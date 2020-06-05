@@ -1,35 +1,48 @@
 /*
+
+    TITLE
+    Object.js
+
     AUTHOR
-        Seagat2011 www.gitub.com/Seagat2011
-        eterna.cmu.edu/web/player/90270/
-        fold.it/port/user/1992490
+    Seagat2011 www.gitub.com/Seagat2011
+    eterna.cmu.edu/web/player/90270/
+    fold.it/port/user/1992490
 
     VERSION
-        Major.Minor.Bugfix.Patch
-        1.0.0.0
+    Major.Minor.Bugfix.Patch
+    1.0.0.0
 
     DESCRIPTION
-        Properties file
+    Properties file
 
     UPDATED
+
+    STYLEGUIDE:
+    http://google-styleguide.googlecode.com/svn/trunk/javascriptguide.xml
 
     REFERENCES
 
     COMPATIBILITY
-        Chrome 53+
+    Chrome 53+
 
 */
 Object.prototype.last = function(){
   var i = this.length-1
   return this[i]
 }
-Object.prototype.mylog = function(){
-  var i,I = arguments.length
+Object.prototype.toRegExp=function(flags){
   var self = this
-  this.innerText = ""
-  for(i=0;i<I;i++){
-    self.innerText += (arguments[i]).toString() + "\n"
-  }
+  var w = self.replace(/([\.\+\-\*\?\{\}\[\]\|\\]+)/g,'\\$1')
+  var u = new RegExp(`^${w} | ${w} | ${w}$`,flags)
+  return u
+}
+Object.prototype.mylog = function(){
+    var i,I = arguments.length
+    var self = this
+    this.innerText = ""
+    for(i=0;i<I;i++){
+        self.innerText += (arguments[i]).toString() + "\n"
+    }
 }
 Object.prototype.clear=function(){
     var self=this
@@ -38,7 +51,7 @@ Object.prototype.clear=function(){
 Object.prototype.show=function(){
     var self=this
     if(
-        self.visible 
+        self.visible
     ){
         if(self.visible!='inline'){ /* fast */
             self.visible='inline'
@@ -54,10 +67,10 @@ Object.prototype.show=function(){
 Object.prototype.hide=function(){
     var self=this
     if(
-        self.visible 
-    ){        
+        self.visible
+    ){
         if(self.visible!='none'){ /* fast */
-            self.visible!='none'
+            self.visible='none'
             self.style.display = 'none'
         }
     } else if (self.style.display != 'none'){
@@ -126,28 +139,26 @@ Object.prototype.solutionComplete = function(u){
             }
         }
         if(result){
-            _AXIOM_.SOLVED = result = "<br><br>Q.E.D. (via "+u+")<br><hr>"
+            g_SOLVED = result = "<br><br>Q.E.D. (via "+u+")<br><hr>"
         }
     }
     return result
 }
-Object.prototype.collapseRedundantPaths = function(){
-    var self = this
-    var redundancyFound
-    var buff={}
-    self.map((u,K,me)=>{
-        if(u in buff){
-            var k=buff[u]
-            for(var j=k;j<K;j++){
-                delete buff[ me[j] ]
-                me[j]=''
-            }
-        }
-        buff[u]=K
-        return u
-    });
-    var tmp=self.filter((u)=>{ return (u != '') })
-    return tmp
+Object.prototype.tokenizeSTRING=function(delim){
+    var self=this
+    var delim = delim || ' '
+    var ret=self.split( delim )
+    return ret
+}
+Object.prototype.RepackAsString=function(){
+    var self=this
+    var ret=self.Repack().join(' ')
+    return ret
+}
+Object.prototype.RepackAsStringThenRetokenize=function(){
+    var self=this
+    var ret=self.RepackAsString().split(' ')
+    return ret
 }
 Object.prototype.getLines = function(){
   return this.toString().replace(/^\n*|\n*$/,"").split(/\n/g)
@@ -177,15 +188,6 @@ Object.prototype.build = function(u){
   }
   self._init = true
 }
-Object.prototype._roundPassed = function(){
-  return this._roundStatus
-}
-Object.prototype._passRound = function(){
-  this._roundStatus = true
-}
-Object.prototype._resetRound = function(){
-  this._roundStatus = false
-}
 Object.prototype.stripWhiteSpace = function(){
   return this.replace(/^\s+|\s+$/,"").replace(/\s+/g," ")
 }
@@ -194,6 +196,24 @@ Object.prototype.deepSplit = function(){
     var self = this
     u = self.split(/\s+/g)
     return u
+}
+Object.prototype.collapseRedundantPaths = function(){
+    var self = this
+    var redundancyFound
+    var buff={}
+    self.map((u,K,me)=>{
+        if(u in buff){
+            var k=buff[u]
+            for(var j=k;j<K;j++){
+                delete buff[ me[j] ]
+                me[j]=''
+            }
+        }
+        buff[u]=K
+        return u
+    });
+    var tmp=self.filter((u)=>{ return (u != '') })
+    return tmp
 }
 Object.prototype.collapseEmptyCells = function(u){
     var self = this
@@ -233,7 +253,9 @@ Object.prototype.compileLemmas = function(v,idx){
         _rhs:w[0],
         _lhs:w[1],
         _stack:[],
-        _history:{},
+        _history:{ _reduce:{},_expand:{} },
+        _rhsSUBKEY:w[0].asPrimaryKey(),
+        _lhsSUBKEY:w[1].asPrimaryKey(),
         _isOnline:true,
         _flags:'Lemma',
         _false:"68934A3E9455FA72420237EB05902327",
@@ -242,7 +264,7 @@ Object.prototype.compileLemmas = function(v,idx){
     );
 }
 Object.prototype.compileAxioms = function(v,idx){
-    var self = this;    
+    var self = this;
     u=v.split(/,/)[0]
     var _u = u.split(/\s+\=\s+/)
     var w = (_u[0].length < _u[1].length) ? [_u[0],_u[1]] : [_u[1],_u[0]] ;
@@ -254,28 +276,14 @@ Object.prototype.compileAxioms = function(v,idx){
         _rhs:w[0],
         _lhs:w[1],
         _stack:[],
-        _history:{},
+        _history:{ _reduce:{},_expand:{} },
         _isOnline:true,
+        _rhsSUBKEY:w[0].asPrimaryKey(),
+        _lhsSUBKEY:w[1].asPrimaryKey(),
         _false:"68934A3E9455FA72420237EB05902327",
         _basenetFOUND:"68934A3E9455FA72420237EB05902327",
     })
     );
-}
-Object.prototype.turnAxiomsOffFrom = function(J){
-  var self = this
-  var I = self.length
-  var j=0
-  self.filter((axiom,i,me)=>{
-    return (axiom._guid.match(/lemma_/)&&true) || (axiom._guid.match('axiom_') && (++j<=J))
-  })
-}
-Object.prototype.turnLemmasOffFrom = function(J){
-  var self = this
-  var I = self.length
-  var j=0
-  self.filter((lemma,i,me)=>{
-    return (lemma._guid.match(/axiom_/)&&true) || (lemma._guid.match('lemma_') && (++j<=J))
-  })
 }
 Object.prototype.attachSourceEditor = function(){
   var self = this
@@ -287,4 +295,66 @@ Object.prototype.attachSourceEditor = function(){
 }
 Object.prototype.addTAG = function(s){
   return "<"+s+">("+this.toString()+")</"+s+">"
+}
+
+Object.prototype.keysMatch = function(){
+    var key=this.join(' ').split(/\s*=\s*/)
+    var KEYSMATCH=Boolean(key.length && key.length>1 && (key[0].asPrimaryKey()==key[1].asPrimaryKey()))
+    return KEYSMATCH
+}
+Object.prototype.subkeyFOUND=function(v){
+    var u=this
+    var ret=((u%v)==0)
+    return ret
+}
+Object.prototype.subkeyUPDATE=function(from,to){
+    var self=this
+    var ret=(self/from*to)
+    return ret
+}
+var LASTPRIME=BigInt(2)
+var PRIMARYKEY = {}
+Object.prototype.nextPrime=function(){
+    var u=LASTPRIME
+    var Big2=BigInt(2)
+    do {
+        u++
+        var notPrime=false
+        var v=BigInt(u/Big2-u%Big2)
+        for(var i=v;i>1;i--){
+            if (u%i==0){
+                notPrime=true
+                break
+            }
+        }
+    } while(notPrime);
+    LASTPRIME=u
+    return u
+}
+Object.prototype.asPrimaryKey=function(){
+    var self=this
+    var x=(self instanceof Array) ? self : self.split(/\s+/g).Repack() ;
+    var y=x.join(' ')
+    var N=BigInt(1)
+    if(y in PRIMARYKEY){
+        N=PRIMARYKEY[y]
+    } else {
+        x.map((u,i,me)=>{
+            var w = !(PRIMARYKEY[u]) ? PRIMARYKEY[u]=u.nextPrime() : PRIMARYKEY[u] ;
+            N*=w
+        });
+        PRIMARYKEY[y]=N
+    }
+    return N
+}
+Object.prototype.isaTentativeProof=function(){
+    var w=this
+    var val=(w/('=').asPrimaryKey())
+    var ret=Boolean(Math.sqrt(val.toString())%1==0)
+    return ret
+}
+Object.prototype._=function(re,u){
+    var self=this
+    var s=self.replace(re,u)
+    return s
 }

@@ -1,13 +1,13 @@
 /*
 
-  TITLE: 
-  Behaviors.js 
+  TITLE:
+  Behaviors.js
 
-  AUTHOR: Seagat2011 
+  AUTHOR: Seagat2011
   http://eterna.cmu.edu/web/player/90270/
   http://fold.it/port/user/1992490
 
-  DESCRIPTION: 
+  DESCRIPTION:
   Main (math) operations interface to euclid and its components
   to operate on numbers of infinite magnitude
 
@@ -27,8 +27,8 @@
 
   OUTPUT:
 11804953080793687218220190712516551324312634864687505210880808771314809449692208436876194384822271357708184535031717068027959841685429128770664233790575880181679985350037523448486097718617832567778737534676386124052291686410471997463434121421588141460555244509176786829246055978175931659333253534905800361156299682852152103254722679689866619497054325800247067107849860786054919813401919938339579178438022507677991107934204473718886622143004966625541530093868693170788752561078386496097003370376576911112647265188701955514490810002933469492281469228900929776468933786077161401405420159052875538550463
-  
-  SCRIPT TYPE: 
+
+  SCRIPT TYPE:
   Euclid Tool
 
 */
@@ -67,25 +67,6 @@ Object.prototype.totalTicks = function(){
 Object.prototype.getTick = function(){
 	return (Date().toString()).match(/(\d+:\d+:\d+)/)[0].split(/:/)
 }
-Object.prototype.padLZero = function(i){
-    var self = this
-    while(i--)
-        self.unshift('0')
-    return self
-}
-Object.prototype.Zero = function(){
-    var self = this
-    return self.map((u,i,me)=>{
-        return '0'
-    })
-}
-Object.prototype.unpadLZero = function(){
-    var self = this
-    var i = this.length - 1
-    while((self[i--] == '0') && !self[i].match(/\./))
-        self.pop()
-    return self
-}
 Object.prototype.asReverseArray = function(){
 	return this.split('').reverse()
 }
@@ -102,81 +83,43 @@ Object.prototype.splitLines = function(){
     });
 	return ret
 }
-Object.prototype.getIDX = function(i){
-	return this[i] || '0'
-}
-Object.prototype.asLONG = function(){
-	return this.unpadLZero().reverse().join('')
-}
 Object.prototype.getDecimal = function(u){
-	return this.replace(/\./,(_,i,me)=>{ 
+	return this.replace(/\./,(_,i,me)=>{
 		u.dot += (me.length-i-1)
 		return ''
 	})
 }
 Object.prototype.placeDecimal = function(u){
 	var self = this
-	if(u.dot){
-		var w = self[u.dot]
-		self[u.dot] = `${w}.`
+	if(u.dot>0){
+        var v = (self.toString()).split('')
+        var I = v.length
+        var i = I-u.dot-1
+		var w = v[i]
+		v[i] = `${w}.`
+        self=v.join('')
 	}
 	return self
 }
-var AWC = { /* Add With Carry : ( op1.op2.carry.result : carry.result ) */  }
-var DWC = { /* Divide With Carry : ( op1.op2.carry.result : carry.result ) */ }
-var MWC = { /* Multiply With Carry : ( op1.op2.carry.result : carry.result ) */ }
-var SWC = { /* Subtract With Carry : ( op1.op2.carry.result : carry.result ) */ }
-for(var i=0;i<1e4;i++){
-    var u=i.toString().padBlock(4,'0')
-    var w=u.split('').map((v)=>{
-        return Number(v)
-    });
-    AWC[u]=((w[0]+w[1])+(w[2]+w[3])).toString().padBlock(2,'0')
-    DWC[u]=parseInt((w[0]/w[1])+(w[2]+w[3])).toString().padBlock(2,'0')
-    MWC[u]=((w[0]*w[1])+(w[2]+w[3])).toString().padBlock(2,'0')
-    SWC[u]=Math.abs((w[0]-w[1])+(w[2]+w[3])).toString().padBlock(2,'0')
-}
-function MULTIPLY(src,targ,divTimer){
+function Main(){
 	if(src.gLAST==src.innerText.replace(/\n+/g,'\n'))
 		return
 	var RET = '';
 	var dte = [RET.getTick()]
 	var decimalPoint = { dot:0 }
 	try {
-		var RESULT = [];
+		var RESULT = '';
 		var operands = src.innerText.splitLines();
 		operands.map((op1,m,meOne)=>{
+            op1=op1.getDecimal(decimalPoint)
 			if(m != 0){
-				var carry = '0'
-				var LHS = []
-				var RHS = op1.getDecimal(decimalPoint).asReverseArray()
-				LHS.padLZero(op1.length)
-				RHS.map((u,i,meTwo)=>{
-					var idx
-					RESULT.map((v,j,meThree)=>{
-						idx = (i+j)
-						var w = u + v + carry + LHS.getIDX(idx)
-						var y = MWC[w]
-						carry = y[0]
-						LHS[idx] = y[1]
-						return v
-					});
-					if(carry > '0'){
-						idx++
-						var w = '00' + carry + LHS.getIDX(idx)
-						var y = MWC[w]
-						LHS[idx] = y[1]
-						carry = '0'
-					}
-					return u
-				});
-				RESULT = LHS
+                RESULT *= BigInt(op1)
 			} else {
-				RESULT = [...op1.getDecimal(decimalPoint).asReverseArray()]
-			}
+                RESULT = BigInt(op1)
+            }
 			return op1
 		});
-		RET = RESULT.placeDecimal(decimalPoint).asLONG()
+		RET = RESULT.placeDecimal(decimalPoint)
 		src.gLAST=src.innerText.replace(/\n+/g,'\n') // SUCCESS //
 	} catch(e) {
 		RET = e
@@ -185,3 +128,4 @@ function MULTIPLY(src,targ,divTimer){
 	dte.push(RET.getTick())
 	divTimer.innerText = dte.totalTicks()
 }
+//addEventListener('keyup',Main,0)

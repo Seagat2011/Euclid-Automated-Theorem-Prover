@@ -7,7 +7,7 @@
 
   VERSION
       Major.Minor.Bugfix.Patch
-      12.0.0.0
+      11.0.0.0
 
   DESCRIPTION
     Theorem prover written in HTML and JavaScript (An E-normalization to normal form, term-rewriting system)
@@ -47,17 +47,21 @@
 
 */
 
+var g_Solution = []
 var g_code = []
 var g_GUID = 0
+var g_history = {}
 var g_origin = "*"
+var g_SOLVED = ""
 
 function reset(partial){
-    delete _AXIOM_.SOLVED
-    g_code._resetRound()
-    if(!partial)
-        g_code.length=0
-    g_code.solutionEditor.clear()
-    g_code.solutionEditorR.clear()
+  g_Solution = []
+  g_history = {}
+  if(!partial){
+    g_code.empty()
+  }
+  g_code.solutionEditor.clear()
+  g_code.solutionEditorR.clear()
 }
 function SymbolsViewer(action){
     if(action){
@@ -79,14 +83,16 @@ function Solve(INDIR){
                 solutionEditorR:solutionEditorR,
                 lma:lemmaEditor })
         }
-        g_code.build()
         reset()
+        g_code.build()
         imgProgressBar.show()
+        g_SOLVED=""
         postMessage({
-        source:"axiomROOT",
-        Proof:g_code.Theorem.lemma,
-        indir:INDIR,
-        },g_origin)
+            source:"axiomROOT",
+            Proof:g_code.Theorem.lemma,
+            indir:INDIR,
+            ProofSUBKEY:g_code.Theorem.lemma.asPrimaryKey(),
+            },g_origin)
         console.clear()
     } catch(e) {
        solutionEditor.innerText=[,e.stack].join('\n\n') 

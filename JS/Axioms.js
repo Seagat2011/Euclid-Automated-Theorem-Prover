@@ -1,35 +1,35 @@
 /*
 
-  TITLE:
+    TITLE:
     Axioms.js
 
-  AUTHOR: Seagat2011
-      http://eterna.cmu.edu/web/player/90270/
-      http://fold.it/port/user/1992490
+    AUTHOR: Seagat2011
+    http://eterna.cmu.edu/web/player/90270/
+    http://fold.it/port/user/1992490
 
-  VERSION:
+    VERSION:
     Major.Minor.Release.Build
-    0.0.0.17
+    0.0.0.16
 
-  DESCRIPTION:
-    Main (math) operations interface to euclid and its components
+    DESCRIPTION:
+    Main (math) interface to Euclid and its proof components
 
-  UPDATED
-      +Auto/Optimal Route performance
-      +Optimal Route
-      +Lemmas (Enabled)
-      +Scoping functionality
+    UPDATED
+    +Auto/Optimal Route performance
+    +Optimal Route
+    +Lemmas (Enabled)
+    +Scoping functionality
 
-  STYLEGUIDE:
+    STYLEGUIDE:
     http://google-styleguide.googlecode.com/svn/trunk/javascriptguide.xml
 
-  REFERENCE:
-      Substitution methods:
-      1. (direct) AXIOMATIC: 1 + 1 = 2
-      2. (indirect) LEMMA SUBSTITUTION: 1 <== 1/1
-      Lemma substitutions rewrite axioms -- which can introduce recursion, stack overflow, and other bugs
+    REFERENCE:
+    Substitution methods:
+    1. (direct) AXIOMATIC: 1 + 1 = 2
+    2. (indirect) LEMMA SUBSTITUTION: 1 <== 1/1
+    Lemma substitutions rewrite axioms -- which can introduce recursion, stack overflow, and other bugs
 
-  SCRIPT TYPE:
+    SCRIPT TYPE:
     Euclid Tool
 
 */
@@ -55,20 +55,24 @@ function _AXIOM_(){
     self._reduce = function(e){
         var u = e.data
         if(
+            u.source &&
             u.source.startsWith('axiom') &&
             self._isOnline &&
            (u.source != self._guid) &&
             u.indir.match(/Reduce|Auto|Optimal/) &&
-           !_AXIOM_.SOLVED
+           !g_SOLVED
         ){
             var val = u.Proof.join(' ')
             self._subnetFOUND = false
-            var ProofFailed = false
             var stack = (u._stack && u._stack.length) ? [...u._stack] : [] ;
             var stackR = (u._stackR && u._stackR.length) ? [...u._stackR] : [] ;
+            var indir = u.indir
+            var flags = u._flags ? u._flags : u.indir ;
+            var ProofSUBKEY = u.ProofSUBKEY
             if(
-                !(val in self._history)
+                !(val in self._history._reduce)
             ){
+                self._history._reduce[val]=true
                 var tmp = [...u.Proof]
                 var Proof = [...u.Proof]
                 var vkeys = []
@@ -86,7 +90,9 @@ function _AXIOM_(){
                 var COMPOUND = Boolean(
                     self._flags &&
                     self._flags.match(/Lemma/) &&
-                    (self._lhs.match(/\s+=\s+/) || self._rhs.match(/\s+=\s+/)))
+                   (self._lhs.match(/\s+=\s+/) || self._rhs.match(/\s+=\s+/)))
+                ProofSUBKEY.subkeyFOUND(self._lhsSUBKEY) &&
+               (ProofSUBKEY = ProofSUBKEY.subkeyUPDATE(self._lhsSUBKEY,self._rhsSUBKEY)) &&
                 tmp.map((tok,idx,me)=>{
                     if((tok == "=") && !COMPOUND){
                         jdx=0
@@ -94,7 +100,6 @@ function _AXIOM_(){
                     if(self._scope_satisfied(tok,me,idx,from,jdx)){
                         vkeys.push(idx)
                         if(++jdx==from.length){
-                            g_code._passRound()
                             self._subnetFOUND = true
                             vkeys.map((kdx,ii)=>{
                                 tmpHTML.pre[kdx] += self._id.addTAG("sub")
@@ -116,16 +121,15 @@ function _AXIOM_(){
                 if(
                     self._subnetFOUND
                 ){
-                    u._flags && (u.indir=u._flags)
                     var P = Proof.collapseEmptyCells()
+                    //ProofSUBKEY = P.asPrimaryKey()
                     tmpHTMLR.post = tmpHTMLR.post.collapseEmptyCells()
-                    var solutionComplete = P.solutionComplete(u.indir)
-                    self._history[val] = true
+                    var solutionComplete = P.solutionComplete(flags)
                     if(solutionComplete){
                         e.stopPropagation()
                         if(stack.length){
-                            var s1 = u.indir.match(/Optimal/) ? stack.collapseRedundantPaths().join('<br><br>') : stack.join('<br><br>') ;
-                            var s2 = u.indir.match(/Optimal/) ? stackR.collapseRedundantPaths().join('<br>') : stackR.join('<br>') ;
+                            var s1 = flags.match(/Optimal/) ? stack.collapseRedundantPaths().join('<br><br>') : stack.join('<br><br>') ;
+                            var s2 = flags.match(/Optimal/) ? stackR.collapseRedundantPaths().join('<br>') : stackR.join('<br>') ;
                             solutionEditor.appendlog(s1)
                             solutionEditorR.appendlogR(s2)
                             stackR = []
@@ -144,8 +148,7 @@ function _AXIOM_(){
                         tmpHTMLR.pre.length && stackR.push( tmpHTMLR.pre.join(" ") )
                         stackR.push( tmpHTMLR.post.join(" ") )
                         if(
-                           (u._flags && u._flags.match(/Auto|Optimal/)) ||
-                            u.indir.match(/Auto|Optimal/)
+                            flags.match(/Auto|Optimal/)
                         ){
                             postMessage({
                                 source:self._guid,
@@ -154,7 +157,8 @@ function _AXIOM_(){
                                 _id:self._id,
                                 _stack:stack,
                                 _stackR:stackR,
-                                _flags:u.indir,
+                                _flags:flags,
+                                ProofSUBKEY:ProofSUBKEY,
                                 },g_origin);
                             postMessage({
                                 source:self._guid,
@@ -163,42 +167,43 @@ function _AXIOM_(){
                                 _id:self._id,
                                 _stack:stack,
                                 _stackR:stackR,
-                                _flags:u.indir,
+                                _flags:flags,
+                                ProofSUBKEY:ProofSUBKEY,
                                 },g_origin);
                         } else {
                             postMessage({
                                 source:self._guid,
                                 Proof:P,
-                                indir:u.indir,
+                                indir:flags,
                                 _id:self._id,
                                 _stack:stack,
                                 _stackR:stackR,
+                                ProofSUBKEY:ProofSUBKEY,
                                 },g_origin);
                         }
                     }
-                    //console.log("Source:",u.source,"; target:",`${self._guid} (Partial Solution Found) ${solutionComplete.replace(/<[^>]+>/g,'')}`)
                 } else {
                     clearTimeout(g_code.activeThread)
                     g_code.activeThread=setTimeout(()=>{
-                        if(!_AXIOM_.SOLVED){
+                        if(!g_SOLVED){
                             if(stack.length){
                                 solutionEditor.appendlog(stack.join('<br><br>'))
+                                solutionEditor.appendlog("Prove via % failed."._(/%/,flags))
                                 solutionEditorR.appendlogR(stackR.join('<br><br>'),"render")
                                 stackR = []
                                 stack = []
                             }
-                            if(u.indir.match(/Auto|Optimal/)){
-                                g_code._resetRound()
+                            if(flags.match(/Auto|Optimal/)){
                                 solutionEditor.appendlog("<br>========( Reduce )=========<br>========( Expand )=========<br>")
                                 reset("partial")
                                 console.log("Prove via Reduce failed; now attempting Expand...")
                                 postMessage({
                                     source:"axiomROOT",
                                     Proof:g_code.Theorem.lemma,
-                                    indir:"Expand"
+                                    indir:"Expand",
+                                    _flags:flags,
+                                    ProofSUBKEY:g_code.Theorem.lemma.asPrimaryKey(),
                                     },g_origin)
-                            } else {
-                                console.log("Prove via Reduce failed.")
                             }
                         } else {
                             e.stopPropagation()
@@ -212,19 +217,24 @@ function _AXIOM_(){
     self._expand = function(e){
         var u = e.data
         if(
+            u.source &&
             u.source.startsWith('axiom') &&
             self._isOnline &&
            (u.source != self._guid) &&
             u.indir.match(/Expand|Auto|Optimal/) &&
-           !_AXIOM_.SOLVED
+           !g_SOLVED
         ){
             var val = u.Proof.join(' ')
             self._subnetFOUND = false
-            stack = (u._stack && u._stack.length) ? [...u._stack] : [] ;
-            stackR = (u._stackR && u._stackR.length) ? [...u._stackR] : [] ;
+            var stack = (u._stack && u._stack.length) ? [...u._stack] : [] ;
+            var stackR = (u._stackR && u._stackR.length) ? [...u._stackR] : [] ;
+            var indir = u.indir
+            var flags = u._flags ? u._flags : u.indir ;
+            var ProofSUBKEY = u.ProofSUBKEY
             if(
-                !(val in self._history)
+                !(val in self._history._expand)
             ){
+                self._history._expand[val]=true
                 var tmp = [...u.Proof]
                 var Proof = [...u.Proof]
                 var vkeys = []
@@ -243,7 +253,9 @@ function _AXIOM_(){
                 var COMPOUND = Boolean(
                     self._flags &&
                     self._flags.match(/Lemma/) &&
-                    (self._lhs.match(/\s+=\s+/) || self._rhs.match(/\s+=\s+/)))
+                   (self._lhs.match(/\s+=\s+/) || self._rhs.match(/\s+=\s+/)))
+                ProofSUBKEY.subkeyFOUND(self._rhsSUBKEY) &&
+               (ProofSUBKEY = ProofSUBKEY.subkeyUPDATE(self._rhsSUBKEY,self._lhsSUBKEY)) &&
                 tmp.map((tok,idx,me)=>{
                     if((tok == "=") && !COMPOUND){
                         jdx=0
@@ -272,16 +284,15 @@ function _AXIOM_(){
                 if(
                     self._subnetFOUND
                 ){
-                    u._flags && (u.indir=u._flags)
                     var P = Proof.collapseEmptyCells()
+                    //ProofSUBKEY = P.asPrimaryKey()
                     tmpHTMLR.post = tmpHTMLR.post.collapseEmptyCells()
-                    var solutionComplete = P.solutionComplete(u.indir)
-                    self._history[val] = true
+                    var solutionComplete = P.solutionComplete(flags)
                     if(solutionComplete){
                         e.stopPropagation()
                         if(stack.length){
-                            var s1 = u.indir.match(/Optimal/) ? stack.collapseRedundantPaths().join('<br><br>') : stack.join('<br><br>') ;
-                            var s2 = u.indir.match(/Optimal/) ? stackR.collapseRedundantPaths().join('<br>') : stackR.join('<br>') ;
+                            var s1 = flags.match(/Optimal/) ? stack.collapseRedundantPaths().join('<br><br>') : stack.join('<br><br>') ;
+                            var s2 = flags.match(/Optimal/) ? stackR.collapseRedundantPaths().join('<br>') : stackR.join('<br>') ;
                             solutionEditor.appendlog(s1)
                             solutionEditorR.appendlogR(s2)
                             stackR=[]
@@ -300,8 +311,7 @@ function _AXIOM_(){
                         tmpHTMLR.pre.length && stackR.push( tmpHTMLR.pre.join(" ") )
                         stackR.push( tmpHTMLR.post.join(" ") )
                         if(
-                           (u._flags && u._flags.match(/Auto|Optimal/)) ||
-                            u.indir.match(/Auto|Optimal/)
+                            flags.match(/Auto|Optimal/)
                         ){
                             postMessage({
                                 source:self._guid,
@@ -310,7 +320,8 @@ function _AXIOM_(){
                                 _id:self._id,
                                 _stack:stack,
                                 _stackR:stackR,
-                                _flags:u.indir,
+                                _flags:flags,
+                                ProofSUBKEY:ProofSUBKEY,
                                 },g_origin);
                             postMessage({
                                 source:self._guid,
@@ -319,33 +330,32 @@ function _AXIOM_(){
                                 _id:self._id,
                                 _stack:stack,
                                 _stackR:stackR,
-                                _flags:u.indir,
+                                _flags:flags,
+                                ProofSUBKEY:ProofSUBKEY,
                                 },g_origin);
                         } else {
                             postMessage({
                                 source:self._guid,
                                 Proof:P,
-                                indir:u.indir,
+                                indir:flags,
                                 _id:self._id,
                                 _stack:stack,
                                 _stackR:stackR,
+                                ProofSUBKEY:ProofSUBKEY,
                                 },g_origin);
                         }
                     }
-                    //console.log("Source:",u.source,"; target:",`${self._guid} (Partial Solution Found) ${solutionComplete.replace(/<[^>]+>/g,'')}`)
                 } else {
                     clearTimeout(g_code.activeThread)
                     g_code.activeThread=setTimeout(()=>{
-                        if(!_AXIOM_.SOLVED){
+                        if(!g_SOLVED){
                             if(stack.length){
                                 solutionEditor.appendlog(stack.join('<br><br>'))
+                                solutionEditor.appendlog("Prove via % failed."._(/%/,flags))
                                 solutionEditorR.appendlogR(stackR.join('<br>'),"render")
                                 stackR = []
                                 stack = []
                             }
-                            g_code._resetRound()
-                            reset("partial")
-                            console.log("Prove via Expand failed - EXIT 0")
                         } else {
                             e.stopPropagation()
                         }
