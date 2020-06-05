@@ -4,11 +4,14 @@ and a brace cannot contact another token (eg. Symbol.Number.Integer.Signed { 1 }
 Notes: LHS or RHS should consistently be fully expanded or condensed, respectively.
 
 TEST CASE [PASS]
-1 + 1 = 2
+4 + 2 = 5 + 1
 2 + 2 = 4
-4 + 2 = 6
-1 + 1 + 1 + 1 + 1 + 1 = 6
-Prove 1 + 2 + 2 + 1 = 6
+Prove 2 + 2 + 2 = 4 + 2
+
+TEST CASE [PASS]
+1 + 1 = 2
+1 + 2 = 3
+Prove 1 + 2 + 1 = 3 + 1
 
 TEST CASE [PASS]
 1 + 1 = 2
@@ -16,28 +19,6 @@ TEST CASE [PASS]
 4 + 2 = 6
 1 + 1 + 1 + 1 + 1 + 1 = 6
 Prove 1 + 2 + 2 + 1 = 6
-
-TEST CASE  [PASS]
-1 + 1 = 2
-2 + 2 = 4
-4 + 2 = 6
-1 + 1 + 1 + 1 + 1 + 1 = 6
-Prove 1 + 2 + 2 + 1 = 6
-
-TEST CASE [PASS]
-4 + 2 = 5 + 1
-2 + 2 = 4
-Prove 2 + 2 + 2 = 4 + 2
-
-TEST CASE [PASS]
-1 + 1 = 2
-2 + 1 = 3
-Prove 1 + 1 + 2 = 3 + 1
-
-TEST CASE [PASS]
-1 + 1 = 2
-1 + 2 = 3
-Prove 1 + 2 + 1 = 3 + 1
 
 TEST CASE [PASS]
 4 + 2 = 6
@@ -293,21 +274,26 @@ TEST CASE  [PASS]
 123 + 123 = 246
 Prove 1 + 1 + 1 + 1 + 1 + 1 + 1 + 1 + 1 + 1 + 1 + 1 + 1 + 1 + 1 + 1 + 1 + 1 + 1 + 1 + 1 + 1 + 1 + 1 + 1 + 1 + 1 + 1 + 1 + 1 + 1 + 1 + 1 + 1 + 1 + 1 + 1 + 1 + 1 + 1 + 1 + 1 + 1 + 1 + 1 + 1 + 1 + 1 + 1 + 1 + 1 + 1 + 1 + 1 + 1 + 1 + 1 + 1 + 1 + 1 + 1 + 1 + 1 + 1 + 1 + 1 + 1 + 1 + 1 + 1 + 1 + 1 + 1 + 1 + 1 + 1 + 1 + 1 + 1 + 1 + 1 + 1 + 1 + 1 + 1 + 1 + 1 + 1 + 1 + 1 + 1 + 1 + 1 + 1 + 1 + 1 + 1 + 1 + 1 + 1 + 1 + 1 + 1 + 1 + 1 + 1 + 1 + 1 + 1 + 1 + 1 + 1 + 1 + 1 + 1 + 1 + 1 + 1 + 1 + 1 + 1 + 1 + 1 + 1 + 1 + 1 + 1 + 1 + 1 + 1 + 1 + 1 + 1 + 1 + 1 + 1 + 1 + 1 + 1 + 1 + 1 + 1 + 1 + 1 + 1 + 1 + 1 + 1 + 1 + 1 + 1 + 1 + 1 + 1 + 1 + 1 + 1 + 1 + 1 + 1 + 1 + 1 + 1 + 1 + 1 + 1 + 1 + 1 + 1 + 1 + 1 + 1 + 1 + 1 + 1 + 1 + 1 + 1 + 1 + 1 + 1 + 1 + 1 + 1 + 1 + 1 + 1 + 1 + 1 + 1 + 1 + 1 + 1 + 1 + 1 + 1 + 1 + 1 + 1 + 1 + 1 + 1 + 1 + 1 + 1 + 1 + 1 + 1 + 1 + 1 + 1 + 1 + 1 + 1 + 1 + 1 + 1 + 1 + 1 + 1 + 1 + 1 + 1 + 1 + 1 + 1 + 1 + 1 + 1 + 1 + 1 + 1 + 1 + 1 + 1 + 1 + 1 + 1 + 1 + 1 + 1 + 1 + 1 + 1 + 1 + 1 = 246
 
-TEST CASE  [PASS] // Implementation note: a state-machine records function calls and paramater-lists -- whether or not they are valid
+TEST CASE [PASS]
+1 + 1 = 2
+2 + 1 = 3
+Prove 1 + 1 + 2 = 3 + 1
+
+TEST CASE  [PASS] // Implementation note: a state-machine records function calls and paramater lists -- whether or not they are valid
 one plus one = two
 two plus two = four
 four plus two = six
 one plus one plus one plus one plus one plus one = six
 Prove one plus two plus two plus one = six
 
-TEST CASE [PASS] // Implementation hint: a state-machine records function calls and paramater-lists and whether or not such are valid
+TEST CASE [PASS] // Implementation hint: a state-machine records function calls and paramater lists and whether or not such are valid
 Num(1) Op(+) Num(1) = Num(2)
 Num(2) Op(+) Num(2) = Num(4)
 Num(4) Op(+) Num(2) = Num(6)
 Num(1) Op(+) Num(1) Op(+) Num(1) Op(+) Num(1) Op(+) Num(1) Op(+) Num(1) = Num(6)
 Prove Num(1) Op(+) Num(2) Op(+) Num(2) Op(+) Num(1) = Num(6)
 
-TEST CASE // Implementation hint: a state-machine records function calls and paramater-lists and whether or not they are valid
+TEST CASE // Implementation hint: a state-machine records function calls and paramater lists and whether or not they are valid
 Number.One Operator.Plus Number.One = Number.Two
 Number.Two Operator.Plus Number.Two = Number.Four
 Number.Four Operator.Plus Number.Two = Number.Six
@@ -363,7 +349,7 @@ TEST CASE [PASS]
 { 1 } { + } { 1 } = { 2 }
 { 2 } { + } { 2 } = { 4 }
 { 4 } { + } { 2 } = { 6 }
-{ 1 } { + } { 1 } { + } { 1 } { + } { 1 } { + } { 1 } { + } { 1 } = { 2 }
+{ 1 } { + } { 1 } { + } { 1 } { + } { 1 } { + } { 1 } { + } { 1 } = { 6 }
 Prove { 1 } { + } { 2 } { + } { 2 } { + } { 1 } = { 6 }
 
 TEST CASE [PASS]
@@ -375,6 +361,13 @@ Prove { { a } ^ { 2 } } + { { b } ^ { 2 } } = { c } ^ { 2 }
 
 TEST CASE [PASS]
 { { a } raised { 2 } } plus { 2ab } plus { b raised { 2 } } <== ( { a } plus { b } ) raised { 2 }
+( { a } plus { b } ) raised { 2 } minus { 2ab } <== { c } raised { 2 }
+{ { a } raised { 2 } } plus { 2ab } minus { 2ab } plus { b raised { 2 } } ==> { { a } raised { 2 } } plus { { b } raised { 2 } }
+( { a } plus { b } ) raised { 2 } = { { c } raised { 2 } } plus { 2ab }
+Prove { { a } raised { 2 } } plus { { b } raised { 2 } } = { c } raised { 2 }
+
+TEST CASE [PASS] [CORNER-CASE-SEARCH-ENABLED]
+{ { a } raised { 2 } } plus { 2ab } plus { b raised { 2 } } <== ( { a } plus { b } ) raised { 2 }
 ( { a } plus { b } ) raised { 2 } minus { 2ab } = { c } raised { 2 } <== ( { a } plus { b } ) raised { 2 } = { { c } raised { 2 } } plus { 2ab }
 { { a } raised { 2 } } plus { 2ab } minus { 2ab } plus { b raised { 2 } } ==> { { a } raised { 2 } } plus { { b } raised { 2 } }
 ( { a } plus { b } ) raised { 2 } = { { c } raised { 2 } } plus { 2ab }
@@ -384,7 +377,6 @@ TEST CASE [PASS]
 primes = { a } raised { 2 } + { b } raised { 2 } , where (a,b) in setz
 { 1 } mod { 4 } = { a } raised { 2 } + { b } raised { 2 }
 Prove primes = { 1 } mod { 4 }
-
 
 TEST CASE [PASS]
 (A_0 + B_1 + C_2 + dotslow + Z_n ) ^ n toward {A_0}^n + {B_1}^n + {C_2}^n + dotslow + {Z_n}^n , Where: (A_0 , dotslow , Z_n) in setz; The Inner Products : piecewise { matrix { # Z_n Z_n drarrow Z_n Z_n ## Z_n Z_{n+1} drarrow Z_n Z_{n+1} ## Z_{n+1} Z_n drarrow -Z_n Z_{n+1} } }
