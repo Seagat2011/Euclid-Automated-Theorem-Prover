@@ -168,12 +168,12 @@ Object.prototype.init = function(){
     return this._init
 }
 Object.prototype.build = function(u){
+  var w
+  var lemma
   var self = this
   self.Libraries = self.lib.innerText.getLines()
   var s = self.axm.innerText.split(/\n.*Prove[\s\t:]*/)
   self.compileAtomics(s[0].getLines())
-  var w
-  var lemma
   if(self.edt.id==self.axm.id){
     lemma = s[1]
     w = lemma.split(/\s+=\s+/g)
@@ -186,7 +186,26 @@ Object.prototype.build = function(u){
     rhs:w[1],
     lemma:lemma.split(/\s+/g),
   }
+  self.optimizeCallGraph()
   self._init = true
+}
+Object.prototype.optimizeCallGraph=function(){
+    var self = this
+    var guidROOT = 'axiomROOT'
+    var TheoremSUBKEY = self.Theorem.lemma.asPrimaryKey()
+    self.map((u,i,me)=>{
+        var uGUID = u._guid;
+        TheoremSUBKEY.subkeyFOUND(u._lhsSUBKEY) ? (u._lhsCallGraph[guidROOT]=true) : "" ;
+        TheoremSUBKEY.subkeyFOUND(u._rhsSUBKEY) ? (u._rhsCallGraph[guidROOT]=true) : "" ;
+        self.map((v,j,too)=>{
+            if(i!=j){
+                (u._rhsSUBKEY.subkeyFOUND(v._lhsSUBKEY) || u._lhsSUBKEY.subkeyFOUND(v._lhsSUBKEY)) ? (v._lhsCallGraph[uGUID]=true) : "" ;
+                (u._rhsSUBKEY.subkeyFOUND(v._rhsSUBKEY) || u._lhsSUBKEY.subkeyFOUND(v._rhsSUBKEY)) ? (v._rhsCallGraph[uGUID]=true) : "" ;
+            }
+            return v
+        });
+        return u
+    });
 }
 Object.prototype.stripWhiteSpace = function(){
   return this.replace(/^\s+|\s+$/,"").replace(/\s+/g," ")
@@ -253,11 +272,13 @@ Object.prototype.compileLemmas = function(v,idx){
         _rhs:w[0],
         _lhs:w[1],
         _stack:[],
-        _history:{ _reduce:{},_expand:{} },
+        _flags:'Lemma',
+        _isOnline:true,
+        _rhsCallGraph:{},
+        _lhsCallGraph:{},
         _rhsSUBKEY:w[0].asPrimaryKey(),
         _lhsSUBKEY:w[1].asPrimaryKey(),
-        _isOnline:true,
-        _flags:'Lemma',
+        _history:{ _reduce:{},_expand:{} },
         _false:"68934A3E9455FA72420237EB05902327",
         _basenetFOUND:"68934A3E9455FA72420237EB05902327",
     })
@@ -276,10 +297,12 @@ Object.prototype.compileAxioms = function(v,idx){
         _rhs:w[0],
         _lhs:w[1],
         _stack:[],
-        _history:{ _reduce:{},_expand:{} },
         _isOnline:true,
+        _rhsCallGraph:{},
+        _lhsCallGraph:{},
         _rhsSUBKEY:w[0].asPrimaryKey(),
         _lhsSUBKEY:w[1].asPrimaryKey(),
+        _history:{ _reduce:{},_expand:{} },
         _false:"68934A3E9455FA72420237EB05902327",
         _basenetFOUND:"68934A3E9455FA72420237EB05902327",
     })

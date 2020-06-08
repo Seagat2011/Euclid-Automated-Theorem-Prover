@@ -13,16 +13,17 @@
     Theorem prover written in HTML and JavaScript (An E-normalization to normal form, term-rewriting system)
 
   UPDATED
-      +Improved ProofComplete search performance
-      +Prove via Auto functionality added (PASS)
-      +Axiom._eval => Axiom._reduce
-      +Axiom.{_reduce,_expand} eventListener(s)
-      +solutionEditor made contentEditable
-      +Prove via Reduce functionality added (PASS)
-      +Prove via Expand functionality added (PASS)
-      +scoping functionality
-      +LibreOffice math library support
-      -Axiom._eval eventListener
+    +_AXIOM_.optimizeCallGraph
+    +Improved ProofComplete search performance
+    +Prove via Auto (PASS)
+    +Axiom._eval => Axiom._reduce
+    +Axiom.{_reduce,_expand} => eventListener(s)
+    +solutionEditor => contentEditable
+    +Prove via Reduce (PASS)
+    +Prove via Expand (PASS)
+    +scoping functionality
+    +LibreOffice math library support
+    -Axiom._eval eventListener
 
   NOTES:
     Term rewrites are performed with the aid of a compiler (ie. via LEMMA SUBSTITUTION); SEE TEST CASES

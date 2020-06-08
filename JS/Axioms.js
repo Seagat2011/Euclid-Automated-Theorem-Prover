@@ -59,6 +59,7 @@ function _AXIOM_(){
             u.source.startsWith('axiom') &&
             self._isOnline &&
            (u.source != self._guid) &&
+           (u.source in self._lhsCallGraph) &&
             u.indir.match(/Reduce|Auto|Optimal/) &&
            !g_SOLVED
         ){
@@ -122,7 +123,6 @@ function _AXIOM_(){
                     self._subnetFOUND
                 ){
                     var P = Proof.collapseEmptyCells()
-                    //ProofSUBKEY = P.asPrimaryKey()
                     tmpHTMLR.post = tmpHTMLR.post.collapseEmptyCells()
                     var solutionComplete = P.solutionComplete(flags)
                     if(solutionComplete){
@@ -221,6 +221,7 @@ function _AXIOM_(){
             u.source.startsWith('axiom') &&
             self._isOnline &&
            (u.source != self._guid) &&
+           (u.source in self._rhsCallGraph) &&
             u.indir.match(/Expand|Auto|Optimal/) &&
            !g_SOLVED
         ){
@@ -285,7 +286,6 @@ function _AXIOM_(){
                     self._subnetFOUND
                 ){
                     var P = Proof.collapseEmptyCells()
-                    //ProofSUBKEY = P.asPrimaryKey()
                     tmpHTMLR.post = tmpHTMLR.post.collapseEmptyCells()
                     var solutionComplete = P.solutionComplete(flags)
                     if(solutionComplete){
