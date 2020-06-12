@@ -26,6 +26,11 @@ TEST CASE [PASS]
 2 + 2 + 2 = 6
 Prove 2 + 2 + 2 = 4 + 2
 
+TEST CASE [PASS]
+1 + 1 = 2
+1 + 2 ~= 4
+Prove 2 + 2 + 4 ~= 4 + 2 + 2
+
 TEST CASE  [PASS]
 1 + 1 = 2
 1 + 2 = 3
