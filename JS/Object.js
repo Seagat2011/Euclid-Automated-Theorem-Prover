@@ -172,7 +172,7 @@ Object.prototype.build = function(u){
   var lemma
   var self = this
   self.Libraries = self.lib.innerText.getLines()
-  var s = self.axm.innerText.split(/\n.*Prove[\s\t:]*/)
+  var s = self.axm.innerText.replace(/~=/g,'=').split(/\n.*Prove[\s\t:]*/)
   self.compileAtomics(s[0].getLines())
   if(self.edt.id==self.axm.id){
     lemma = s[1]
@@ -253,7 +253,7 @@ Object.prototype.compileAtomics = function(a){
             j++
             self.compileLemmas(u.stripWhiteSpace(),i)
         } else {
-            k++
+            k++            
             self.compileAxioms(u.stripWhiteSpace(),i)
         }
     });

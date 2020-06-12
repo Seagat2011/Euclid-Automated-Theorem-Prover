@@ -141,6 +141,7 @@ function _AXIOM_(){
                             solutionEditorR.appendlogR(tmpHTMLR.pre.join(" "))
                         solutionEditor.appendlog(P.join(" ")+solutionComplete)
                         solutionEditorR.appendlogR(P.join(" ")+solutionComplete,"render")
+                        imgProgressBar.hide()
                     } else {
                         stack.push(
                             tmpHTML.pre.join(" "),
@@ -304,6 +305,7 @@ function _AXIOM_(){
                         if(!stack.length)
                             solutionEditorR.appendlogR(tmpHTMLR.pre.join(" "))
                         solutionEditorR.appendlogR(P.join(" ")+solutionComplete,"render")
+                        imgProgressBar.hide()
                     } else {
                         stack.push(
                             tmpHTML.pre.join(" "),

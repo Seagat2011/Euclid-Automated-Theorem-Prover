@@ -1237,7 +1237,7 @@ var buildSYMBOL = {
 'dchi':function(){ return 'd&chi;' },
 'dpsi':function(){ return 'd&psi;' },
 'domega':function(){ return 'd&omega;' },
-'C21F969B5F03D33D43E04F8F136E7682':function(){ v = arguments[0]; j = arguments[1]; var s = v[j].val; if((s && s.match(/\w/) && s.match(/\W/))||(s.match(/\{|\}/))){ s = span_red_LHS+s+span_RHS } return s }, // MD5('default') //
+'C21F969B5F03D33D43E04F8F136E7682':function(){ var v = arguments[0]; j = arguments[1]; var s = v[j].val; if((s && s.match(/\w/) && s.match(/\W/))||(s.match(/\{|\}/))){ s = span_red_LHS+s+span_RHS } return s }, // MD5('default') //
 }
 var padSP = {
     'lsup':1,

@@ -13,6 +13,7 @@
     Theorem prover written in HTML and JavaScript (An E-normalization to normal form, term-rewriting system)
 
   UPDATED
+    +Negative proof assertions ~=
     +_AXIOM_.optimizeCallGraph
     +Improved ProofComplete search performance
     +Prove via Auto (PASS)
