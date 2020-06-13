@@ -50,35 +50,11 @@ Object.prototype.clear=function(){
 }
 Object.prototype.show=function(){
     var self=this
-    if(
-        self.visible
-    ){
-        if(self.visible!='inline'){ /* fast */
-            self.visible='inline'
-            self.style.display = 'inline'
-        }
-    } else if (self.style.display != 'inline'){
-        self.visible = 'inline'
-        self.style.display = 'inline'
-    } else {
-        self.visible = 'none'
-    }
+    self.style.display = 'inline'
 }
 Object.prototype.hide=function(){
     var self=this
-    if(
-        self.visible
-    ){
-        if(self.visible!='none'){ /* fast */
-            self.visible='none'
-            self.style.display = 'none'
-        }
-    } else if (self.style.display != 'none'){
-        self.visible = 'none'
-        self.style.display = 'none'
-    } else {
-        self.visible = 'inline'
-    }
+    self.style.display = 'none'
 }
 Object.prototype.appendlogR = function(args,bRender){
     var self=this;
