@@ -229,7 +229,7 @@ Object.prototype.compileAtomics = function(a){
             j++
             self.compileLemmas(u.stripWhiteSpace(),i)
         } else {
-            k++            
+            k++
             self.compileAxioms(u.stripWhiteSpace(),i)
         }
     });
@@ -317,24 +317,22 @@ Object.prototype.subkeyUPDATE=function(from,to){
     var ret=(self/from*to)
     return ret
 }
-var LASTPRIME=BigInt(2)
 var PRIMARYKEY = {}
+var LASTPRIMEIDX = BigInt(1)
+var PRIMECOMPOSITE = BigInt(2)
 Object.prototype.nextPrime=function(){
-    var u=LASTPRIME
-    var Big2=BigInt(2)
-    do {
-        u++
-        var notPrime=false
-        var v=BigInt(u/Big2-u%Big2)
-        for(var i=v;i>1;i--){
-            if (u%i==0){
-                notPrime=true
-                break
-            }
+    var u=LASTPRIMEIDX
+    var K=PRIMECOMPOSITE
+    var m
+    while(1){
+        m=BigInt(2)*(u++)+BigInt(1)
+        if(m%K!=0){
+            PRIMECOMPOSITE=K*m
+            LASTPRIMEIDX=u
+            break
         }
-    } while(notPrime);
-    LASTPRIME=u
-    return u
+    }
+    return m
 }
 Object.prototype.asPrimaryKey=function(){
     var self=this
