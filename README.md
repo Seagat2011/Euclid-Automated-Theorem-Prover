@@ -80,7 +80,7 @@ PROOFGUIDE
 <img title="Symbol Editor" src="https://github.com/Seagat2011/Euclid-Automated-Theorem-Prover/blob/master/IMG/Screenshot_2018-06-03_12-17-39.png">  
   
 ## Screenshot 2  
-![screenshot](https://github.com/Seagat2011/Euclid-Automated-Theorem-Prover/blob/master/IMG/sample_screenshot.png)  
+![screenshot](IMG/sample_screenshot.png)  
   
 ## Screenshot 3  
 ![screenshot](https://github.com/Seagat2011/Euclid-Automated-Theorem-Prover/blob/master/IMG/sample_screenshot_3.png)
