@@ -75,3 +75,15 @@ PROOFGUIDE
         primes = { a } raised { 2 } + { b } raised { 2 } , where (a,b) in setz
         { 1 } mod { 4 } = { a } raised { 2 } + { b } raised { 2 }
         Prove primes = { 1 } mod { 4 }
+
+## Screenshot 1  
+![screenshot](SYMBOLIC%20PROVER/IMG/Screenshot_2018-06-03_12-17-39.png)  
+  
+## Screenshot 2  
+![screenshot](SYMBOLIC%20PROVER/IMG/sample_screenshot.png)  
+  
+## Screenshot 3  
+![screenshot](SYMBOLIC%20PROVER/IMG/sample_screenshot_3.png)
+  
+## Screenshot 4  
+![screenshot](SYMBOLIC%20PROVER/IMG/sample_screenshot_5.png) 
