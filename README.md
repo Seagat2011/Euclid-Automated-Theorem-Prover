@@ -77,13 +77,13 @@ PROOFGUIDE
         Prove primes = { 1 } mod { 4 }
 
 ## Screenshot 1  
-<img title="Symbol Editor" src="https://github.com/Seagat2011/Euclid-Automated-Theorem-Prover/blob/master/IMG/Screenshot_2018-06-03_12-17-39.png">  
+![screenshot](IMG/Screenshot_2018-06-03_12-17-39.png)  
   
 ## Screenshot 2  
 ![screenshot](IMG/sample_screenshot.png)  
   
 ## Screenshot 3  
-![screenshot](https://github.com/Seagat2011/Euclid-Automated-Theorem-Prover/blob/master/IMG/sample_screenshot_3.png)
+![screenshot](IMG/sample_screenshot_3.png)
   
 ## Screenshot 4  
-![screenshot](https://github.com/Seagat2011/Euclid-Automated-Theorem-Prover/blob/master/IMG/sample_screenshot_5.png) 
+![screenshot](IMG/sample_screenshot_5.png) 
