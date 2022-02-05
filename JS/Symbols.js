@@ -1370,6 +1370,7 @@ function loader(forceReset) {
     euclid_reset()
     if(forceReset || !axmEditor.innerText){
         axmEditor.innerText = 'int from 0 to 5 { x raised c dx } = c cdot x raised { ( c minus 1 ) }, given c greaterthan 0'
+        lemmaEditor.innerText = ''
     }
     srcTranslated.innerText = ''
     var s = ''
@@ -1416,6 +1417,8 @@ function preview() {
     var u = [];
     var v = [];
     var z = [];
+    lemmaEditor.innerText = 
+    formulaTBL.innerText = ''
     axmEditor.innerText.split(/\n+/g).map((w,i,me)=>{
         if(w.match(/<==|<==>|==>/)){
             u.push(w)
