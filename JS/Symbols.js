@@ -1387,7 +1387,7 @@ function clear_window() { // clear_window () //
 }
 function MD5() { // generate_MD5 () //
     var obj = [srcTranslated.innerText]
-    obj.push('Message Digest v5 Verification key\n'+Math.md5(srcTranslated.innerText) )
+    obj.push('Message Digest v5 Verification key\n'+Math.md5(axmEditor.innerText) )
     srcTranslated.innerText = obj.join('\n\n')
 }
 function entag(N) {
