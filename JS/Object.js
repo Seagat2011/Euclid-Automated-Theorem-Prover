@@ -56,6 +56,26 @@ Object.prototype.hide=function(){
     var self=this
     self.style.display = 'none'
 }
+Object.prototype.scrollIntoViewIfNeeded = function() {
+    const isNotChrome_Flag = !/Chrome/.test(navigator.userAgent);
+    var self = this;
+  
+    // 'scrollIntoViewIfNeeded' is not standard and not supported by Firefox.
+    // Hence, we'll first check if it's available.
+    if (isNotChrome_Flag === false) {
+        self.scrollIntoViewIfNeeded();
+    } else {
+        // For browsers, like Firefox, we'll use a fallback approach. //
+        const rect = self.getBoundingClientRect();
+
+        if (rect.bottom > window.innerHeight || rect.top < 0) {
+            // If element is not fully visible, use 'scrollIntoView' with 'block: nearest'
+            // to scroll the minimum amount needed to bring the element into view.
+            self.scrollIntoView({ block: 'nearest', behavior: 'smooth' });
+        }
+        // If the element is fully visible, no action is taken. //
+    }
+}
 Object.prototype.appendlogR = function(args,bRender){
     var self=this;
     self.textBuffer || (self.textBuffer=[]);
@@ -63,7 +83,7 @@ Object.prototype.appendlogR = function(args,bRender){
     if(bRender){
         self.textBuffer && render({ src:entag(self.textBuffer.join('\n')),targ:self })
         self.innerHTML+='<br><hr>'
-        //self.scrollIntoViewIfNeeded()
+        self.scrollIntoViewIfNeeded()
         self.textBuffer=''
     }
 }
@@ -75,7 +95,7 @@ Object.prototype.appendlog = function(){
     z.push( "<br>" + (arguments[i]).toString() + "<br>" )
   }
   self.innerHTML += z.join('<br>')
-  //self.scrollIntoViewIfNeeded()
+  self.scrollIntoViewIfNeeded()
 }
 Object.prototype.startsWith = function(re){
   return this.toString().match(new RegExp("^"+re))
