@@ -17,7 +17,9 @@ body {
     margin-bottom: 30px;
     font-family:monospace;
     font-size:10pt;
-    font-style:italic;
+    font-style:italic;/*
+    color: black;
+    background-color: white;
     /*
     font-size:12pt;
     overflow-y: scroll;
@@ -44,35 +46,35 @@ body {
     display:none;
 }
 .cssPOS {
-    font-size:12;
+    font-size:12pt;
 }
 .cssSUP {
-    font-size:12;
+    font-size:12pt;
     padding-bottom:0px;
     padding-top:0px;
     /*text-align:top;*/
 }
 .cssPIECEWISE {
     font-style: normal;
-    padding-bottom:20;
+    padding-bottom:20px;
 }
 .cssMATRIX {
     font-family:'liberation serif';
 }
 .cssUBOUNDS {
-    font-size:12;
+    font-size:12pt;
     padding-bottom:0px;
     padding-top:0px;
     text-align:center;
 }
 .cssLBOUNDS {
-    font-size:12;
+    font-size:12pt;
     padding-bottom:0px;
     padding-top:0px;
     text-align:center;
 }
 .cssWindowTitle {
-    font-size:45;
+    font-size:45pt;
 }
 .cssFormula {
     font-size:16px;/*20px;*/
@@ -133,13 +135,13 @@ body {
     float:left;
 }
 .cssLINE {
-    font-size:12;
+    font-size:12pt;
     padding-bottom:0px;
     padding-top:0px;
     padding-left:64px;
 }
 .cssGIVEN {
-    font-size:21;
+    font-size:21pt;
     font-family:'liberation serif';
     padding-left:21px;
 }
@@ -233,9 +235,12 @@ prooflink {
 }
 prooflink:hover {
     color: darkgreen;
-    cursor: hand;
+    cursor: /*hand*/ pointer;
 }
 comment {
-    font-size:18px;
+    font-size:18pt;
     color: darkgreen;
+}
+select {
+    font-size: large;
 }
