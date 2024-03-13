@@ -63,7 +63,7 @@ Object.prototype.appendlogR = function(args,bRender){
     if(bRender){
         self.textBuffer && render({ src:entag(self.textBuffer.join('\n')),targ:self })
         self.innerHTML+='<br><hr>'
-        self.scrollIntoViewIfNeeded()
+        //self.scrollIntoViewIfNeeded()
         self.textBuffer=''
     }
 }
@@ -75,7 +75,7 @@ Object.prototype.appendlog = function(){
     z.push( "<br>" + (arguments[i]).toString() + "<br>" )
   }
   self.innerHTML += z.join('<br>')
-  self.scrollIntoViewIfNeeded()
+  //self.scrollIntoViewIfNeeded()
 }
 Object.prototype.startsWith = function(re){
   return this.toString().match(new RegExp("^"+re))
