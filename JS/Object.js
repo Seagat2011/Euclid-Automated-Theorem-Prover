@@ -347,21 +347,26 @@ Object.prototype.subkeyUPDATE=function(from,to){
     return ret
 }
 var PRIMARYKEY = {}
-var LASTPRIMEIDX = BigInt(1)
-var PRIMECOMPOSITE = BigInt(2)
-Object.prototype.nextPrime=function(){
-    var u=LASTPRIMEIDX
-    var K=PRIMECOMPOSITE
-    var m
-    while(1){
-        m=BigInt(2)*(u++)+BigInt(1)
-        if(m%K!=0){
-            PRIMECOMPOSITE=K*m
-            LASTPRIMEIDX=u
-            break
-        }
+var LASTPRIMEIDX = BigInt(3)
+Object.prototype.isPrime=function(num) {
+    if (num <= BigInt(1)) return false;
+    if (num <= BigInt(3)) return true;
+  
+    // Check divisibility from 2 to the square root of num
+    for (let i = BigInt(2); i * i <= num; ++i) { 
+      if (num % i === 0) return false;
     }
-    return m
+    return true;
+}
+Object.prototype.nextPrime=function() {
+    var num = LASTPRIMEIDX;
+    while (1) {
+      if (isPrime(num)) {
+        LASTPRIMEIDX = num + BigInt(2);
+        return num;
+      }
+      num += BigInt(2); // only check odd numbers //
+    }
 }
 Object.prototype.asPrimaryKey=function(){
     var self=this
