@@ -81,19 +81,21 @@ function _Firefox_ScollAsNeeded(){
 // 'scrollIntoViewIfNeeded' is not standard and not supported by Firefox. //
 // Hence, we'll first check if it's available. //
 const isNotChrome_Flag = !/Chrome/.test(navigator.userAgent);
+
 Object.prototype.scrollIntoViewIfNeeded = isNotChrome_Flag 
     ? _Firefox_ScollAsNeeded
     : _Chrome_ScollAsNeeded ;
 
-    Object.prototype.appendlogR = function(args,bRender){
+Object.prototype.appendlogR = 
+Object.prototype.appendlogRaw = function(args,bRender){
     var self=this;
     self.textBuffer || (self.textBuffer=[]);
     args && self.textBuffer.push(...args.split(/<br>|<hr>/g).filter((u)=>{ return u!='' }))
     if(bRender){
         self.textBuffer && render({ src:entag(self.textBuffer.join('\n')),targ:self })
         self.innerHTML+='<br><hr>'
-        self.scrollIntoViewIfNeeded()
-        self.textBuffer=''
+        self.scrollIntoViewIfNeeded();
+        self.textBuffer=[];
     }
 }
 Object.prototype.appendlog = function(){
@@ -104,7 +106,7 @@ Object.prototype.appendlog = function(){
     z.push( "<br>" + (arguments[i]).toString() + "<br>" )
   }
   self.innerHTML += z.join('<br>')
-  self.scrollIntoViewIfNeeded()
+  self.scrollIntoViewIfNeeded();
 }
 Object.prototype.startsWith = function(re){
   return this.toString().match(new RegExp("^"+re))
@@ -120,6 +122,34 @@ Object.prototype.forEach = function(cb){
         }
     }
 }
+Object.prototype.deepCopy = function(obj) {
+    if (obj === null || typeof obj !== 'object') {
+        return obj;
+    }
+
+    if (obj instanceof Array) {
+        let copy = [];
+        for (let attr in obj) {
+            if (obj.hasOwnProperty(attr)) copy[attr] = deepCopy(obj[attr]);
+        }
+        return copy;
+    }
+
+    if (obj instanceof Object) {
+        let copy = {};
+        for (let attr in obj) {
+            if (obj.hasOwnProperty(attr)) copy[attr] = deepCopy(obj[attr]);
+        }
+        return copy;
+    }
+
+    throw new Error("Unable to copy obj! Its type is not supported.");
+}
+Object.prototype.shallowCopy = function(){
+    var w = this;
+    var obj = JSON.parse(JSON.stringify(w));
+    return obj;
+}
 Object.prototype.clonePROPS = function(){
     var self=this
     var args={}
@@ -127,6 +157,47 @@ Object.prototype.clonePROPS = function(){
         args[w]=self[w]
     }
     return args
+}
+Object.prototype.isSquare_NewtonRaphsonMethod = function(n){
+    if (n < 0n) return false;
+    if (n < 2n) return true;
+  
+    let x = n / 2n;
+    let y = (x + n / x) / 2n;
+    while (y < x) {
+      x = y;
+      y = (x + n / x) / 2n;
+    }
+    return x * x === n;
+}
+Object.prototype.isSquare = function(n){
+    if (n < 0n) return false;
+    if (n < 2n) return true;
+    let low = 0n, high = n;
+
+    while (low <= high) {
+        let mid = (low + high) >> 1n;
+        let square = mid * mid;
+
+        if (square < n) {
+            low = mid + 1n;
+        } else if (square > n) {
+            high = mid - 1n;
+        } else {
+            return true;
+        }
+    }
+    return false;
+}
+Object.prototype.isaTentativeProof=function(u){
+    ret = false;
+    const w=this;
+    var val=(w/('=').asPrimaryKey());
+    var ProofFound_Flag=self.isSquare_NewtonRaphsonMethod(val);
+    if(ProofFound_Flag){
+        ret = `<br><br>Q.E.D. (via ${u})<br><hr>`;
+    }
+    return ret;
 }
 Object.prototype.solutionComplete = function(u){
     var obj = this.join(" ").stripWhiteSpace().split(/\s+=\s+/)
@@ -144,7 +215,7 @@ Object.prototype.solutionComplete = function(u){
             }
         }
         if(result){
-            g_SOLVED = result = "<br><br>Q.E.D. (via "+u+")<br><hr>"
+            g_SOLVED = result = `<br><br>Q.E.D. (via ${u})<br><hr>`;
         }
     }
     return result
@@ -177,7 +248,10 @@ Object.prototype.build = function(u){
   var lemma
   var self = this
   self.Libraries = self.lib.innerText.getLines()
-  var s = self.axm.innerText.replace(/~=/g,'=').split(/\n.*Prove[\s\t:]*/)
+  var s = self.axm.innerText
+    .replace(/\n+/g,'\n')
+    .replace(/~=/g,'=')
+    .split(/\n.*Prove[\s\t:]*/)
   self.compileAtomics(s[0].getLines())
   if(self.edt.id==self.axm.id){
     lemma = s[1]
@@ -383,12 +457,6 @@ Object.prototype.asPrimaryKey=function(){
         PRIMARYKEY[y]=N
     }
     return N
-}
-Object.prototype.isaTentativeProof=function(){
-    var w=this
-    var val=(w/('=').asPrimaryKey())
-    var ret=Boolean(Math.sqrt(val.toString())%1==0)
-    return ret
 }
 Object.prototype._=function(re,u){
     var self=this
