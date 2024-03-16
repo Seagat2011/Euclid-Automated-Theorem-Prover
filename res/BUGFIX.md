@@ -18,3 +18,6 @@ SOLU: PrimeFastCheck
 
 SYMP: _AXIOM_ gets stuck in Proving loop (eg between axioms)
 SOLU: _AXIOM_.optimizeCallGraph
+
+SYMP: _u[1] is undefined (ie. newlines are processed as empty axioms)
+SOLU: Object.prototype.build: var s = self.axm.innerText => var s = self.axm.innerText.replace(/\n+/g,'\n')
