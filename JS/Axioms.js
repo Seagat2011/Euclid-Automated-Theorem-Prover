@@ -88,7 +88,7 @@ function _AXIOM_(){
             u.indir.match(/Expand|Auto|Optimal/) &&
            !g_SOLVED
         ){
-            var val = u.Proof.join(' ')
+            var val = u.Proof.join(' ');
             if(
                 !(val in self._history._expand)
             ){
@@ -109,8 +109,8 @@ function _AXIOM_(){
         var Proof = [...u.Proof]
         var vkeys = []
         var tmpHTML = {
-            pre:[...u.Proof],
-            post:[...u.Proof]
+              pre:[...u.Proof]
+            , post:[...u.Proof]
         }
         const from = expandingIndir_Flag
             ? self._rhs.split(/\s+/)
@@ -124,8 +124,8 @@ function _AXIOM_(){
         const indir = u.indir;
         const flags = u._flags ? u._flags : u.indir ;
         var tmpHTMLR = {
-            pre:[],
-            post:[...u.Proof] }
+              pre:[]
+            , post:[...u.Proof] }
         if(stackR.length==0){
             tmpHTMLR.pre=[...u.Proof];
         }
@@ -191,8 +191,8 @@ function _AXIOM_(){
                  solutionEditorR.appendlogR(P.join(" ")+solutionComplete,"render")
              } else { // solutionComplete == false //
                  stack.push(
-                     tmpHTML.pre.join(" "),
-                     tmpHTML.post.join(" "))
+                      tmpHTML.pre.join(" ")
+                    , tmpHTML.post.join(" "))
                  tmpHTMLR.pre.length && stackR.push( tmpHTMLR.pre.join(" ") )
                  stackR.push( tmpHTMLR.post.join(" ") )
                  if(
