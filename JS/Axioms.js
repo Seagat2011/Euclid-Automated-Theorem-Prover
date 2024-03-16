@@ -127,6 +127,8 @@ function _AXIOM_(){
                     var solutionComplete = P.solutionComplete(flags)
                     if(solutionComplete){
                         e.stopPropagation()
+                        solutionEditor.innerHTML = ""
+                        solutionEditorR.innerHTML = ""
                         if(stack.length){
                             var s1 = flags.match(/Optimal/) ? stack.collapseRedundantPaths().join('<br><br>') : stack.join('<br><br>') ;
                             var s2 = flags.match(/Optimal/) ? stackR.collapseRedundantPaths().join('<br>') : stackR.join('<br>') ;
@@ -291,6 +293,8 @@ function _AXIOM_(){
                     var solutionComplete = P.solutionComplete(flags)
                     if(solutionComplete){
                         e.stopPropagation()
+                        solutionEditor.innerHTML = ""
+                        solutionEditorR.innerHTML = ""
                         if(stack.length){
                             var s1 = flags.match(/Optimal/) ? stack.collapseRedundantPaths().join('<br><br>') : stack.join('<br><br>') ;
                             var s2 = flags.match(/Optimal/) ? stackR.collapseRedundantPaths().join('<br>') : stackR.join('<br>') ;
