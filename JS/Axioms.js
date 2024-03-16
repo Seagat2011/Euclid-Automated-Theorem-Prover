@@ -53,14 +53,19 @@ function _AXIOM_(){
     self._stepEXPAND = function(){
     }
     self._reduce = function(e){
-        var u = e.data
+        const u = e.data;
+        const StandardMode_Flag = /Reduce|Auto|Optimal/i.test(u.indir);
+        const OptimalMode_Flag = /Optimal|Auto/i.test(u._flags);
         if(
             u.source &&
             u.source.startsWith('axiom') &&
             self._isOnline &&
            (u.source != self._guid) &&
-           (u.source in self._lhsCallGraph) &&
-            u.indir.match(/Reduce|Auto|Optimal/) &&
+           (
+             (!OptimalMode_Flag && u.ProofSUBKEY.subkeyFOUND(self._lhsSUBKEY))
+           || (OptimalMode_Flag && (u.source in self._lhsCallGraph))
+            ) &&
+           StandardMode_Flag &&
            !g_SOLVED
         ){
             var val = u.Proof.join(' ')
@@ -70,7 +75,9 @@ function _AXIOM_(){
                 var ProofSUBKEY = u.ProofSUBKEY;
                 self._history._reduce[val]=true;
                 self._subnetFOUND = false;
-                const subkeyFound_Flag = ProofSUBKEY.subkeyFOUND(self._lhsSUBKEY);
+                const subkeyFound_Flag = OptimalMode_Flag
+                    ? ProofSUBKEY.subkeyFOUND(self._lhsSUBKEY) 
+                    : true ;
                 if(subkeyFound_Flag){
                     self._updateSubkey(u,"Reduce");
                 }
@@ -78,14 +85,19 @@ function _AXIOM_(){
         } // if(u.source && ... && !g_SOLVED) //
     }
     self._expand = function(e){
-        var u = e.data
+        const u = e.data;
+        const StandardMode_Flag = /Expand|Auto|Optimal/i.test(u.indir);
+        const OptimalMode_Flag = /Optimal|Auto/i.test(u._flags);
         if(
             u.source &&
             u.source.startsWith('axiom') &&
             self._isOnline &&
            (u.source != self._guid) &&
-           (u.source in self._rhsCallGraph) &&
-            u.indir.match(/Expand|Auto|Optimal/) &&
+           (
+             (!OptimalMode_Flag && u.ProofSUBKEY.subkeyFOUND(self._rhsSUBKEY)) 
+           || (OptimalMode_Flag && (u.source in self._rhsCallGraph))
+           ) &&
+           StandardMode_Flag &&
            !g_SOLVED
         ){
             var val = u.Proof.join(' ');
@@ -95,7 +107,9 @@ function _AXIOM_(){
                 var ProofSUBKEY = u.ProofSUBKEY;
                 self._history._expand[val]=true;
                 self._subnetFOUND = false;
-                const subkeyFound_Flag = ProofSUBKEY.subkeyFOUND(self._rhsSUBKEY);
+                const subkeyFound_Flag = OptimalMode_Flag
+                    ? ProofSUBKEY.subkeyFOUND(self._rhsSUBKEY)
+                    : true ;
                 if(subkeyFound_Flag){
                     self._updateSubkey(u,"Expand");
                 }
