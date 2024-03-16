@@ -1,6 +1,6 @@
 NOTES
 
-    Compatibility Chrome 53+ (Windows)
+    Compatibility: Chrome 53+ (Windows) | Firefox 123.0.1+ (Windows)
 
 STYLEGUIDE
 
