@@ -284,6 +284,13 @@ TEST CASE [PASS]
 2 + 1 = 3
 Prove 1 + 1 + 2 = 3 + 1
 
+TEST CASE (Via Reduce) [PASS]
+1 + 1 = 2
+2 + 1 = 3
+2 + 2 = 4
+3 + 1 = 4
+Prove 1 + 1 + 2 = 3 + 1
+
 TEST CASE  [PASS] // Implementation note: a state-machine records function calls and paramater lists -- whether or not they are valid
 one plus one = two
 two plus two = four
