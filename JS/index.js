@@ -97,6 +97,6 @@ function Solve(INDIR){
             },g_origin)
         console.clear()
     } catch(e) {
-       solutionEditor.innerText=[,e.stack].join('\n\n') 
+       solutionEditor.innerText=[`Error: ${e.message}...`,e.stack.replace(/@/g,' >> ')].join('\n\n') 
     }
 }
