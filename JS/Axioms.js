@@ -1,4 +1,3 @@
-const Square = require('./square.js');
 /*
 
     TITLE:
@@ -11,7 +10,7 @@ const Square = require('./square.js');
     VERSION:
     Major.Minor.Release.Build
     0.0.0.18
-                    
+
     DESCRIPTION:
     Main (math) interface to Euclid and its proof components
 
