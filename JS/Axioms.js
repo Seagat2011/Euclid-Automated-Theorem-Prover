@@ -1,3 +1,4 @@
+const Square = require('./square.js');
 /*
 
     TITLE:
@@ -9,12 +10,16 @@
 
     VERSION:
     Major.Minor.Release.Build
-    0.0.0.16
-
+    0.0.0.18
+                    
     DESCRIPTION:
     Main (math) interface to Euclid and its proof components
 
     UPDATED
+    +FastForward Support (ie. Proofstep caching) to improve rewrite performance
+    +Improved ProofComplete search performance
+    +_AXIOM_.optimizeCallGraph
+    +Negative proof assertions ~=
     +Auto/Optimal Route performance
     +Optimal Route
     +Lemmas (Enabled)
@@ -33,7 +38,10 @@
     Euclid Tool
 
 */
-
+g_global_rewrite_cache = { 
+      _lhs:{}
+    , _rhs:{}
+};
 function _AXIOM_(){
     var self = this
     var args = arguments[0]
@@ -55,48 +63,38 @@ function _AXIOM_(){
     self._reduce = function(e){
         const u = e.data;
         const StandardMode_Flag = /Reduce|Auto|Optimal/i.test(u.indir);
-        const OptimalMode_Flag = /Optimal|Auto/i.test(u._flags);
         if(
             u.source &&
             u.source.startsWith('axiom') &&
             self._isOnline &&
            (u.source != self._guid) &&
-           (
-             (!OptimalMode_Flag && u.ProofSUBKEY.subkeyFOUND(self._lhsSUBKEY))
-           || (OptimalMode_Flag && (u.source in self._lhsCallGraph))
-            ) &&
            StandardMode_Flag &&
            !g_SOLVED
         ){
-            var val = u.Proof.join(' ')
+            var val = u.Proof.join(' ');
             if(
                 !(val in self._history._reduce)
             ){
                 var ProofSUBKEY = u.ProofSUBKEY;
                 self._history._reduce[val]=true;
-                self._subnetFOUND = false;
-                const subkeyFound_Flag = OptimalMode_Flag
-                    ? ProofSUBKEY.subkeyFOUND(self._lhsSUBKEY) 
-                    : true ;
-                if(subkeyFound_Flag){
-                    self._updateSubkey(u,"Reduce");
-                }
+               // Likely to converge faster than the following code //
+               if((u.source in self._lhsCallGraph)){
+                   self._updateSubkey(u,"Reduce");
+               }
+               if(u.ProofSUBKEY.subkeyFOUND(self._lhsSUBKEY)){
+                   self._updateSubkey(u,"Reduce");
+               }
             } // if(!(val in self._history._reduce)) //
         } // if(u.source && ... && !g_SOLVED) //
     }
     self._expand = function(e){
         const u = e.data;
         const StandardMode_Flag = /Expand|Auto|Optimal/i.test(u.indir);
-        const OptimalMode_Flag = /Optimal|Auto/i.test(u._flags);
         if(
             u.source &&
             u.source.startsWith('axiom') &&
             self._isOnline &&
            (u.source != self._guid) &&
-           (
-             (!OptimalMode_Flag && u.ProofSUBKEY.subkeyFOUND(self._rhsSUBKEY)) 
-           || (OptimalMode_Flag && (u.source in self._rhsCallGraph))
-           ) &&
            StandardMode_Flag &&
            !g_SOLVED
         ){
@@ -106,17 +104,18 @@ function _AXIOM_(){
             ){
                 var ProofSUBKEY = u.ProofSUBKEY;
                 self._history._expand[val]=true;
-                self._subnetFOUND = false;
-                const subkeyFound_Flag = OptimalMode_Flag
-                    ? ProofSUBKEY.subkeyFOUND(self._rhsSUBKEY)
-                    : true ;
-                if(subkeyFound_Flag){
+               // Likely to converge faster than the following code //
+                if((u.source in self._rhsCallGraph)){
                     self._updateSubkey(u,"Expand");
+                }
+                if(u.ProofSUBKEY.subkeyFOUND(self._rhsSUBKEY)){
+                     self._updateSubkey(u,"Expand");
                 }
             } // if(!(val in self._history._expand)) //
         } // if(u.source && ... && !g_SOLVED) //
     }
     self._updateSubkey = function(u,indirection){
+        self._subnetFOUND = false;
         const expandingIndir_Flag = /Expand/i.test(indirection);
         var ProofSUBKEY = u.ProofSUBKEY;
         var tmp = [...u.Proof]
@@ -153,10 +152,11 @@ function _AXIOM_(){
         const insertSubkey = expandingIndir_Flag
             ? self._lhsSUBKEY
             : self._rhsSUBKEY ;
-        (ProofSUBKEY = ProofSUBKEY.subkeyUPDATE(removeSubkey,insertSubkey)) 
-        && tmp.map((tok,idx,me)=>{
+        (ProofSUBKEY = ProofSUBKEY.subkeyUPDATE(removeSubkey,insertSubkey));
+
+        tmp.map((tok,idx,me)=>{
              if((tok == "=") && !COMPOUND){
-                 jdx=0
+                 jdx=0;
              }
              if(self._scope_satisfied(tok,me,idx,from,jdx)){
                  vkeys.push(idx)
@@ -173,12 +173,77 @@ function _AXIOM_(){
                              Proof[kdx] = to.join(" ")
                          }
                      })
-                     jdx=0
-                     vkeys = []
+                     jdx=0;
+                     vkeys = [];
                  }
              }
-             return tok
+             return tok;
          });
+
+        const currentSUBNET = expandingIndir_Flag
+            ? "_lhs"
+            : "_rhs" ;
+        const oppositeSUBNET = expandingIndir_Flag
+            ? "_rhs"
+            : "_lhs" ;
+
+        if(!(ProofSUBKEY in g_global_rewrite_cache[currentSUBNET])){
+            const _html_pre = expandingIndir_Flag ? tmpHTML.pre.getLHS().join(' ') : tmpHTML.pre.getRHS().join(' ') ;
+            const _html_post = expandingIndir_Flag ? tmpHTML.post.getLHS().join(' ') : tmpHTML.post.getRHS().join(' ') ;
+            const _proof = expandingIndir_Flag ? Proof.getLHS().join(' ') : Proof.getRHS().join(' ') ;
+            const _text = expandingIndir_Flag ? tmpHTMLR.pre.getLHS().join(' ') : tmpHTMLR.pre.getRHS().join(' ') ;
+
+            let tmp_stack = stack.map((s)=>{ return expandingIndir_Flag ? s.getLHS() : s.getRHS() ; });
+            let tmp_stackR = stackR.map((s)=>{ return  expandingIndir_Flag ? s.getLHS() : s.getRHS() ; });
+            tmp_stack.push(_html_pre);
+            tmp_stack.push(_html_post);
+            tmp_stack.push(_proof);
+            tmp_stackR.push(_text);
+            tmp_stackR.push(_proof);
+
+            g_global_rewrite_cache[currentSUBNET][ProofSUBKEY] = { tmp_stack, tmp_stackR };
+        }
+        if(g_global_rewrite_cache[oppositeSUBNET][ProofSUBKEY]){
+            g_SOLVED = true;
+            imgProgressBar.hide();
+            solutionEditor.innerHTML = "";
+            solutionEditorR.innerHTML = "";
+            const ret1 = g_global_rewrite_cache._lhs[ProofSUBKEY];
+            const ret2 = g_global_rewrite_cache._rhs[ProofSUBKEY];
+
+            const tmp_stack = ret1.tmp_stack;
+            const tmp_stackR = ret1.tmp_stackR;
+            const tmp_stack_opp = ret2.tmp_stack;
+            const tmp_stackR_opp =ret2.tmp_stackR;
+            const proofSteps = [];
+            const proofStepsR = [];
+
+            const I = Math.max(tmp_stack.length,tmp_stack_opp.length);
+            const II = Math.max(tmp_stackR.length,tmp_stackR_opp.length);
+
+            for(let i=0;i<I;++i){
+                const _lhs = (i in tmp_stack) ? tmp_stack[i] : tmp_stack.last();
+                const _rhs = (i in tmp_stack_opp) ? tmp_stack_opp[i] : tmp_stack_opp.last();
+                
+                proofSteps.push(`${_lhs} = ${_rhs}`);
+            }
+
+            for(let i=0;i<II;++i){
+                const _lhs = (i in tmp_stackR) ? tmp_stackR[i] : tmp_stackR.last();
+                const _rhs = (i in tmp_stackR_opp) ? tmp_stackR_opp[i] : tmp_stackR_opp.last();
+                
+                proofStepsR.push(`${_lhs} = ${_rhs}`);
+            }
+
+            const s2 = `Q.E.D. (via ${indir} - FastForward)`;
+
+            solutionEditor.appendlog(proofSteps.join('<br>'));
+            solutionEditor.appendlog(s2);
+            solutionEditorR.appendlogR(proofStepsR.join('<br>'));
+            solutionEditorR.appendlogR(s2,"render");
+            return;
+        }
+
          if(
              self._subnetFOUND
          ){
