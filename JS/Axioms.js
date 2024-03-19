@@ -189,18 +189,17 @@ function _AXIOM_(){
         if(!(ProofSUBKEY in g_global_rewrite_cache[currentSUBNET])){
             const _html_pre = expandingIndir_Flag ? tmpHTML.pre.getLHS().join(' ') : tmpHTML.pre.getRHS().join(' ') ;
             const _html_post = expandingIndir_Flag ? tmpHTML.post.getLHS().join(' ') : tmpHTML.post.getRHS().join(' ') ;
-            const _proof = expandingIndir_Flag ? Proof.getLHS().join(' ') : Proof.getRHS().join(' ') ;
             const _text = expandingIndir_Flag ? tmpHTMLR.pre.getLHS().join(' ') : tmpHTMLR.pre.getRHS().join(' ') ;
+            const _proof = expandingIndir_Flag ? Proof.getLHS().join(' ') : Proof.getRHS().join(' ') ;
 
-            let tmp_stack = stack.map((s)=>{ return expandingIndir_Flag ? s.getLHS() : s.getRHS() ; });
-            let tmp_stackR = stackR.map((s)=>{ return  expandingIndir_Flag ? s.getLHS() : s.getRHS() ; });
-            tmp_stack.push(_html_pre);
-            tmp_stack.push(_html_post);
-            tmp_stack.push(_proof);
-            tmp_stackR.push(_text);
-            tmp_stackR.push(_proof);
+            let _stack = stack.map((s)=>{ return expandingIndir_Flag ? s.getLHS_String() : s.getRHS_String() ; });
+            let _stackR = stackR.map((s)=>{ return  expandingIndir_Flag ? s.getLHS_String() : s.getRHS_String() ; });
+            _stack.push(_html_pre);
+            _stack.push(_html_post);
+            _stack.push(_proof);
+            _stackR.push(_text);
 
-            g_global_rewrite_cache[currentSUBNET][ProofSUBKEY] = { tmp_stack, tmp_stackR };
+            g_global_rewrite_cache[currentSUBNET][ProofSUBKEY] = { _stack, _stackR };
         }
         if(g_global_rewrite_cache[oppositeSUBNET][ProofSUBKEY]){
             g_SOLVED = true;
@@ -210,26 +209,26 @@ function _AXIOM_(){
             const ret1 = g_global_rewrite_cache._lhs[ProofSUBKEY];
             const ret2 = g_global_rewrite_cache._rhs[ProofSUBKEY];
 
-            const tmp_stack = ret1.tmp_stack;
-            const tmp_stackR = ret1.tmp_stackR;
-            const tmp_stack_opp = ret2.tmp_stack;
-            const tmp_stackR_opp =ret2.tmp_stackR;
+            const _stack = ret1._stack;
+            const _stackR = ret1._stackR;
+            const _stack_opp = ret2._stack;
+            const _stackR_opp = ret2._stackR;
             const proofSteps = [];
             const proofStepsR = [];
 
-            const I = Math.max(tmp_stack.length,tmp_stack_opp.length);
-            const II = Math.max(tmp_stackR.length,tmp_stackR_opp.length);
+            const I = Math.max(_stack.length,_stack_opp.length);
+            const II = Math.max(_stackR.length,_stackR_opp.length);
 
             for(let i=0;i<I;++i){
-                const _lhs = (i in tmp_stack) ? tmp_stack[i] : tmp_stack.last();
-                const _rhs = (i in tmp_stack_opp) ? tmp_stack_opp[i] : tmp_stack_opp.last();
+                const _lhs = (i in _stack) ? _stack[i] : _stack.last();
+                const _rhs = (i in _stack_opp) ? _stack_opp[i] : _stack_opp.last();
                 
                 proofSteps.push(`${_lhs} = ${_rhs}`);
             }
 
             for(let i=0;i<II;++i){
-                const _lhs = (i in tmp_stackR) ? tmp_stackR[i] : tmp_stackR.last();
-                const _rhs = (i in tmp_stackR_opp) ? tmp_stackR_opp[i] : tmp_stackR_opp.last();
+                const _lhs = (i in _stackR) ? _stackR[i] : _stackR.last();
+                const _rhs = (i in _stackR_opp) ? _stackR_opp[i] : _stackR_opp.last();
                 
                 proofStepsR.push(`${_lhs} = ${_rhs}`);
             }
