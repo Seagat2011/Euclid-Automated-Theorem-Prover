@@ -463,3 +463,39 @@ Object.prototype._=function(re,u){
     var s=self.replace(re,u)
     return s
 }
+Object.prototype.getLHS = function(){
+    var self=this;
+    
+    const indexOfEquals = self.indexOf('=');
+
+    let result=self.splice(0,indexOfEquals);
+
+    return result;
+}
+Object.prototype.getRHS = function(){
+    var self=this;
+    
+    const indexOfEquals = self.indexOf('=');
+
+    const result=self.splice(indexOfEquals+1);
+
+    return result;
+}
+Object.prototype.getLHS_String = function(){
+    var self=this;
+    
+    const indexOfEquals = self.indexOf('=');
+
+    const result=self.split(' ').splice(0,indexOfEquals);
+
+    return result.join(' ');
+}
+Object.prototype.getRHS_String = function(){
+    var self=this;
+    
+    const indexOfEquals = self.indexOf('=');
+
+    const result=self.split(' ').splice(indexOfEquals+1);
+
+    return result.join(' ');
+}
