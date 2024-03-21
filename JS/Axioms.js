@@ -189,18 +189,18 @@ function _AXIOM_(){
         const NoCurrentSubnetKeyExists_Flag = !(ProofSUBKEY in g_global_rewrite_cache[currentSUBNET]);
         const OppositeSubnetKeyExists_Flag = (ProofSUBKEY in g_global_rewrite_cache[oppositeSUBNET]);
 
-        if(NoCurrentSubnetKeyExists_Flag){
+        if(0){
             const _pre = tmpHTML.pre;//.collapseEmptyCells();
             const _post = tmpHTML.post;//.collapseEmptyCells();
             const _postR = tmpHTMLR.post;//.collapseEmptyCells();
 
-            const _html_pre = expandingIndir_Flag ? _pre.getLHS().join(' ') : _pre.getRHS().join(' ') ;
-            const _html_post = expandingIndir_Flag ? _post.getLHS().join(' ') : _post.getRHS().join(' ') ;
-            const _text = expandingIndir_Flag ? _postR.getLHS().join(' ') : _postR.getRHS().join(' ') ;
-            const _proof = expandingIndir_Flag ? Proof.getLHS().join(' ') : Proof.getRHS().join(' ') ;
+            const _html_pre = expandingIndir_Flag ? _pre.getLHS_toString() : _pre.getRHS_toString() ;
+            const _html_post = expandingIndir_Flag ? _post.getLHS_toString() : _post.getRHS_toString() ;
+            const _text = expandingIndir_Flag ? _postR.getLHS_toString() : _postR.getRHS_toString() ;
+            const _proof = expandingIndir_Flag ? Proof.getLHS_toString() : Proof.getRHS_toString() ;
 
-            let _stack = stack.map((s)=>{ return expandingIndir_Flag ? s.getLHS_String() : s.getRHS_String() ; });
-            let _stackR = stackR.map((s)=>{ return  expandingIndir_Flag ? s.getLHS_String() : s.getRHS_String() ; });
+            let _stack = stack.map((s)=>{ return expandingIndir_Flag ? s.getLHS_toString() : s.getRHS_toString() ; });
+            let _stackR = stackR.map((s)=>{ return  expandingIndir_Flag ? s.getLHS_toString() : s.getRHS_toString() ; });
             
             _stack.push(_html_pre);
             _stack.push(_html_post);
@@ -211,8 +211,7 @@ function _AXIOM_(){
         }
         
         if(
-            g_global_rewrite_cache[currentSUBNET][ProofSUBKEY]
-            && OppositeSubnetKeyExists_Flag){
+            0){
             g_SOLVED = true;
             imgProgressBar.hide();
             solutionEditor.innerHTML = "";
