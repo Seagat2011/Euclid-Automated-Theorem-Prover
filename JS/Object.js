@@ -341,11 +341,13 @@ Object.prototype.compileLemmas = function(v,idx){
     var self = this
     u=v.split(/,/)[0]
     var axiom_any = Boolean(u.match(/<==>/));
-    u.split(/\s+<?=+>?\s+/)
+    u
+    .replace(/<==>|<==|==>/g, '=')
+    .split(/\s+=\s+/g)
     .map((_u,ii,me)=>{
-        if(ii%2==0){
-            var _i=me[ii]
-            var _j=me[(ii+1)]
+        if(ii < me.length-1){
+            var _i=me[ii];
+            var _j=me[(ii+1)];
             var w = (_i.length < _j.length) ? [_i,_j] : [_j,_i] ;
             var guid=self.length
             self.push(new _AXIOM_
@@ -371,27 +373,34 @@ Object.prototype.compileLemmas = function(v,idx){
 }
 Object.prototype.compileAxioms = function(v,idx){
     var self = this;
-    u=v.split(/,/)[0]
-    var _u = u.split(/\s+\=\s+/)
-    var w = (_u[0].length < _u[1].length) ? [_u[0],_u[1]] : [_u[1],_u[0]] ;
-    var guid=self.length
-    self.push(new _AXIOM_
-    ({
-        _guid:"axiom_"+guid,
-        _id:guid,
-        _rhs:w[0],
-        _lhs:w[1],
-        _stack:[],
-        _isOnline:true,
-        _rhsCallGraph:{},
-        _lhsCallGraph:{},
-        _rhsSUBKEY:w[0].asPrimaryKey(),
-        _lhsSUBKEY:w[1].asPrimaryKey(),
-        _history:{ _reduce:{},_expand:{} },
-        _false:"68934A3E9455FA72420237EB05902327",
-        _basenetFOUND:"68934A3E9455FA72420237EB05902327",
-    })
-    );
+    u=v.split(/,/)[0];
+    u
+    .split(/\s+\=\s+/)
+    .map((_u,ii,me)=>{
+        if(ii < me.length-1){
+            var _i=me[ii];
+            var _j=me[(ii+1)];
+            var w = (_i.length < _j.length) ? [_i,_j] : [_j,_i] ;
+            var guid=self.length;
+            self.push(new _AXIOM_
+            ({
+                _guid:"axiom_"+guid,
+                _id:guid,
+                _rhs:w[0],
+                _lhs:w[1],
+                _stack:[],
+                _isOnline:true,
+                _rhsCallGraph:{},
+                _lhsCallGraph:{},
+                _rhsSUBKEY:w[0].asPrimaryKey(),
+                _lhsSUBKEY:w[1].asPrimaryKey(),
+                _history:{ _reduce:{},_expand:{} },
+                _false:"68934A3E9455FA72420237EB05902327",
+                _basenetFOUND:"68934A3E9455FA72420237EB05902327",
+            }));
+        }
+        return _u;
+    });
 }
 Object.prototype.attachSourceEditor = function(){
   var self = this
@@ -482,21 +491,25 @@ Object.prototype.getRHS = function(){
 
     return result;
 }
-Object.prototype.getLHS_String = function(){
+Object.prototype.getLHS_toString = function(){
     var self=this;
     
     const indexOfEquals = self.indexOf('=');
 
-    const result=self.split(' ').splice(0,indexOfEquals);
+    const t = self.split ? self.split(' ') : self ;
+
+    const result=t.splice(0,indexOfEquals);
 
     return result.join(' ');
 }
-Object.prototype.getRHS_String = function(){
+Object.prototype.getRHS_toString = function(){
     var self=this;
     
     const indexOfEquals = self.indexOf('=');
 
-    const result=self.split(' ').splice(indexOfEquals+1);
+    const t = self.split ? self.split(' ') : self ;
+
+    const result=t.splice(indexOfEquals+1);
 
     return result.join(' ');
 }
