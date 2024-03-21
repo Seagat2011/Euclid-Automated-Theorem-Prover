@@ -49,6 +49,10 @@
 
 */
 
+var g_global_rewrite_cache = { 
+      _lhs:{}
+    , _rhs:{}
+};
 var g_Solution = []
 var g_code = []
 var g_GUID = 0
@@ -57,13 +61,15 @@ var g_origin = "*"
 var g_SOLVED = ""
 
 function reset(partial){
-  g_Solution = []
-  g_history = {}
+  g_Solution = [];
+  g_history = {};
+  g_global_rewrite_cache._lhs = {};
+  g_global_rewrite_cache._rhs = {};
   if(!partial){
-    g_code.empty()
+    g_code.empty();
   }
-  g_code.solutionEditor.clear()
-  g_code.solutionEditorR.clear()
+  g_code.solutionEditor.clear();
+  g_code.solutionEditorR.clear();
 }
 function SymbolsViewer(action){
     if(action){
