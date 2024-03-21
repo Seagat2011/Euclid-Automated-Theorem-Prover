@@ -37,10 +37,6 @@
     Euclid Tool
 
 */
-g_global_rewrite_cache = { 
-      _lhs:{}
-    , _rhs:{}
-};
 function _AXIOM_(){
     var self = this
     var args = arguments[0]
@@ -185,14 +181,17 @@ function _AXIOM_(){
         const oppositeSUBNET = expandingIndir_Flag
             ? "_rhs"
             : "_lhs" ;
+        
+        const _pre = tmpHTML.pre;//.collapseEmptyCells();
+        const _post = tmpHTML.post;//.collapseEmptyCells();
+        const _postR = tmpHTMLR.post;//.collapseEmptyCells();
 
-        const NoCurrentSubnetKeyExists_Flag = !(ProofSUBKEY in g_global_rewrite_cache[currentSUBNET]);
-        const OppositeSubnetKeyExists_Flag = (ProofSUBKEY in g_global_rewrite_cache[oppositeSUBNET]);
+        const Current_ProofSUBKEY = expandingIndir_Flag ? _pre.getLHS().asPrimaryKey() : _pre.getRHS().asPrimaryKey() ;
+        
+        const NoCurrentSubnetKeyExists_Flag = !(Current_ProofSUBKEY in g_global_rewrite_cache[currentSUBNET]);
+        const OppositeSubnetKeyExists_Flag = (Current_ProofSUBKEY in g_global_rewrite_cache[oppositeSUBNET]);
 
-        if(0){
-            const _pre = tmpHTML.pre;//.collapseEmptyCells();
-            const _post = tmpHTML.post;//.collapseEmptyCells();
-            const _postR = tmpHTMLR.post;//.collapseEmptyCells();
+        if(NoCurrentSubnetKeyExists_Flag){
 
             const _html_pre = expandingIndir_Flag ? _pre.getLHS_toString() : _pre.getRHS_toString() ;
             const _html_post = expandingIndir_Flag ? _post.getLHS_toString() : _post.getRHS_toString() ;
@@ -207,17 +206,20 @@ function _AXIOM_(){
             _stack.push(_proof);
             _stackR.push(_text);
 
-            g_global_rewrite_cache[currentSUBNET][ProofSUBKEY] = { _stack, _stackR };
+            g_global_rewrite_cache[currentSUBNET][Current_ProofSUBKEY] = { _stack, _stackR };
         }
-        
+
+        const CurrentSubnetKeyExists_Flag = (Current_ProofSUBKEY in g_global_rewrite_cache[currentSUBNET]); // true //
+
         if(
-            0){
+            CurrentSubnetKeyExists_Flag
+            && OppositeSubnetKeyExists_Flag){
             g_SOLVED = true;
             imgProgressBar.hide();
             solutionEditor.innerHTML = "";
             solutionEditorR.innerHTML = "";
-            const ret1 = g_global_rewrite_cache._lhs[ProofSUBKEY];
-            const ret2 = g_global_rewrite_cache._rhs[ProofSUBKEY];
+            const ret1 = g_global_rewrite_cache._lhs[Current_ProofSUBKEY];
+            const ret2 = g_global_rewrite_cache._rhs[Current_ProofSUBKEY];
 
             const _stack = ret1._stack;
             const _stackR = ret1._stackR;

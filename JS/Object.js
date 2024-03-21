@@ -475,41 +475,57 @@ Object.prototype._=function(re,u){
 }
 Object.prototype.getLHS = function(){
     var self=this;
-    
-    const indexOfEquals = self.indexOf('=');
 
-    let result=self.splice(0,indexOfEquals);
+    let result=[];
+    
+    for(u of self){
+        if(/=/.test(u)){
+            break;
+        } else {
+            result.push(u);
+        }
+    }
 
     return result;
 }
 Object.prototype.getRHS = function(){
     var self=this;
-    
-    const indexOfEquals = self.indexOf('=');
 
-    const result=self.splice(indexOfEquals+1);
+    let result=[];
+    let beyondIndexOfEquals_Flag = false;
+    
+    for(u of self){
+        if(/=/.test(u)){
+            beyondIndexOfEquals_Flag = true;
+            continue;
+        } 
+        
+        if(beyondIndexOfEquals_Flag) {
+            result.push(u);
+        }
+    }
 
     return result;
 }
 Object.prototype.getLHS_toString = function(){
     var self=this;
-    
-    const indexOfEquals = self.indexOf('=');
 
-    const t = self.split ? self.split(' ') : self ;
+    let t = self.split // test for string //
+        ? self.split(' ') 
+        : self ;
 
-    const result=t.splice(0,indexOfEquals);
+    const result=t.getLHS().join(' ');
 
-    return result.join(' ');
+    return result;
 }
 Object.prototype.getRHS_toString = function(){
     var self=this;
-    
-    const indexOfEquals = self.indexOf('=');
 
-    const t = self.split ? self.split(' ') : self ;
+    let t = self.split // test for string //
+        ? self.split(' ') 
+        : self ;
 
-    const result=t.splice(indexOfEquals+1);
+    const result=t.getRHS().join(' ');
 
-    return result.join(' ');
+    return result;
 }
