@@ -402,9 +402,10 @@ Object.prototype.attachSourceEditor = function(){
   })
 }
 Object.prototype.addTAG = function(s){
-  return "<"+s+">("+this.toString()+")</"+s+">"
+    let self = this;
+    const result = `<${s}>(${self.toString()})</${s}>` ;
+    return result;
 }
-
 Object.prototype.keysMatch = function(){
     var key=this.join(' ').split(/\s*=\s*/)
     var KEYSMATCH=Boolean(key.length && key.length>1 && (key[0].asPrimaryKey()==key[1].asPrimaryKey()))
