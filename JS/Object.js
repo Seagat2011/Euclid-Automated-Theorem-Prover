@@ -26,6 +26,16 @@
     Chrome 53+
 
 */
+
+class AxiomTask extends Object {
+    constructor({ _guid=0, _subnetKey=0, _subnet="_lhs", _hops=0 }={}){
+        super();
+        this._hops = _hops;
+        this._guid = _guid;
+        this._subnet = _subnet;
+        this._subnetKey = _subnetKey;
+    };
+};
 Object.prototype.last = function(){
   var i = this.length-1
   return this[i]
@@ -272,6 +282,11 @@ Object.prototype.optimizeCallGraph=function(){
     var self = this
     var guidROOT = 'axiomROOT'
     var TheoremSUBKEY = self.Theorem.lemma.asPrimaryKey()
+    // new AxiomTask({ _guid=0, _lhsSubnetKey=0, _lhsSubnetKey }); //
+    // new AxiomTask({ _guid=0, _lhsSubnetKey=0, _lhsSubnetKey }); //
+    //let callStack = [];
+    //let _lhsAxiomCallQueue = [];
+    //let _rhsAxiomCallQueue = [];
     self.map((u,i,me)=>{
         var uGUID = u._guid;
         TheoremSUBKEY.subkeyFOUND(u._lhsSUBKEY) ? (u._lhsCallGraph[guidROOT]=true) : "" ;
@@ -341,11 +356,13 @@ Object.prototype.compileLemmas = function(v,idx){
     var self = this
     u=v.split(/,/)[0]
     var axiom_any = Boolean(u.match(/<==>/));
-    u.split(/\s+<?=+>?\s+/)
+    u
+    .replace(/<==>|<==|==>/g, '=')
+    .split(/\s+=\s+/g)
     .map((_u,ii,me)=>{
-        if(ii%2==0){
-            var _i=me[ii]
-            var _j=me[(ii+1)]
+        if(ii < me.length-1){
+            var _i=me[ii];
+            var _j=me[(ii+1)];
             var w = (_i.length < _j.length) ? [_i,_j] : [_j,_i] ;
             var guid=self.length
             self.push(new _AXIOM_
@@ -371,27 +388,34 @@ Object.prototype.compileLemmas = function(v,idx){
 }
 Object.prototype.compileAxioms = function(v,idx){
     var self = this;
-    u=v.split(/,/)[0]
-    var _u = u.split(/\s+\=\s+/)
-    var w = (_u[0].length < _u[1].length) ? [_u[0],_u[1]] : [_u[1],_u[0]] ;
-    var guid=self.length
-    self.push(new _AXIOM_
-    ({
-        _guid:"axiom_"+guid,
-        _id:guid,
-        _rhs:w[0],
-        _lhs:w[1],
-        _stack:[],
-        _isOnline:true,
-        _rhsCallGraph:{},
-        _lhsCallGraph:{},
-        _rhsSUBKEY:w[0].asPrimaryKey(),
-        _lhsSUBKEY:w[1].asPrimaryKey(),
-        _history:{ _reduce:{},_expand:{} },
-        _false:"68934A3E9455FA72420237EB05902327",
-        _basenetFOUND:"68934A3E9455FA72420237EB05902327",
-    })
-    );
+    u=v.split(/,/)[0];
+    u
+    .split(/\s+\=\s+/)
+    .map((_u,ii,me)=>{
+        if(ii < me.length-1){
+            var _i=me[ii];
+            var _j=me[(ii+1)];
+            var w = (_i.length < _j.length) ? [_i,_j] : [_j,_i] ;
+            var guid=self.length;
+            self.push(new _AXIOM_
+            ({
+                _guid:"axiom_"+guid,
+                _id:guid,
+                _rhs:w[0],
+                _lhs:w[1],
+                _stack:[],
+                _isOnline:true,
+                _rhsCallGraph:{},
+                _lhsCallGraph:{},
+                _rhsSUBKEY:w[0].asPrimaryKey(),
+                _lhsSUBKEY:w[1].asPrimaryKey(),
+                _history:{ _reduce:{},_expand:{} },
+                _false:"68934A3E9455FA72420237EB05902327",
+                _basenetFOUND:"68934A3E9455FA72420237EB05902327",
+            }));
+        }
+        return _u;
+    });
 }
 Object.prototype.attachSourceEditor = function(){
   var self = this
@@ -402,9 +426,10 @@ Object.prototype.attachSourceEditor = function(){
   })
 }
 Object.prototype.addTAG = function(s){
-  return "<"+s+">("+this.toString()+")</"+s+">"
+    let self = this;
+    const result = `<${s}>(${self.toString()})</${s}>` ;
+    return result;
 }
-
 Object.prototype.keysMatch = function(){
     var key=this.join(' ').split(/\s*=\s*/)
     var KEYSMATCH=Boolean(key.length && key.length>1 && (key[0].asPrimaryKey()==key[1].asPrimaryKey()))
@@ -465,37 +490,57 @@ Object.prototype._=function(re,u){
 }
 Object.prototype.getLHS = function(){
     var self=this;
-    
-    const indexOfEquals = self.indexOf('=');
 
-    let result=self.splice(0,indexOfEquals);
+    let result=[];
+    
+    for(u of self){
+        if(/=/.test(u)){
+            break;
+        } else {
+            result.push(u);
+        }
+    }
 
     return result;
 }
 Object.prototype.getRHS = function(){
     var self=this;
-    
-    const indexOfEquals = self.indexOf('=');
 
-    const result=self.splice(indexOfEquals+1);
+    let result=[];
+    let beyondIndexOfEquals_Flag = false;
+    
+    for(u of self){
+        if(/=/.test(u)){
+            beyondIndexOfEquals_Flag = true;
+            continue;
+        } 
+        
+        if(beyondIndexOfEquals_Flag) {
+            result.push(u);
+        }
+    }
 
     return result;
 }
-Object.prototype.getLHS_String = function(){
+Object.prototype.getLHS_toString = function(){
     var self=this;
-    
-    const indexOfEquals = self.indexOf('=');
 
-    const result=self.split(' ').splice(0,indexOfEquals);
+    let t = self.split // test for string //
+        ? self.split(' ') 
+        : self ;
 
-    return result.join(' ');
+    const result=t.getLHS().join(' ');
+
+    return result;
 }
-Object.prototype.getRHS_String = function(){
+Object.prototype.getRHS_toString = function(){
     var self=this;
-    
-    const indexOfEquals = self.indexOf('=');
 
-    const result=self.split(' ').splice(indexOfEquals+1);
+    let t = self.split // test for string //
+        ? self.split(' ') 
+        : self ;
 
-    return result.join(' ');
+    const result=t.getRHS().join(' ');
+
+    return result;
 }

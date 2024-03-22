@@ -31,7 +31,7 @@ TEST CASE [PASS]
 1 + 2 ~= 4
 Prove 2 + 2 + 4 ~= 4 + 2 + 2
 
-TEST CASE  [PASS]
+TEST CASE [PASS] via [REDUCE]
 1 + 1 = 2
 1 + 2 = 3
 2 + 2 = 4
@@ -378,7 +378,7 @@ TEST CASE [PASS]
 ( { a } plus { b } ) raised { 2 } = { { c } raised { 2 } } plus { 2ab }
 Prove { { a } raised { 2 } } plus { { b } raised { 2 } } = { c } raised { 2 }
 
-TEST CASE [FAIL] [CORNER-CASE-SEARCH-ENABLED]
+TEST CASE [FAIL] [CORNER-CASE-SEARCH-ENABLED] | [PASS] [FAST-FORWARD]
 { { a } raised { 2 } } plus { 2ab } plus { b raised { 2 } } <== ( { a } plus { b } ) raised { 2 }
 ( { a } plus { b } ) raised { 2 } minus { 2ab } = { c } raised { 2 } <== ( { a } plus { b } ) raised { 2 } = { { c } raised { 2 } } plus { 2ab }
 { { a } raised { 2 } } plus { 2ab } minus { 2ab } plus { b raised { 2 } } ==> { { a } raised { 2 } } plus { { b } raised { 2 } }
