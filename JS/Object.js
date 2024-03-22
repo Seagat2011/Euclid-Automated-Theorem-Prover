@@ -26,6 +26,16 @@
     Chrome 53+
 
 */
+
+class AxiomTask extends Object {
+    constructor({ _guid=0, _subnetKey=0, _subnet="_lhs", _hops=0 }={}){
+        super();
+        this._hops = _hops;
+        this._guid = _guid;
+        this._subnet = _subnet;
+        this._subnetKey = _subnetKey;
+    };
+};
 Object.prototype.last = function(){
   var i = this.length-1
   return this[i]
@@ -272,6 +282,11 @@ Object.prototype.optimizeCallGraph=function(){
     var self = this
     var guidROOT = 'axiomROOT'
     var TheoremSUBKEY = self.Theorem.lemma.asPrimaryKey()
+    // new AxiomTask({ _guid=0, _lhsSubnetKey=0, _lhsSubnetKey }); //
+    // new AxiomTask({ _guid=0, _lhsSubnetKey=0, _lhsSubnetKey }); //
+    //let callStack = [];
+    //let _lhsAxiomCallQueue = [];
+    //let _rhsAxiomCallQueue = [];
     self.map((u,i,me)=>{
         var uGUID = u._guid;
         TheoremSUBKEY.subkeyFOUND(u._lhsSUBKEY) ? (u._lhsCallGraph[guidROOT]=true) : "" ;

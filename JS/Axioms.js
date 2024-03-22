@@ -55,7 +55,7 @@ function _AXIOM_(){
     }
     self._stepEXPAND = function(){
     }
-    self._reduce = function(e){
+    self._reduce = async function(e){
         const u = e.data;
         const StandardMode_Flag = /Reduce|Auto|Optimal/i.test(u.indir);
         if(
@@ -72,17 +72,20 @@ function _AXIOM_(){
             ){
                 var ProofSUBKEY = u.ProofSUBKEY;
                 self._history._reduce[val]=true;
-               // Likely to converge faster than the following code //
-               if((u.source in self._lhsCallGraph)){
-                   self._updateSubkey(u,"Reduce");
-               }
-               if(u.ProofSUBKEY.subkeyFOUND(self._lhsSUBKEY)){
-                   self._updateSubkey(u,"Reduce");
-               }
+                // Likely to converge faster than the following code //
+                if(
+                    (u.source in self._lhsCallGraph)
+                    && !u._DeepRewritesEnabled_Flag){
+                    await self._updateSubkey(u,"Reduce");
+                } else if(
+                    u._DeepRewritesEnabled_Flag 
+                    && u.ProofSUBKEY.subkeyFOUND(self._lhsSUBKEY)){
+                    await self._updateSubkey(u,"Reduce");
+                }
             } // if(!(val in self._history._reduce)) //
         } // if(u.source && ... && !g_SOLVED) //
     }
-    self._expand = function(e){
+    self._expand = async function(e){
         const u = e.data;
         const StandardMode_Flag = /Expand|Auto|Optimal/i.test(u.indir);
         if(
@@ -99,19 +102,23 @@ function _AXIOM_(){
             ){
                 var ProofSUBKEY = u.ProofSUBKEY;
                 self._history._expand[val]=true;
-               // Likely to converge faster than the following code //
-                if((u.source in self._rhsCallGraph)){
-                    self._updateSubkey(u,"Expand");
-                }
-                if(u.ProofSUBKEY.subkeyFOUND(self._rhsSUBKEY)){
-                     self._updateSubkey(u,"Expand");
+                // Likely to converge faster than the following code //
+                if(
+                    (u.source in self._rhsCallGraph)
+                    && !u._DeepRewritesEnabled_Flag){
+                    await self._updateSubkey(u,"Expand");
+                } else if(
+                    u._DeepRewritesEnabled_Flag 
+                    && u.ProofSUBKEY.subkeyFOUND(self._rhsSUBKEY)){
+                    await self._updateSubkey(u,"Expand");
                 }
             } // if(!(val in self._history._expand)) //
         } // if(u.source && ... && !g_SOLVED) //
     }
-    self._updateSubkey = function(u,indirection){
+    self._updateSubkey = async function(u,indirection){
         self._subnetFOUND = false;
         const expandingIndir_Flag = /Expand/i.test(indirection);
+        const DeepRewritesEnabled_Flag = u._DeepRewritesEnabled_Flag;
         var ProofSUBKEY = u.ProofSUBKEY;
         var tmp = [...u.Proof]
         var Proof = [...u.Proof]
@@ -295,6 +302,7 @@ function _AXIOM_(){
                          _stack:stack,
                          _stackR:stackR,
                          _flags:flags,
+                         _deepRewritesEnabled_Flag: DeepRewritesEnabled_Flag,
                          ProofSUBKEY:ProofSUBKEY,
                          },g_origin);
                      postMessage({
@@ -305,6 +313,7 @@ function _AXIOM_(){
                          _stack:stack,
                          _stackR:stackR,
                          _flags:flags,
+                         _deepRewritesEnabled_Flag:DeepRewritesEnabled_Flag,
                          ProofSUBKEY:ProofSUBKEY,
                          },g_origin);
                  } else {
