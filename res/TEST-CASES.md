@@ -378,7 +378,7 @@ TEST CASE [PASS]
 ( { a } plus { b } ) raised { 2 } = { { c } raised { 2 } } plus { 2ab }
 Prove { { a } raised { 2 } } plus { { b } raised { 2 } } = { c } raised { 2 }
 
-TEST CASE [FAIL] [CORNER-CASE-SEARCH-ENABLED] | [PASS] [FAST-FORWARD]
+TEST CASE [PASS]
 { { a } raised { 2 } } plus { 2ab } plus { b raised { 2 } } <== ( { a } plus { b } ) raised { 2 }
 ( { a } plus { b } ) raised { 2 } minus { 2ab } = { c } raised { 2 } <== ( { a } plus { b } ) raised { 2 } = { { c } raised { 2 } } plus { 2ab }
 { { a } raised { 2 } } plus { 2ab } minus { 2ab } plus { b raised { 2 } } ==> { { a } raised { 2 } } plus { { b } raised { 2 } }
