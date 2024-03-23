@@ -218,15 +218,26 @@ function _AXIOM_(){
 
         const CurrentSubnetKeyExists_Flag = (Current_ProofSUBKEY in g_global_rewrite_cache[currentSUBNET]); // true //
 
+        let ProofFound_Flag = false;
+
         if(
             CurrentSubnetKeyExists_Flag
             && OppositeSubnetKeyExists_Flag){
+            if(
+                g_global_rewrite_cache._lhs[Current_ProofSUBKEY].last()
+                == g_global_rewrite_cache._rhs[Current_ProofSUBKEY].last() ){
+                ProofFound_Flag = true;
+            }
+
+        }
+
+        if(ProofFound_Flag){
+            const ret1 = g_global_rewrite_cache._lhs[Current_ProofSUBKEY];
+            const ret2 = g_global_rewrite_cache._rhs[Current_ProofSUBKEY];
             g_SOLVED = true;
             imgProgressBar.hide();
             solutionEditor.innerHTML = "";
             solutionEditorR.innerHTML = "";
-            const ret1 = g_global_rewrite_cache._lhs[Current_ProofSUBKEY];
-            const ret2 = g_global_rewrite_cache._rhs[Current_ProofSUBKEY];
 
             const _stack = ret1._stack;
             const _stackR = ret1._stackR;
