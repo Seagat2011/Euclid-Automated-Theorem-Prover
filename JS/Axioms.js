@@ -42,7 +42,11 @@ function _AXIOM_(){
     var args = arguments[0]
     args.forEach((u)=>{
         self[u] = args[u]
-    })
+    });
+    self._lhsCallIDX = 0;
+    self._rhsCallIDX = 0;
+    self._lhsCallStack = [];
+    self._rhsCallStack = [];
     self._criteria=[[,],[,]] // callback array of [ORs[ANDs,...],[ANDs,...]...] for Axioms (Turing Complete) //
     self._update = function(){
         var args = arguments[0]
@@ -224,8 +228,8 @@ function _AXIOM_(){
             CurrentSubnetKeyExists_Flag
             && OppositeSubnetKeyExists_Flag){
             if(
-                g_global_rewrite_cache._lhs[Current_ProofSUBKEY].last()
-                == g_global_rewrite_cache._rhs[Current_ProofSUBKEY].last() ){
+                g_global_rewrite_cache._lhs[Current_ProofSUBKEY]._stack.last()
+                == g_global_rewrite_cache._rhs[Current_ProofSUBKEY]._stack.last() ){
                 ProofFound_Flag = true;
             }
 
@@ -275,9 +279,14 @@ function _AXIOM_(){
          if(
              self._subnetFOUND
          ){
-             var P = Proof.collapseEmptyCells()
-             tmpHTMLR.post = tmpHTMLR.post.collapseEmptyCells()
-             var solutionComplete = P.solutionComplete(flags)
+            var P = Proof.collapseEmptyCells()
+            tmpHTMLR.post = tmpHTMLR.post.collapseEmptyCells();
+            const QED_qualifier = 
+                u._DeepRewritesEnabled_Flag 
+                && u._DeepRewritesEnabled_Flag == true
+                ? " - Deep Rewrite"
+                : "" ;
+             const solutionComplete = P.solutionComplete(flags,QED_qualifier)
              if(solutionComplete){
                 imgProgressBar.hide();
                  solutionEditor.innerHTML = ""
@@ -290,12 +299,15 @@ function _AXIOM_(){
                      stackR=[]
                      stack=[]
                  }
+
+                 const QED_phrase = P.join(" ")+solutionComplete;
+
                  solutionEditor.appendlog(tmpHTML.pre.join(" "))
                  solutionEditor.appendlog(tmpHTML.post.join(" "))
-                 solutionEditor.appendlog(P.join(" ")+solutionComplete)
+                 solutionEditor.appendlog(QED_phrase)
                  if(!stack.length)
-                     solutionEditorR.appendlogR(tmpHTMLR.pre.join(" "))
-                 solutionEditorR.appendlogR(P.join(" ")+solutionComplete,"render")
+                    solutionEditorR.appendlogR(tmpHTMLR.pre.join(" "))
+                 solutionEditorR.appendlogR(QED_phrase,"render")
              } else { // solutionComplete == false //
                  stack.push(
                       tmpHTML.pre.join(" ")

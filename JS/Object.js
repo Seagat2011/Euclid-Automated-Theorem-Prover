@@ -10,35 +10,30 @@
 
     VERSION
     Major.Minor.Bugfix.Patch
-    1.0.0.0
+    1.0.0.2
 
     DESCRIPTION
     Properties file
 
     UPDATED
 
-    STYLEGUIDE:
+    STYLEGUIDE
     http://google-styleguide.googlecode.com/svn/trunk/javascriptguide.xml
 
     REFERENCES
 
     COMPATIBILITY
-    Chrome 53+
+    Chrome 53+ | Firefox 124+
 
 */
 
-class AxiomTask extends Object {
-    constructor({ _guid=0, _subnetKey=0, _subnet="_lhs", _hops=0 }={}){
-        super();
-        this._hops = _hops;
-        this._guid = _guid;
-        this._subnet = _subnet;
-        this._subnetKey = _subnetKey;
-    };
-};
 Object.prototype.last = function(){
   var i = this.length-1
   return this[i]
+}
+Object.prototype.lastIDX = function(){
+  const I = this.length-1;
+  return I;
 }
 Object.prototype.toRegExp=function(flags){
   var self = this
@@ -92,11 +87,11 @@ function _Firefox_ScollAsNeeded(){
 // Hence, we'll first check if it's available. //
 const isNotChrome_Flag = !/Chrome/.test(navigator.userAgent);
 
-Object.prototype.scrollIntoViewIfNeeded = isNotChrome_Flag 
+Object.prototype.scrollIntoViewIfNeeded = isNotChrome_Flag
     ? _Firefox_ScollAsNeeded
     : _Chrome_ScollAsNeeded ;
 
-Object.prototype.appendlogR = 
+Object.prototype.appendlogR =
 Object.prototype.appendlogRaw = function(args,bRender){
     var self=this;
     self.textBuffer || (self.textBuffer=[]);
@@ -171,7 +166,7 @@ Object.prototype.clonePROPS = function(){
 Object.prototype.isSquare_NewtonRaphsonMethod = function(n){
     if (n < 0n) return false;
     if (n < 2n) return true;
-  
+
     let x = n / 2n;
     let y = (x + n / x) / 2n;
     while (y < x) {
@@ -209,7 +204,7 @@ Object.prototype.isaTentativeProof=function(u){
     }
     return ret;
 }
-Object.prototype.solutionComplete = function(u){
+Object.prototype.solutionComplete = function(method,details){
     var obj = this.join(" ").stripWhiteSpace().split(/\s+=\s+/)
     var result = obj[0]
     if(obj.length<2){
@@ -225,7 +220,7 @@ Object.prototype.solutionComplete = function(u){
             }
         }
         if(result){
-            g_SOLVED = result = `<br><br>Q.E.D. (via ${u})<br><hr>`;
+            g_SOLVED = result = `<br><br>Q.E.D. (via ${method}${details})<br><hr>`;
         }
     }
     return result
@@ -278,15 +273,73 @@ Object.prototype.build = function(u){
   self.optimizeCallGraph()
   self._init = true
 }
+Object.prototype._lhsCallQueueSET = function(u){
+    let self = this;
+    self._lhsCallStack.push(u);
+}
+Object.prototype._lhsCallQueueGET = function(){
+    let self = this;
+    const idx = self._lhsCallIDX;
+    const _currentAxiomSet = self._lhsCallStack[idx];
+    return _currentAxiomSet;
+}
+Object.prototype._lhsCallQueueNEXT = function(){
+    let self = this;
+    const idx = self._lhsCallIDX;
+    if(idx < self._lhsCallStack.length)
+        self._lhsCallIDX++;
+}
+Object.prototype._lhsCallQueueRESET = function(){
+    let self = this;
+    self._lhsCallIDX = 0;
+}
+Object.prototype._lhsCallQueueEMPTY = function(){
+    let self = this;
+    self._lhsCallIDX = 0;
+    self._lhsCallStack = [];
+}
+Object.prototype._rhsCallQueueSET = function(u){
+    let self = this;
+    self._rhsCallStack.push(u);
+}
+Object.prototype._rhsCallQueueGET = function(){
+    let self = this;
+    const idx = self._rhsCallIDX;
+    const _currentAxiomSet = self._rhsCallStack[idx];
+    return _currentAxiomSet;
+}
+Object.prototype._rhsCallQueueNEXT = function(){
+    let self = this;
+    self._rhsCallIDX++;
+}
+Object.prototype._rhsCallQueueRESET = function(){
+    let self = this;
+    self._rhsCallIDX = 0;
+}
+Object.prototype._rhsCallQueueEMPTY = function(){
+    let self = this;
+    self._rhsCallIDX = 0;
+    self._rhsCallStack = [];
+}
+Object.prototype.toFactorial = function() {
+    let self = this;
+
+    let n = self.length;
+    const one = BigInt(1);
+    let result = BigInt(1);
+
+    while (n > one) {
+        result *= n;
+
+        n -= one;
+    }
+
+    return result;
+}
 Object.prototype.optimizeCallGraph=function(){
     var self = this
     var guidROOT = 'axiomROOT'
-    var TheoremSUBKEY = self.Theorem.lemma.asPrimaryKey()
-    // new AxiomTask({ _guid=0, _lhsSubnetKey=0, _lhsSubnetKey }); //
-    // new AxiomTask({ _guid=0, _lhsSubnetKey=0, _lhsSubnetKey }); //
-    //let callStack = [];
-    //let _lhsAxiomCallQueue = [];
-    //let _rhsAxiomCallQueue = [];
+    var TheoremSUBKEY = self.Theorem.lemma.asPrimaryKey();
     self.map((u,i,me)=>{
         var uGUID = u._guid;
         TheoremSUBKEY.subkeyFOUND(u._lhsSUBKEY) ? (u._lhsCallGraph[guidROOT]=true) : "" ;
@@ -344,11 +397,11 @@ Object.prototype.compileAtomics = function(a){
     var k=0
     a && a.map((u,i,me)=>{
         if(Boolean(u.match(/<==|==>/))){
-            j++
-            self.compileLemmas(u.stripWhiteSpace(),i)
+            self.compileLemmas(u.stripWhiteSpace(),j);
+            ++j;
         } else {
-            k++
-            self.compileAxioms(u.stripWhiteSpace(),i)
+            self.compileAxioms(u.stripWhiteSpace(),k);
+            ++k;
         }
     });
 }
@@ -356,6 +409,7 @@ Object.prototype.compileLemmas = function(v,idx){
     var self = this
     u=v.split(/,/)[0]
     var axiom_any = Boolean(u.match(/<==>/));
+    const guid=idx;//self.length;
     u
     .replace(/<==>|<==|==>/g, '=')
     .split(/\s+=\s+/g)
@@ -364,11 +418,10 @@ Object.prototype.compileLemmas = function(v,idx){
             var _i=me[ii];
             var _j=me[(ii+1)];
             var w = (_i.length < _j.length) ? [_i,_j] : [_j,_i] ;
-            var guid=self.length
             self.push(new _AXIOM_
             ({
-                _guid:"axiom_"+guid,
-                _id:guid,
+                _guid:`axiom_${guid}.${ii}`,
+                _id:`${guid}.${ii}`,
                 _rhs:w[0],
                 _lhs:w[1],
                 _stack:[],
@@ -450,9 +503,9 @@ var LASTPRIMEIDX = BigInt(3)
 Object.prototype.isPrime=function(num) {
     if (num <= BigInt(1)) return false;
     if (num <= BigInt(3)) return true;
-  
+
     // Check divisibility from 2 to the square root of num
-    for (let i = BigInt(2); i * i <= num; ++i) { 
+    for (let i = BigInt(2); i * i <= num; ++i) {
       if (num % i === 0) return false;
     }
     return true;
@@ -492,7 +545,7 @@ Object.prototype.getLHS = function(){
     var self=this;
 
     let result=[];
-    
+
     for(u of self){
         if(/=/.test(u)){
             break;
@@ -508,13 +561,13 @@ Object.prototype.getRHS = function(){
 
     let result=[];
     let beyondIndexOfEquals_Flag = false;
-    
+
     for(u of self){
         if(/=/.test(u)){
             beyondIndexOfEquals_Flag = true;
             continue;
-        } 
-        
+        }
+
         if(beyondIndexOfEquals_Flag) {
             result.push(u);
         }
@@ -526,7 +579,7 @@ Object.prototype.getLHS_toString = function(){
     var self=this;
 
     let t = self.split // test for string //
-        ? self.split(' ') 
+        ? self.split(' ')
         : self ;
 
     const result=t.getLHS().join(' ');
@@ -537,7 +590,7 @@ Object.prototype.getRHS_toString = function(){
     var self=this;
 
     let t = self.split // test for string //
-        ? self.split(' ') 
+        ? self.split(' ')
         : self ;
 
     const result=t.getRHS().join(' ');
