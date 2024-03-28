@@ -10,12 +10,14 @@
 
     VERSION
     Major.Minor.Bugfix.Patch
-    1.0.0.2
+    1.0.2.5
 
     DESCRIPTION
     Properties file
 
     UPDATED
+    -Fixed non-unique Axiom uuid bug
+    -Fixed Axiom assignment bug
 
     STYLEGUIDE
     http://google-styleguide.googlecode.com/svn/trunk/javascriptguide.xml
@@ -397,10 +399,10 @@ Object.prototype.compileAtomics = function(a){
     var k=0
     a && a.map((u,i,me)=>{
         if(Boolean(u.match(/<==|==>/))){
-            self.compileLemmas(u.stripWhiteSpace(),j);
+            self.compileLemmas(u.stripWhiteSpace(),i);
             ++j;
         } else {
-            self.compileAxioms(u.stripWhiteSpace(),k);
+            self.compileAxioms(u.stripWhiteSpace(),i);
             ++k;
         }
     });
@@ -413,15 +415,16 @@ Object.prototype.compileLemmas = function(v,idx){
     u
     .replace(/<==>|<==|==>/g, '=')
     .split(/\s+=\s+/g)
-    .map((_u,ii,me)=>{
-        if(ii < me.length-1){
-            var _i=me[ii];
-            var _j=me[(ii+1)];
+    .map((_u,i,me)=>{
+        let ii = i+1;
+        while(ii < me.length){
+            var _i=me[i];
+            var _j=me[(ii)];
             var w = (_i.length < _j.length) ? [_i,_j] : [_j,_i] ;
             self.push(new _AXIOM_
             ({
-                _guid:`axiom_${guid}.${ii}`,
-                _id:`${guid}.${ii}`,
+                _guid:`axiom_${guid}.${i}.${ii}`,
+                _id:`${guid}.${i}.${ii}`,
                 _rhs:w[0],
                 _lhs:w[1],
                 _stack:[],
@@ -434,26 +437,28 @@ Object.prototype.compileLemmas = function(v,idx){
                 _history:{ _reduce:{},_expand:{} },
                 _false:"68934A3E9455FA72420237EB05902327",
                 _basenetFOUND:"68934A3E9455FA72420237EB05902327",
-            })
-            );
+            }));
+
+            ++ii;
         }
     });
 }
 Object.prototype.compileAxioms = function(v,idx){
     var self = this;
     u=v.split(/,/)[0];
+    const guid=idx;//self.length;
     u
     .split(/\s+\=\s+/)
-    .map((_u,ii,me)=>{
-        if(ii < me.length-1){
-            var _i=me[ii];
-            var _j=me[(ii+1)];
+    .map((_u,i,me)=>{
+        let ii = i+1;
+        while(ii < me.length){
+            var _i=me[i];
+            var _j=me[(ii)];
             var w = (_i.length < _j.length) ? [_i,_j] : [_j,_i] ;
-            var guid=self.length;
             self.push(new _AXIOM_
             ({
-                _guid:"axiom_"+guid,
-                _id:guid,
+                _guid:`axiom_${guid}.${i}.${ii}`,
+                _id:`${guid}.${i}.${ii}`,
                 _rhs:w[0],
                 _lhs:w[1],
                 _stack:[],
@@ -466,6 +471,8 @@ Object.prototype.compileAxioms = function(v,idx){
                 _false:"68934A3E9455FA72420237EB05902327",
                 _basenetFOUND:"68934A3E9455FA72420237EB05902327",
             }));
+            
+            ++ii;
         }
         return _u;
     });

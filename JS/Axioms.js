@@ -9,14 +9,16 @@
 
     VERSION:
     Major.Minor.Release.Build
-    0.0.0.20
+    0.0.2.21
 
     DESCRIPTION:
     Main (math) interface to Euclid and its proof components
 
     UPDATED
+    -Fixed lhs rewrite bug
+    -Fixed postMessage dual post bug
     +Improved stability and responsiveness during proof search
-    +Step enabled proofs
+    +Added (Strict) Step-enabled University proofs
     +FastForward Support (ie. Proofstep caching) to improve rewrite performance
     +Improved ProofComplete search performance
     +_AXIOM_.optimizeCallGraph
@@ -77,16 +79,17 @@ function _AXIOM_(){
                 !(val in self._history._reduce)
             ){
                 var ProofSUBKEY = u.ProofSUBKEY;
-                self._history._reduce[val]=true;
                 // Likely to converge faster than the following code //
                 if(
                     (u.source in self._lhsCallGraph)
                     && !u._DeepRewritesEnabled_Flag){
                     await self._updateSubkey(u,"Reduce");
+                    self._history._reduce[val]=true;
                 } else if(
                     u._DeepRewritesEnabled_Flag 
                     && u.ProofSUBKEY.subkeyFOUND(self._lhsSUBKEY)){
                     await self._updateSubkey(u,"Reduce");
+                    self._history._reduce[val]=true;
                 }
             } // if(!(val in self._history._reduce)) //
         } // if(u.source && ... && !g_SOLVED) //
@@ -107,16 +110,17 @@ function _AXIOM_(){
                 !(val in self._history._expand)
             ){
                 var ProofSUBKEY = u.ProofSUBKEY;
-                self._history._expand[val]=true;
                 // Likely to converge faster than the following code //
                 if(
                     (u.source in self._rhsCallGraph)
                     && !u._DeepRewritesEnabled_Flag){
                     await self._updateSubkey(u,"Expand");
+                    self._history._expand[val]=true;
                 } else if(
                     u._DeepRewritesEnabled_Flag 
                     && u.ProofSUBKEY.subkeyFOUND(self._rhsSUBKEY)){
                     await self._updateSubkey(u,"Expand");
+                    self._history._expand[val]=true;
                 }
             } // if(!(val in self._history._expand)) //
         } // if(u.source && ... && !g_SOLVED) //
@@ -154,13 +158,13 @@ function _AXIOM_(){
                self._flags
             && self._flags.match(/Lemma/)
             && (self._lhs.match(/\s+=\s+/) || self._rhs.match(/\s+=\s+/)));
-        const removeSubkey = expandingIndir_Flag 
+        const fromSubkey = expandingIndir_Flag 
             ? self._rhsSUBKEY 
             : self._lhsSUBKEY ;
-        const insertSubkey = expandingIndir_Flag
+        const toSubkey = expandingIndir_Flag
             ? self._lhsSUBKEY
             : self._rhsSUBKEY ;
-        (ProofSUBKEY = ProofSUBKEY.subkeyUPDATE(removeSubkey,insertSubkey));
+        (ProofSUBKEY = ProofSUBKEY.subkeyUPDATE(fromSubkey,toSubkey));
         
         if(flags.match(/Step/)) {
             let idx = 0; // Manually track the index
@@ -168,6 +172,7 @@ function _AXIOM_(){
             for (let tok of tmp) {
                 if (tok == "=" && !COMPOUND) {
                     jdx = 0; // Reset on encountering "=" if not in a compound expression
+                    vkeys = [];
                     lastFoundIndex = -1; // Reset last found index
                 }
                 if (self._scope_satisfied(tok, tmp, idx, from, jdx)) {
@@ -188,10 +193,10 @@ function _AXIOM_(){
                                     Proof[kdx] = to.join(" ");
                                 }
                             }
-                            //jdx = 0;
-                            //vkeys = [];
-                            //lastFoundIndex = -1; // Reset for the next search
-                            break;
+                            jdx = 0;
+                            vkeys = [];
+                            lastFoundIndex = -1; // Reset for the next search
+                            //break;
                         }
                     } else {
                         // Reset if tokens are not contiguous
@@ -208,6 +213,7 @@ function _AXIOM_(){
             tmp.map((tok,idx,me)=>{
                  if((tok == "=") && !COMPOUND){
                      jdx=0;
+                     vkeys = [];
                  }
                  if(self._scope_satisfied(tok,me,idx,from,jdx)){
                      vkeys.push(idx)
@@ -322,9 +328,9 @@ function _AXIOM_(){
             return;
         }
 
-         if(
-             self._subnetFOUND
-         ){
+        if(
+            self._subnetFOUND
+        ){
             var P = Proof.collapseEmptyCells()
             tmpHTMLR.post = tmpHTMLR.post.collapseEmptyCells();
             const QED_qualifier = 
@@ -332,93 +338,62 @@ function _AXIOM_(){
                 && u._DeepRewritesEnabled_Flag == true
                 ? " - Deep Rewrite"
                 : "" ;
-             const solutionComplete = P.solutionComplete(flags,QED_qualifier)
-             if(solutionComplete){
+            const solutionComplete = P.solutionComplete(flags,QED_qualifier)
+            if(solutionComplete){
                 imgProgressBar.hide();
-                 solutionEditor.innerHTML = ""
-                 solutionEditorR.innerHTML = ""
-                 if(stack.length){
-                     var s1 = flags.match(/Optimal/) ? stack.collapseRedundantPaths().join('<br><br>') : stack.join('<br><br>') ;
-                     var s2 = flags.match(/Optimal/) ? stackR.collapseRedundantPaths().join('<br>') : stackR.join('<br>') ;
-                     solutionEditor.appendlog(s1)
-                     solutionEditorR.appendlogR(s2)
-                     stackR=[]
-                     stack=[]
-                 }
+                solutionEditor.innerHTML = ""
+                solutionEditorR.innerHTML = ""
+                if(stack.length){
+                    var s1 = flags.match(/Optimal/) ? stack.collapseRedundantPaths().join('<br><br>') : stack.join('<br><br>') ;
+                    var s2 = flags.match(/Optimal/) ? stackR.collapseRedundantPaths().join('<br>') : stackR.join('<br>') ;
+                    solutionEditor.appendlog(s1)
+                    solutionEditorR.appendlogR(s2)
+                    stackR=[]
+                    stack=[]
+                }
 
-                 const QED_phrase = P.join(" ")+solutionComplete;
+                const QED_phrase = P.join(" ")+solutionComplete;
 
-                 solutionEditor.appendlog(tmpHTML.pre.join(" "))
-                 solutionEditor.appendlog(tmpHTML.post.join(" "))
-                 solutionEditor.appendlog(QED_phrase)
-                 if(!stack.length)
+                solutionEditor.appendlog(tmpHTML.pre.join(" "))
+                solutionEditor.appendlog(tmpHTML.post.join(" "))
+                solutionEditor.appendlog(QED_phrase)
+                if(!stack.length)
                     solutionEditorR.appendlogR(tmpHTMLR.pre.join(" "))
-                 solutionEditorR.appendlogR(QED_phrase,"render")
-             } else { // solutionComplete == false //
-                 stack.push(
+                solutionEditorR.appendlogR(QED_phrase,"render")
+            } else { // solutionComplete == false //
+                stack.push(
                       tmpHTML.pre.join(" ")
                     , tmpHTML.post.join(" "))
-                 tmpHTMLR.pre.length && stackR.push( tmpHTMLR.pre.join(" ") )
-                 stackR.push( tmpHTMLR.post.join(" ") )
-                 if(
-                     flags.match(/Auto|Optimal/)
-                 ){
-                     //postMessage({
-                    g_global_message_queue.push({
-                         source:self._guid,
-                         Proof:P,
-                         indir:'Expand',
-                         _id:self._id,
-                         _stack:stack,
-                         _stackR:stackR,
-                         _flags:flags,
-                         _deepRewritesEnabled_Flag: DeepRewritesEnabled_Flag,
-                         ProofSUBKEY:ProofSUBKEY,
-                         });//),g_origin);
-                         
-                    dispatchEvent(dispatchProofstepEvent);
+                tmpHTMLR.pre.length && stackR.push( tmpHTMLR.pre.join(" ") )
+                stackR.push( tmpHTMLR.post.join(" ") );
 
-                     //postMessage({
-                    g_global_message_queue.push({
-                         source:self._guid,
-                         Proof:P,
-                         indir:'Reduce',
-                         _id:self._id,
-                         _stack:stack,
-                         _stackR:stackR,
-                         _flags:flags,
-                         _deepRewritesEnabled_Flag:DeepRewritesEnabled_Flag,
-                         ProofSUBKEY:ProofSUBKEY,
-                         });//,g_origin);
-                         
-                    dispatchEvent(dispatchProofstepEvent);
-                 } else {
-                     //postMessage({
-                    g_global_message_queue.push({
-                         source:self._guid,
-                         Proof:P,
-                         indir:flags,
-                         _id:self._id,
-                         _stack:stack,
-                         _stackR:stackR,
-                         ProofSUBKEY:ProofSUBKEY,
-                         });//,g_origin);
-                    dispatchEvent(dispatchProofstepEvent);
-                 }
-             }
-         } else { // self._subnetFOUND == false //
-             if(!g_SOLVED){
-                 if(stack.length){
-                    solutionEditor.innerHTML = "";
-                    solutionEditorR.innerHTML = "";
-
+                g_global_message_queue.push({
+                        source:self._guid,
+                        Proof:P,
+                        indir:flags,
+                        _id:self._id,
+                        _stack:stack,
+                        _stackR:stackR,
+                        _flags:flags, // Auto|Optimal usually will check this flag //
+                        _deepRewritesEnabled_Flag: DeepRewritesEnabled_Flag,
+                        ProofSUBKEY:ProofSUBKEY,
+                    });
+                
+                dispatchEvent(dispatchProofstepEvent);
+            }
+        } else { // self._subnetFOUND == false //
+            if(!g_SOLVED){
+                solutionEditor.innerHTML = "";
+                solutionEditorR.innerHTML = "";
+                if(stack.length){
                     solutionEditor.appendlog(stack.join('<br><br>'));
-                    solutionEditor.appendlog("Prove via % failed."._(/%/,flags));
-                    solutionEditorR.appendlogR(stackR.join('<br>'),"render");
-                    imgProgressBar.hide();
-                 }
-             }
-         } // if(self._subnetFOUND) //
+                    solutionEditorR.appendlogR(stackR.join('<br>'));
+                }
+                solutionEditor.appendlog("Prove via % failed."._(/%/,flags));
+                solutionEditorR.appendlogR("Prove via % failed."._(/%/,flags),"render");
+                //imgProgressBar.hide();
+            }
+        } // if(self._subnetFOUND) //
     }
     self._scope_satisfied = function(etok,lhs,li,rhs,ri){
         var i = 1
@@ -450,14 +425,27 @@ function _AXIOM_(){
         return sat
     }
     self._dispatch_message = async function(u){
-        if(!g_SOLVED && g_global_message_queue.length){
+        if(
+            !g_SOLVED 
+            && g_global_message_queue.length){
+            // Prioritize by length, least to greatest //
+            g_global_message_queue.sort((a, b) => { // a > b ?
+                const a_lhs = a.Proof.getLHS().length;
+                const a_rhs = a.Proof.getRHS().length;
+                const b_lhs = b.Proof.getLHS().length;
+                const b_rhs = b.Proof.getRHS().length;
+
+                const result = (Math.abs(a_lhs-a_rhs) - Math.abs(b_lhs-b_rhs));
+
+                return result;
+            });
             const msg = g_global_message_queue.shift();
             postMessage(msg,g_origin);
         } else if(g_SOLVED){
             g_global_message_queue = [];
         }
     }
-    addEventListener("message",self._reduce)
-    addEventListener("message",self._expand)
+    addEventListener("message",self._reduce) // call both Expand|Reduce //
+    addEventListener("message",self._expand) // call both Expand|Reduce //
     addEventListener("dispatchProofstep",self._dispatch_message)
 }
