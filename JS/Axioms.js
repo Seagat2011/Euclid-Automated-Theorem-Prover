@@ -9,7 +9,7 @@
 
     VERSION:
     Major.Minor.Release.Build
-    0.0.2.21
+    0.0.3.21
 
     DESCRIPTION:
     Main (math) interface to Euclid and its proof components
@@ -66,6 +66,7 @@ function _AXIOM_(){
     self._reduce = async function(e){
         const u = e.data;
         const StandardMode_Flag = /Reduce|Auto|Optimal/i.test(u.indir);
+        const Reduce_Flag = /Reduce/i.test(u.indir);
         if(
             u.source &&
             u.source.startsWith('axiom') &&
@@ -79,7 +80,14 @@ function _AXIOM_(){
                 !(val in self._history._reduce)
             ){
                 var ProofSUBKEY = u.ProofSUBKEY;
-                // Likely to converge faster than the following code //
+                if(
+                    (u.source in self._lhsCallGraph)
+                    || (Reduce_Flag && u.ProofSUBKEY.subkeyFOUND(self._lhsSUBKEY))){
+                    await self._updateSubkey(u,"Reduce");
+                    self._history._reduce[val]=true;
+                }
+                /*
+                // Likely to converge faster than deep rewrites //
                 if(
                     (u.source in self._lhsCallGraph)
                     && !u._DeepRewritesEnabled_Flag){
@@ -91,12 +99,14 @@ function _AXIOM_(){
                     await self._updateSubkey(u,"Reduce");
                     self._history._reduce[val]=true;
                 }
+                */
             } // if(!(val in self._history._reduce)) //
         } // if(u.source && ... && !g_SOLVED) //
     }
     self._expand = async function(e){
         const u = e.data;
         const StandardMode_Flag = /Expand|Auto|Optimal/i.test(u.indir);
+        const Expand_Flag = /Expand/i.test(u.indir);
         if(
             u.source &&
             u.source.startsWith('axiom') &&
@@ -110,7 +120,14 @@ function _AXIOM_(){
                 !(val in self._history._expand)
             ){
                 var ProofSUBKEY = u.ProofSUBKEY;
-                // Likely to converge faster than the following code //
+                if(
+                    (u.source in self._rhsCallGraph)
+                    || (Expand_Flag && u.ProofSUBKEY.subkeyFOUND(self._rhsSUBKEY))){
+                    await self._updateSubkey(u,"Expand");
+                    self._history._expand[val]=true;
+                }
+                // Likely to converge faster than deep rewrites //
+                /*
                 if(
                     (u.source in self._rhsCallGraph)
                     && !u._DeepRewritesEnabled_Flag){
@@ -122,6 +139,7 @@ function _AXIOM_(){
                     await self._updateSubkey(u,"Expand");
                     self._history._expand[val]=true;
                 }
+                */
             } // if(!(val in self._history._expand)) //
         } // if(u.source && ... && !g_SOLVED) //
     }

@@ -53,7 +53,9 @@ Object.prototype.mylog = function(){
 }
 Object.prototype.clear=function(){
     var self=this
-    self.innerHTML = self.innerText = self.textBuffer=""
+    self.innerHTML = "";
+    self.innerText = "";
+    self.textBuffer="";
 }
 Object.prototype.show=function(){
     var self=this
@@ -120,6 +122,7 @@ Object.prototype.startsWith = function(re){
 }
 Object.prototype.empty = function(){
   this.length = 0
+  this._init = false;
 }
 Object.prototype.forEach = function(cb){
     var self=this

@@ -7,12 +7,13 @@
 
   VERSION
       Major.Minor.Bugfix.Patch
-      11.0.0.2
+      11.0.0.3
 
   DESCRIPTION
     Theorem prover written in HTML and JavaScript (An E-normalization to normal form, term-rewriting system)
 
   UPDATED
+    +Added reset functionality to solutionEditor et. al.
     +Negative proof assertions ~=
     +_AXIOM_.optimizeCallGraph
     +Improved ProofComplete search performance
