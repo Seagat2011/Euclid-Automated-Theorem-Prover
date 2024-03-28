@@ -105,16 +105,6 @@ function Solve(INDIR){
             ProofSUBKEY:g_code.Theorem.lemma.asPrimaryKey(),
             },g_origin);
         console.clear();
-        if(!g_SOLVED){
-          postMessage({
-              source:"axiomROOT",
-              Proof:g_code.Theorem.lemma,
-              indir:INDIR,
-              _deepRewritesEnabled_Flag:true,
-              ProofSUBKEY:g_code.Theorem.lemma.asPrimaryKey(),
-              },g_origin);
-          console.clear();
-        }
     } catch(e) {
        solutionEditor.innerText=[`Error: ${e.message}...`,e.stack.replace(/@/g,' >> ')].join('\n\n') 
     }
