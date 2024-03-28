@@ -9,6 +9,26 @@ TEST CASE [PASS]
 Prove 2 + 2 + 2 = 4 + 2
 
 TEST CASE [PASS]
+4 + 2 = 5 + 1
+2 + 2 = 4
+Prove 2 + 4 = 4 + 2
+
+TEST CASE [PASS]
+4 + 2 = 5 + 1 = 6
+2 + 2 = 4
+Prove 2 + 4 = 4 + 2
+
+TEST CASE [PASS]
+4 + 2 = 5 + 1 = 6
+2 + 2 = 4
+Prove 2 + 4 = 6
+
+TEST CASE [PASS]
+4 + 2 = 5 + 1 = 6
+2 + 2 = 4
+Prove 2 + 2 + 2 = 6
+
+TEST CASE [PASS]
 1 + 1 = 2
 1 + 2 = 3
 Prove 1 + 2 + 1 = 3 + 1
