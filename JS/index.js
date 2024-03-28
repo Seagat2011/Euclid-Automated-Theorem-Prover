@@ -7,7 +7,7 @@
 
   VERSION
       Major.Minor.Bugfix.Patch
-      11.0.0.0
+      11.0.0.2
 
   DESCRIPTION
     Theorem prover written in HTML and JavaScript (An E-normalization to normal form, term-rewriting system)
@@ -48,7 +48,8 @@
     Chrome 53+
 
 */
-
+const dispatchProofstepEvent = new CustomEvent('dispatchProofstep');
+var g_global_message_queue = [];
 var g_global_rewrite_cache = { 
       _lhs:{}
     , _rhs:{}

@@ -9,12 +9,14 @@
 
     VERSION:
     Major.Minor.Release.Build
-    0.0.0.18
+    0.0.0.20
 
     DESCRIPTION:
     Main (math) interface to Euclid and its proof components
 
     UPDATED
+    +Improved stability and responsiveness during proof search
+    +Step enabled proofs
     +FastForward Support (ie. Proofstep caching) to improve rewrite performance
     +Improved ProofComplete search performance
     +_AXIOM_.optimizeCallGraph
@@ -31,7 +33,7 @@
     Substitution methods:
     1. (direct) AXIOMATIC: 1 + 1 = 2
     2. (indirect) LEMMA SUBSTITUTION: 1 <== 1/1
-    Lemma substitutions rewrite axioms -- which can introduce recursion, stack overflow, and other bugs
+    Please note: Lemma substitutions rewrite axioms -- which can introduce recursion, stack overflow, and other bugs
 
     SCRIPT TYPE:
     Euclid Tool
@@ -159,32 +161,76 @@ function _AXIOM_(){
             ? self._lhsSUBKEY
             : self._rhsSUBKEY ;
         (ProofSUBKEY = ProofSUBKEY.subkeyUPDATE(removeSubkey,insertSubkey));
+        
+        if(flags.match(/Step/)) {
+            let idx = 0; // Manually track the index
+            let lastFoundIndex = -1; // Track the last index where a token was found, initialize with -1 for none
+            for (let tok of tmp) {
+                if (tok == "=" && !COMPOUND) {
+                    jdx = 0; // Reset on encountering "=" if not in a compound expression
+                    lastFoundIndex = -1; // Reset last found index
+                }
+                if (self._scope_satisfied(tok, tmp, idx, from, jdx)) {
+                    // Ensure contiguity by comparing current index with lastFoundIndex (should be consecutive unless it's the first find)
+                    if (lastFoundIndex === -1 || lastFoundIndex === idx - 1) {
+                        vkeys.push(idx);
+                        lastFoundIndex = idx; // Update lastFoundIndex to current
+                        if (++jdx == from.length) {
+                            self._subnetFOUND = true;
+                            for (let [ii, kdx] of vkeys.entries()) { // Use entries() to get both index and value
+                                tmpHTML.pre[kdx] += self._id.addTAG("sub");
+                                tmpHTML.post[kdx] = null;
+                                tmpHTMLR.post[kdx] = null;
+                                Proof[kdx] = null;
+                                if (ii == 0) {
+                                    tmpHTML.post[kdx] = to.map((atok) => atok + self._id.addTAG("sub")).join(" ");
+                                    tmpHTMLR.post[kdx] = to.join(' ');
+                                    Proof[kdx] = to.join(" ");
+                                }
+                            }
+                            //jdx = 0;
+                            //vkeys = [];
+                            //lastFoundIndex = -1; // Reset for the next search
+                            break;
+                        }
+                    } else {
+                        // Reset if tokens are not contiguous
+                        jdx = 0;
+                        vkeys = [];
+                        lastFoundIndex = -1;
+                    }
+                }
+                idx++; // Manually increment the index
+            } // end for (let tok of tmp)
 
-        tmp.map((tok,idx,me)=>{
-             if((tok == "=") && !COMPOUND){
-                 jdx=0;
-             }
-             if(self._scope_satisfied(tok,me,idx,from,jdx)){
-                 vkeys.push(idx)
-                 if(++jdx==from.length){
-                     self._subnetFOUND = true
-                     vkeys.map((kdx,ii)=>{
-                         tmpHTML.pre[kdx] += self._id.addTAG("sub")
-                         tmpHTML.post[kdx] = null
-                         tmpHTMLR.post[kdx] = null
-                         Proof[kdx] = null
-                         if(ii==0){
-                             tmpHTML.post[kdx] = to.map((atok)=>{ return (atok + self._id.addTAG("sub")) }).join(" ")
-                             tmpHTMLR.post[kdx] = to.join(' ')
-                             Proof[kdx] = to.join(" ")
-                         }
-                     })
+        } else { // Step == false //
+
+            tmp.map((tok,idx,me)=>{
+                 if((tok == "=") && !COMPOUND){
                      jdx=0;
-                     vkeys = [];
                  }
-             }
-             return tok;
-         });
+                 if(self._scope_satisfied(tok,me,idx,from,jdx)){
+                     vkeys.push(idx)
+                     if(++jdx==from.length){
+                         self._subnetFOUND = true
+                         vkeys.map((kdx,ii)=>{
+                             tmpHTML.pre[kdx] += self._id.addTAG("sub")
+                             tmpHTML.post[kdx] = null
+                             tmpHTMLR.post[kdx] = null
+                             Proof[kdx] = null
+                             if(ii==0){
+                                 tmpHTML.post[kdx] = to.map((atok)=>{ return (atok + self._id.addTAG("sub")) }).join(" ")
+                                 tmpHTMLR.post[kdx] = to.join(' ')
+                                 Proof[kdx] = to.join(" ")
+                             }
+                         })
+                         jdx=0;
+                         vkeys = [];
+                     }
+                 }
+                 return tok;
+             });
+        }
 
         const currentSUBNET = expandingIndir_Flag
             ? "_lhs"
@@ -317,7 +363,8 @@ function _AXIOM_(){
                  if(
                      flags.match(/Auto|Optimal/)
                  ){
-                     postMessage({
+                     //postMessage({
+                    g_global_message_queue.push({
                          source:self._guid,
                          Proof:P,
                          indir:'Expand',
@@ -327,8 +374,12 @@ function _AXIOM_(){
                          _flags:flags,
                          _deepRewritesEnabled_Flag: DeepRewritesEnabled_Flag,
                          ProofSUBKEY:ProofSUBKEY,
-                         },g_origin);
-                     postMessage({
+                         });//),g_origin);
+                         
+                    dispatchEvent(dispatchProofstepEvent);
+
+                     //postMessage({
+                    g_global_message_queue.push({
                          source:self._guid,
                          Proof:P,
                          indir:'Reduce',
@@ -338,9 +389,12 @@ function _AXIOM_(){
                          _flags:flags,
                          _deepRewritesEnabled_Flag:DeepRewritesEnabled_Flag,
                          ProofSUBKEY:ProofSUBKEY,
-                         },g_origin);
+                         });//,g_origin);
+                         
+                    dispatchEvent(dispatchProofstepEvent);
                  } else {
-                     postMessage({
+                     //postMessage({
+                    g_global_message_queue.push({
                          source:self._guid,
                          Proof:P,
                          indir:flags,
@@ -348,7 +402,8 @@ function _AXIOM_(){
                          _stack:stack,
                          _stackR:stackR,
                          ProofSUBKEY:ProofSUBKEY,
-                         },g_origin);
+                         });//,g_origin);
+                    dispatchEvent(dispatchProofstepEvent);
                  }
              }
          } else { // self._subnetFOUND == false //
@@ -394,6 +449,15 @@ function _AXIOM_(){
         } // test(etok) //
         return sat
     }
-  addEventListener("message",self._reduce)
-  addEventListener("message",self._expand)
+    self._dispatch_message = async function(u){
+        if(!g_SOLVED && g_global_message_queue.length){
+            const msg = g_global_message_queue.shift();
+            postMessage(msg,g_origin);
+        } else if(g_SOLVED){
+            g_global_message_queue = [];
+        }
+    }
+    addEventListener("message",self._reduce)
+    addEventListener("message",self._expand)
+    addEventListener("dispatchProofstep",self._dispatch_message)
 }
