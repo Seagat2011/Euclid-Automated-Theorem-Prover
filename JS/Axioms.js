@@ -86,20 +86,6 @@ function _AXIOM_(){
                     await self._updateSubkey(u,"Reduce");
                     self._history._reduce[val]=true;
                 }
-                /*
-                // Likely to converge faster than deep rewrites //
-                if(
-                    (u.source in self._lhsCallGraph)
-                    && !u._DeepRewritesEnabled_Flag){
-                    await self._updateSubkey(u,"Reduce");
-                    self._history._reduce[val]=true;
-                } else if(
-                    u._DeepRewritesEnabled_Flag 
-                    && u.ProofSUBKEY.subkeyFOUND(self._lhsSUBKEY)){
-                    await self._updateSubkey(u,"Reduce");
-                    self._history._reduce[val]=true;
-                }
-                */
             } // if(!(val in self._history._reduce)) //
         } // if(u.source && ... && !g_SOLVED) //
     }
@@ -120,26 +106,15 @@ function _AXIOM_(){
                 !(val in self._history._expand)
             ){
                 var ProofSUBKEY = u.ProofSUBKEY;
+                const deepRewrites_Flag = (Expand_Flag 
+                    && u.ProofSUBKEY.subkeyFOUND(self._rhsSUBKEY));
                 if(
                     (u.source in self._rhsCallGraph)
-                    || (Expand_Flag && u.ProofSUBKEY.subkeyFOUND(self._rhsSUBKEY))){
+                    || (deepRewrites_Flag)){
                     await self._updateSubkey(u,"Expand");
                     self._history._expand[val]=true;
                 }
                 // Likely to converge faster than deep rewrites //
-                /*
-                if(
-                    (u.source in self._rhsCallGraph)
-                    && !u._DeepRewritesEnabled_Flag){
-                    await self._updateSubkey(u,"Expand");
-                    self._history._expand[val]=true;
-                } else if(
-                    u._DeepRewritesEnabled_Flag 
-                    && u.ProofSUBKEY.subkeyFOUND(self._rhsSUBKEY)){
-                    await self._updateSubkey(u,"Expand");
-                    self._history._expand[val]=true;
-                }
-                */
             } // if(!(val in self._history._expand)) //
         } // if(u.source && ... && !g_SOLVED) //
     }
