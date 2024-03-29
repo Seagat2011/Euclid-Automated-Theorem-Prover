@@ -80,9 +80,13 @@ function _AXIOM_(){
                 !(val in self._history._reduce)
             ){
                 var ProofSUBKEY = u.ProofSUBKEY;
+                const shallowRewrite_Flag = (u.source in self._lhsCallGraph);
+                const deepRewrite_Flag = Reduce_Flag 
+                    && u.ProofSUBKEY.subkeyFOUND(self._lhsSUBKEY)
+
                 if(
-                    (u.source in self._lhsCallGraph)
-                    || (Reduce_Flag && u.ProofSUBKEY.subkeyFOUND(self._lhsSUBKEY))){
+                    (shallowRewrite_Flag)
+                    || (deepRewrite_Flag)){
                     await self._updateSubkey(u,"Reduce");
                     self._history._reduce[val]=true;
                 }
@@ -106,15 +110,16 @@ function _AXIOM_(){
                 !(val in self._history._expand)
             ){
                 var ProofSUBKEY = u.ProofSUBKEY;
-                const deepRewrites_Flag = (Expand_Flag 
-                    && u.ProofSUBKEY.subkeyFOUND(self._rhsSUBKEY));
+                const shallowRewrite_Flag = (u.source in self._rhsCallGraph);
+                const deepRewrite_Flag = Expand_Flag 
+                    && u.ProofSUBKEY.subkeyFOUND(self._rhsSUBKEY);
+
                 if(
-                    (u.source in self._rhsCallGraph)
-                    || (deepRewrites_Flag)){
+                    (shallowRewrite_Flag)
+                    || (deepRewrite_Flag)){
                     await self._updateSubkey(u,"Expand");
                     self._history._expand[val]=true;
                 }
-                // Likely to converge faster than deep rewrites //
             } // if(!(val in self._history._expand)) //
         } // if(u.source && ... && !g_SOLVED) //
     }
