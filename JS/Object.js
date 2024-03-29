@@ -329,7 +329,7 @@ Object.prototype._rhsCallQueueEMPTY = function(){
 Object.prototype.toFactorial = function() {
     let self = this;
 
-    let n = self.length;
+    let n = BigInt(self);
     const one = BigInt(1);
     let result = BigInt(1);
 

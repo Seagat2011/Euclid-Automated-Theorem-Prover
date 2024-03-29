@@ -9,12 +9,13 @@
 
     VERSION:
     Major.Minor.Release.Build
-    0.0.3.21
+    0.0.3.22
 
     DESCRIPTION:
     Main (math) interface to Euclid and its proof components
 
     UPDATED
+    +Restrict total rewrites to an upper bound
     -Fixed lhs rewrite bug
     -Fixed postMessage dual post bug
     +Improved stability and responsiveness during proof search
@@ -127,6 +128,7 @@ function _AXIOM_(){
         self._subnetFOUND = false;
         const expandingIndir_Flag = /Expand/i.test(indirection);
         const DeepRewritesEnabled_Flag = u._DeepRewritesEnabled_Flag;
+
         var ProofSUBKEY = u.ProofSUBKEY;
         var tmp = [...u.Proof]
         var Proof = [...u.Proof]
@@ -203,7 +205,7 @@ function _AXIOM_(){
                         lastFoundIndex = -1;
                     }
                 }
-                idx++; // Manually increment the index
+                ++idx; // Manually increment the index
             } // end for (let tok of tmp)
 
         } else { // Step == false //
@@ -243,9 +245,9 @@ function _AXIOM_(){
             ? "_rhs"
             : "_lhs" ;
         
-        const _pre = tmpHTML.pre;//.collapseEmptyCells();
-        const _post = tmpHTML.post;//.collapseEmptyCells();
-        const _postR = tmpHTMLR.post;//.collapseEmptyCells();
+        const _pre = tmpHTML.pre;
+        const _post = tmpHTML.post;
+        const _postR = tmpHTMLR.post;
 
         const Current_ProofSUBKEY = expandingIndir_Flag ? _pre.getLHS().asPrimaryKey() : _pre.getRHS().asPrimaryKey() ;
         
@@ -273,7 +275,7 @@ function _AXIOM_(){
         const CurrentSubnetKeyExists_Flag = (Current_ProofSUBKEY in g_global_rewrite_cache[currentSUBNET]); // true //
 
         let ProofFound_Flag = false;
-
+        
         if(
             CurrentSubnetKeyExists_Flag
             && OppositeSubnetKeyExists_Flag){
@@ -284,7 +286,7 @@ function _AXIOM_(){
             }
 
         }
-
+        
         if(ProofFound_Flag){
             const ret1 = g_global_rewrite_cache._lhs[Current_ProofSUBKEY];
             const ret2 = g_global_rewrite_cache._rhs[Current_ProofSUBKEY];
