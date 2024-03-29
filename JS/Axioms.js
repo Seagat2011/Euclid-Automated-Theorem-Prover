@@ -15,6 +15,7 @@
     Main (math) interface to Euclid and its proof components
 
     UPDATED
+    -Deprecated experimental deep rewrites (for now)
     +Restrict total rewrites to an upper bound
     -Fixed lhs rewrite bug
     -Fixed postMessage dual post bug
