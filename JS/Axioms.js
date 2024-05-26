@@ -15,10 +15,11 @@
     Main (math) interface to Euclid and its proof components
 
     UPDATED
+    +Fixed (Strict) University proofstep bug
     -Deprecated experimental deep rewrites (for now)
     +Restrict total rewrites to an upper bound
     -Fixed lhs rewrite bug
-    -Fixed postMessage dual post bug
+    -Fixed postMessage dual postMsg bug
     +Improved stability and responsiveness during proof search
     +Added (Strict) Step-enabled University proofs
     +FastForward Support (ie. Proofstep caching) to improve rewrite performance
@@ -166,78 +167,53 @@ function _AXIOM_(){
             ? self._lhsSUBKEY
             : self._rhsSUBKEY ;
         (ProofSUBKEY = ProofSUBKEY.subkeyUPDATE(fromSubkey,toSubkey));
-        
-        if(flags.match(/Step/)) {
-            let idx = 0; // Manually track the index
-            let lastFoundIndex = -1; // Track the last index where a token was found, initialize with -1 for none
-            for (let tok of tmp) {
-                if (tok == "=" && !COMPOUND) {
-                    jdx = 0; // Reset on encountering "=" if not in a compound expression
-                    vkeys = [];
-                    lastFoundIndex = -1; // Reset last found index
-                }
-                if (self._scope_satisfied(tok, tmp, idx, from, jdx)) {
-                    // Ensure contiguity by comparing current index with lastFoundIndex (should be consecutive unless it's the first find)
-                    if (lastFoundIndex === -1 || lastFoundIndex === idx - 1) {
-                        vkeys.push(idx);
-                        lastFoundIndex = idx; // Update lastFoundIndex to current
-                        if (++jdx == from.length) {
-                            self._subnetFOUND = true;
-                            for (let [ii, kdx] of vkeys.entries()) { // Use entries() to get both index and value
-                                tmpHTML.pre[kdx] += self._id.addTAG("sub");
-                                tmpHTML.post[kdx] = null;
-                                tmpHTMLR.post[kdx] = null;
-                                Proof[kdx] = null;
-                                if (ii == 0) {
-                                    tmpHTML.post[kdx] = to.map((atok) => atok + self._id.addTAG("sub")).join(" ");
-                                    tmpHTMLR.post[kdx] = to.join(' ');
-                                    Proof[kdx] = to.join(" ");
-                                }
-                            }
-                            jdx = 0;
-                            vkeys = [];
-                            lastFoundIndex = -1; // Reset for the next search
-                            //break;
-                        }
-                    } else {
-                        // Reset if tokens are not contiguous
-                        jdx = 0;
-                        vkeys = [];
-                        lastFoundIndex = -1;
+
+        const singleStepRewrite = flags.match(/Step/);
+
+        let rewriteCount = false;
+
+        tmp.map((tok,idx,me)=>{
+
+            if((tok == "=") && !COMPOUND){
+                jdx=0;
+                vkeys = [];
+            }
+
+            if(self._scope_satisfied(tok,me,idx,from,jdx)){
+                vkeys.push(idx)
+                if(++jdx==from.length){
+                    if(singleStepRewrite && rewriteCount){
+                        const P_temp = Proof.collapseEmptyCells();
+                        const P_post = tmpHTMLR.post.collapseEmptyCells();
+                        
+                        const QED_phrase = P_temp.join(" ");
+                        const QED_phraseR = P_post.join(" ");
+                        stack.push(tmpHTML.pre.join(" "));
+                        
+                        stack.push(QED_phrase);
+                        stackR.push(QED_phraseR);
                     }
+                    self._subnetFOUND = true
+                    vkeys.map((kdx,ii)=>{
+                        tmpHTML.pre[kdx] += self._id.addTAG("sub")
+                        tmpHTML.post[kdx] = null
+                        tmpHTMLR.post[kdx] = null
+                        Proof[kdx] = null
+                        if(ii==0){
+                            tmpHTML.post[kdx] = to.map((atok)=>{ return (atok + self._id.addTAG("sub")) }).join(" ")
+                            tmpHTMLR.post[kdx] = to.join(' ')
+                            Proof[kdx] = to.join(" ")
+                        }
+                    })
+                    jdx=0;
+                    vkeys = [];
+                    rewriteCount = true;
                 }
-                ++idx; // Manually increment the index
-            } // end for (let tok of tmp)
+            }
 
-        } else { // Step == false //
+            return tok;
 
-            tmp.map((tok,idx,me)=>{
-                 if((tok == "=") && !COMPOUND){
-                     jdx=0;
-                     vkeys = [];
-                 }
-                 if(self._scope_satisfied(tok,me,idx,from,jdx)){
-                     vkeys.push(idx)
-                     if(++jdx==from.length){
-                         self._subnetFOUND = true
-                         vkeys.map((kdx,ii)=>{
-                             tmpHTML.pre[kdx] += self._id.addTAG("sub")
-                             tmpHTML.post[kdx] = null
-                             tmpHTMLR.post[kdx] = null
-                             Proof[kdx] = null
-                             if(ii==0){
-                                 tmpHTML.post[kdx] = to.map((atok)=>{ return (atok + self._id.addTAG("sub")) }).join(" ")
-                                 tmpHTMLR.post[kdx] = to.join(' ')
-                                 Proof[kdx] = to.join(" ")
-                             }
-                         })
-                         jdx=0;
-                         vkeys = [];
-                     }
-                 }
-                 return tok;
-             });
-        }
+        });
 
         const currentSUBNET = expandingIndir_Flag
             ? "_lhs"
