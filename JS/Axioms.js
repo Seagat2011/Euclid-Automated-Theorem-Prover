@@ -9,7 +9,7 @@
 
     VERSION:
     Major.Minor.Release.Build
-    0.0.3.22
+    0.0.4.22
 
     DESCRIPTION:
     Main (math) interface to Euclid and its proof components
