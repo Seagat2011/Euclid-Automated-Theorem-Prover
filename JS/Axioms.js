@@ -183,15 +183,13 @@ function _AXIOM_(){
                 vkeys.push(idx)
                 if(++jdx==from.length){
                     if(singleStepRewrite && rewriteCount){
-                        const P_temp = Proof.collapseEmptyCells();
                         const P_post = tmpHTMLR.post.collapseEmptyCells();
                         
-                        const QED_phrase = P_temp.join(" ");
                         const QED_phraseR = P_post.join(" ");
-                        stack.push(tmpHTML.pre.join(" "));
                         
-                        stack.push(QED_phrase);
                         stackR.push(QED_phraseR);
+                    } else if(singleStepRewrite) {
+                        rewriteCount = true;
                     }
                     self._subnetFOUND = true
                     vkeys.map((kdx,ii)=>{
@@ -207,7 +205,6 @@ function _AXIOM_(){
                     })
                     jdx=0;
                     vkeys = [];
-                    rewriteCount = true;
                 }
             }
 
