@@ -9,13 +9,14 @@
 
     VERSION:
     Major.Minor.Release.Build
-    0.0.4.22
+    0.0.4.23
 
     DESCRIPTION:
     Main (math) interface to Euclid and its proof components
 
     UPDATED
     +Fixed (Strict) University proofstep bug
+    +Temporarily Patched (Strict) University proofstep bug
     -Deprecated experimental deep rewrites (for now)
     +Restrict total rewrites to an upper bound
     -Fixed lhs rewrite bug
@@ -168,9 +169,8 @@ function _AXIOM_(){
             : self._rhsSUBKEY ;
         (ProofSUBKEY = ProofSUBKEY.subkeyUPDATE(fromSubkey,toSubkey));
 
-        const singleStepRewrite = flags.match(/Step/);
-
         let rewriteCount = false;
+        const singleStepRewrite = flags.match(/Step/);
 
         tmp.map((tok,idx,me)=>{
 
@@ -185,11 +185,21 @@ function _AXIOM_(){
                     if(singleStepRewrite && rewriteCount){
                         const P_post = tmpHTMLR.post.collapseEmptyCells();
                         
+                        // Push rewrites //
                         const QED_phraseR = P_post.join(" ");
-                        
+                        stack.push( tmpHTML.pre.collapseEmptyCells().join(" ") );
+                        stack.push( tmpHTML.post.collapseEmptyCells().join(" ") );
+                        stack.push( Proof.collapseEmptyCells().join(" ") );
+
                         stackR.push(QED_phraseR);
+                        // Advance the rewrite step //
+                        tmpHTML.post = [...Proof];
+                        tmpHTML.pre = [...Proof];
+                        // tmpHTML.post; //
                     } else if(singleStepRewrite) {
                         rewriteCount = true;
+                        // Push last rewrite //
+                        stack.push( Proof.collapseEmptyCells().join(" ") );
                     }
                     self._subnetFOUND = true
                     vkeys.map((kdx,ii)=>{
