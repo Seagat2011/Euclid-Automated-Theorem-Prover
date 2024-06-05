@@ -10,12 +10,13 @@
 
     VERSION
     Major.Minor.Bugfix.Patch
-    1.0.2.5
+    1.0.2.6
 
     DESCRIPTION
     Properties file
 
     UPDATED
+    -Fixed u==null PrimaryKey calc bug
     -Fixed non-unique Axiom uuid bug
     -Fixed Axiom assignment bug
 
@@ -539,8 +540,10 @@ Object.prototype.asPrimaryKey=function(){
         N=PRIMARYKEY[y]
     } else {
         x.map((u,i,me)=>{
-            var w = !(PRIMARYKEY[u]) ? PRIMARYKEY[u]=u.nextPrime() : PRIMARYKEY[u] ;
-            N*=w
+            if(u){
+                var w = !(PRIMARYKEY[u]) ? PRIMARYKEY[u]=u.nextPrime() : PRIMARYKEY[u] ;
+                N*=w
+            }
         });
         PRIMARYKEY[y]=N
     }
