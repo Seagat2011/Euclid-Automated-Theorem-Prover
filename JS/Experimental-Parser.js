@@ -19,7 +19,7 @@
     Add FastForward support
 
     TODO
-    Add async support    
+    Add async support
 
     STYLEGUIDE:
     http://google-styleguide.googlecode.com/svn/trunk/javascriptguide.xml
@@ -107,16 +107,16 @@ function replaceBitfieldsInProofStepBigEndian ({
     let toOffsetBitsRemainingZ = toResolutionZ;
 
     // ensure read/write masks are properly aligned
-    while (bitsRemainingZ > maskSizeZ 
-        || fromOffsetBitsRemainingZ > maskSizeZ 
+    while (bitsRemainingZ > maskSizeZ
+        || fromOffsetBitsRemainingZ > maskSizeZ
         || toOffsetBitsRemainingZ > maskSizeZ) {
-    
+
         if (bitsRemainingZ > maskSizeZ)
             bitsRemainingZ -= maskSizeZ;
-    
+
         if (fromOffsetBitsRemainingZ > maskSizeZ)
             fromOffsetBitsRemainingZ -= maskSizeZ;
-    
+
         if (toOffsetBitsRemainingZ > maskSizeZ)
             toOffsetBitsRemainingZ -= maskSizeZ;
     }
@@ -141,7 +141,7 @@ function replaceBitfieldsInProofStepBigEndian ({
                 const intermediateOffsetZ = ii;
 
                 const intermediateOffsetMaskZ = (1n << intermediateOffsetZ) - 1n;
-                
+
                 const intermediateRewriteZ = (resultZ << intermediateOffsetZ) | (proofStepZ & intermediateOffsetMaskZ);
 
                 if (lastPushedValue !== intermediateRewriteZ) {
@@ -152,10 +152,10 @@ function replaceBitfieldsInProofStepBigEndian ({
                 if (!fullRewriteFoundFlag) {
                     if (firstRewriteOnlyFlag)
                         return ret;
-                    
+
                     fullRewriteFoundFlag = true;
                 }
-                
+
             }
         } else if (nonMatchSubnetLengthsFlag) {
             resultZ = (resultZ << maskSizeZ) | chunk;
@@ -173,15 +173,15 @@ function replaceBitfieldsInProofStepBigEndian ({
     return ret;
 } // end replaceBitfieldsInProofStepBigEndian
 
-function initCallGraphs ({ 
+function initCallGraphs ({
         axioms1C
         , resultObj
         , stackA }) {
 
-    if (isNotEmpty({ targ:resultObj })) {
+    if (isNotEmpty ({ targ:resultObj })) {
         const axioms2C = resultObj.axioms2C;
         const _resultObj = resultObj.resultObj;
-        
+
         const retArray = [
             _resultObj._lhsExpand
             , _resultObj._lhsReduce
@@ -190,7 +190,7 @@ function initCallGraphs ({
         ]
         .forEach ((valueA, indexZ, thisArrayA) => {
             if (valueA.length) {
-                switch(indexZ) {
+                switch (indexZ) {
                     case 0: axioms1C._lhsExpandCallGraph[axioms2C.guidZ] = true; break;
                     case 1: axioms1C._lhsReduceCallGraph[axioms2C.guidZ] = true; break;
                     case 2: axioms1C._rhsExpandCallGraph[axioms2C.guidZ] = true; break;
@@ -201,27 +201,44 @@ function initCallGraphs ({
     }
 } // end initCallGraphs
 
-function rewriteProofstepF ({ 
-        axioms1C
-        , resultObj
-        , stackA }) {
+function rewriteProofstepF({
+    axioms1C,
+    resultObj: { axioms2C, _resultObj } = {},
+    stackA
+}) {
+    if (_resultObj == null) return;
 
-    const axioms2C = resultObj.axioms2C;
-    const _resultObj = resultObj.resultObj;
-    
-    const retArray = [
-        _resultObj._lhsExpand
-        , _resultObj._lhsReduce
-        , _resultObj._rhsExpand
-        , _resultObj._rhsReduce
-    ]
-    .map ((valueA, indexZ, thisArrayA) => {
-        if (valueA) {
-            return true;
+    const operations = [
+        { isLHS: true, isExpand: true, values: _resultObj._lhsExpand },
+        { isLHS: true, isExpand: false, values: _resultObj._lhsReduce },
+        { isLHS: false, isExpand: true, values: _resultObj._rhsExpand },
+        { isLHS: false, isExpand: false, values: _resultObj._rhsReduce }
+    ];
+
+    const resultsA = operations.map(({ isLHS, isExpand, values }) => {
+        if (!values?.length) return false;
+
+        let currentProofChain = [...stackA];
+        for (let valueZ of values) {
+            let proofStep = new ProofStepObjectClass();
+
+            proofStep.guidZ = axioms2C.guidZ;
+            proofStep[isLHS ? 'lhsZ' : 'rhsZ'] = valueZ;
+            proofStep[isLHS ? 'rhsZ' : 'lhsZ'] = isLHS ? axioms2C.rhsZ : axioms2C.lhsZ;
+            proofStep.rewriteOpcodeZ = rewriteOpcodesO[`_${isLHS ? 'lhs' : 'rhs'}${isExpand ? 'Expand' : 'Reduce'}`];
+
+            const proofFound = (proofStep.lhsZ === proofStep.rhsZ);
+            currentProofChain.push(proofStep);
+
+            rewriteQueue.push(currentProofChain);
+
+            if (proofFound) return [...currentProofChain];
         }
+
+        return false;
     });
 
-    [ lhsExpandProofFoundFlag, lhsReduceProofFoundFlag, rhsExpandProofFoundFlag, rhsReduceProofFoundFlag ] = retArray;
+    [ lhsExpandProofFoundFlag, lhsReduceProofFoundFlag, rhsExpandProofFoundFlag, rhsReduceProofFoundFlag ] = resultsA;
 
 } // end rewriteProofstepF
 
@@ -235,46 +252,46 @@ function compareAxioms ({
     if (axioms1C.guidZ === axioms2C.guidZ)
         return {};
 
-    let resultObj = { 
+    let resultObj = {
         _lhsExpand: false
         , _lhsReduce: false
         , _rhsExpand: false
         , _rhsReduce: false
     };
 
-    resultObj._lhsExpand = replaceBitfieldsInProofStepBigEndian ({ 
+    resultObj._lhsExpand = replaceBitfieldsInProofStepBigEndian ({
         proofStepZ: axioms1C.lhsZ
         , maskSizeZ: maskSizeZ
         , fromZ: axioms2C.rhsZ
         , toZ: axioms2C.lhsZ
         , firstRewriteOnlyFlag: firstRewriteOnlyFlag })
 
-    , resultObj._lhsReduce = replaceBitfieldsInProofStepBigEndian ({ 
+    , resultObj._lhsReduce = replaceBitfieldsInProofStepBigEndian ({
         proofStepZ: axioms1C.lhsZ
         , maskSizeZ: maskSizeZ
         , fromZ: axioms2C.lhsZ
         , toZ: axioms2C.rhsZ
         , firstRewriteOnlyFlag: firstRewriteOnlyFlag })
 
-    , resultObj._rhsExpand = replaceBitfieldsInProofStepBigEndian ({ 
+    , resultObj._rhsExpand = replaceBitfieldsInProofStepBigEndian ({
         proofStepZ: axioms1C.rhsZ
         , maskSizeZ: maskSizeZ
         , fromZ: axioms2C.rhsZ
         , toZ: axioms2C.lhsZ
         , firstRewriteOnlyFlag: firstRewriteOnlyFlag })
 
-    , resultObj._rhsReduce = replaceBitfieldsInProofStepBigEndian ({ 
+    , resultObj._rhsReduce = replaceBitfieldsInProofStepBigEndian ({
         proofStepZ: axioms1C.lhsZ
         , maskSizeZ: maskSizeZ
         , fromZ: axioms2C.rhsZ
         , toZ: axioms2C.lhsZ
         , firstRewriteOnlyFlag: firstRewriteOnlyFlag })
-                
+
     return { axioms2C, resultObj };
 
 } // end compareAxioms
 
-function processAxioms ({ 
+function processAxioms ({
         axiomsA
         , maskSizeZ
         , firstRewriteOnlyFlag = false
@@ -283,7 +300,7 @@ function processAxioms ({
 
     axiomsA.forEach (axioms1C => {
         AxiomsArray
-        .map (axioms2C => 
+        .map (axioms2C =>
             compareAxioms ({
                 axioms1C: axioms1C
                 , axioms2C: axioms2C
@@ -291,7 +308,7 @@ function processAxioms ({
                 , firstRewriteOnlyFlag: firstRewriteOnlyFlag
             })
         )
-        .forEach (result => cb ({ 
+        .forEach (result => cb ({
             axioms1C: axioms1C
             , resultObj: result
             , stackA: stackA
@@ -301,7 +318,7 @@ function processAxioms ({
 } // end processAxioms
 
 function _resolutionOf ({ valueZ }) {
-    const I = BigInt(valueZ.toString(2).length);
+    const I = BigInt (valueZ.toString (2).length);
 
     return I;
 } // end _resolutionOf
@@ -317,10 +334,16 @@ function _lastElementOf ({ valueA }) {
     return ret;
 } // end _lastElementOf
 
-function isNotEmpty({ targ }) {
-    const resultFlag = Object.keys(targ).length > 0;
+function isNotEmpty ({ targ }) {
+    const resultFlag = Object.keys (targ).length > 0;
 
     return resultFlag;
+} // end isNotEmpty
+
+function isEmpty ({ targ }) {
+    const resultFlag = isNotEmpty ({ targ: targ });
+
+    return !resultFlag;
 } // end isNotEmpty
 
 class AxiomClass extends Object {
@@ -352,7 +375,7 @@ class CloneableObjectClass {
     constructor (objectToClone = {}) {
       return this.cloneObject (objectToClone);
     }
-  
+
     cloneObject (obj) {
         const cloneDeep = (value) => {
             if (typeof value !== 'object' || value === null) {
@@ -371,7 +394,7 @@ class CloneableObjectClass {
                 Object.entries (value).map (([key, val]) => [key, cloneDeep (val)])
             ));
         };
-    
+
         if (Array.isArray (obj)) {
             const clonedArray = obj.map (cloneDeep);
 
@@ -416,41 +439,41 @@ function initAxiomsArrayF ({ proofStatementsA = [] }) {
     });
 } // end initAxiomsArrayF
 
-function initAxiomCallGraphs ({ 
+function initAxiomCallGraphs ({
         axiomsA
         , maskSizeZ
         , firstRewriteOnlyFlag = true
         , stackA = []
         , cb = null }) {
-    
+
     const I = AxiomsArray.length;
     const II = AxiomsArray.length * 2 - 1;
 
     for (let i = 0; i < II; ++i){
         const ii = (i < I ? i : I - i%I - 2) ;
-        processAxioms ({ 
+        processAxioms ({
             axiomsA: [AxiomsArray[ii]]
             , maskSizeZ: maskSizeZ
             , firstRewriteOnlyFlag: firstRewriteOnlyFlag
             , stackA: stackA
             , cb: cb });
     }
-    
+
 } // end initAxiomCallGraphs
 
 function main () {
-    
+
     AxiomsArray = initAxiomsArrayF ({ proofStatementsA: ProofStatementsA });
-    
-    initAxiomCallGraphs ({ 
+
+    initAxiomCallGraphs ({
         axiomsA: AxiomsArray
         , maskSizeZ: maskSizeZ
         , firstRewriteOnlyFlag: true
         , stackA: []
         , cb: initCallGraphs });
-    
+
     const theoremA = AxiomsArray.pop (); // Theorem is the last element!
-    
+
     rewriteQueue.push ([theoremA]);
 
     const startTimeZ = performance.now ();
@@ -473,7 +496,7 @@ function main () {
 
         if (fastForwardQueue.has (_lhsFastKeySearchS)) {
             QED = [...proofstackA];
-            
+
             fastForwardQueue.get (_lhsFastKeySearchS)
             .map ((valueZ, indexZ, thisArrayA) => {
                 const _lhsFastKeyO = new ProofStepObjectClass ();
@@ -495,7 +518,7 @@ function main () {
 
         if (fastForwardQueue.has (_rhsFastKeySearchS)) {
             QED = [...proofstackA];
-            
+
             fastForwardQueue.get (_rhsFastKeySearchS)
             .map ((valueZ, indexZ, thisArrayA) => {
                 const _rhsFastKeyO = new ProofStepObjectClass ();
@@ -517,8 +540,8 @@ function main () {
 
         // clone rewrite candidates for each subnet
         const _pfc = new CloneableObjectClass (proofStepC);
-        
-        processAxioms ({ 
+
+        processAxioms ({
             axiomsA: [_pfc]
             , maskSizeZ: maskSizeZ
             , firstRewriteOnlyFlag: false
@@ -532,7 +555,7 @@ function main () {
             || rhsReduceProofFoundFlag;
 
             ProofFoundFlag = QED && (QED.length > 0);
-        } 
+        }
 
         if (ProofFoundFlag)
             break;
@@ -553,7 +576,7 @@ function main () {
 
 } // end main
 
-try   {  
+try   {
     main ();
 } catch (e) {
     console.info (`An error occured: ${e}`);
