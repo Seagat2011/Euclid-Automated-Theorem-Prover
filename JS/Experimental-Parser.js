@@ -151,22 +151,31 @@ function clock ({ valueS }) {
 
 function initCallGraphs ({
     axioms1C
-    , resultObj: { axioms2C, _resultObj } = {}
-    , stackA
+    , resultObj
+    , stackA 
 }) {
-    if (_resultObj == null) return;
+
+if (isNotEmpty ({ targ:resultObj })) {
+    const { axioms2C, _resultObj } = resultObj;
 
     const retArray = [
-        { isLHS: true, isExpand: true, values: _resultObj._lhsExpand }
-        , { isLHS: true, isExpand: false, values: _resultObj._lhsReduce }
-        , { isLHS: false, isExpand: true, values: _resultObj._rhsExpand }
-        , { isLHS: false, isExpand: false, values: _resultObj._rhsReduce }
+        _resultObj._lhsExpand
+        , _resultObj._lhsReduce
+        , _resultObj._rhsExpand
+        , _resultObj._rhsReduce
     ]
-    .forEach (({ isLHS, isExpand, values }) => {
-        if (!values?.length) return;
+    .forEach ((valueA, indexZ, thisArrayA) => {
+        if (valueA?.length < 1)
+            return;
 
-        axioms1C[`${isLHS ? '_lhs' : '_rhs'}${isExpand ? 'Expand' : 'Reduce'}CallGraph`][axioms2C.guidZ] = true;            
+        switch (indexZ) {
+            case 0: axioms1C._lhsExpandCallGraph[axioms2C.guidZ] = true; break;
+            case 1: axioms1C._lhsReduceCallGraph[axioms2C.guidZ] = true; break;
+            case 2: axioms1C._rhsExpandCallGraph[axioms2C.guidZ] = true; break;
+            case 3: axioms1C._rhsReduceCallGraph[axioms2C.guidZ] = true; break;
+        }
     });
+}
 } // end initCallGraphs
 
 function rewriteProofstepF ({
@@ -344,28 +353,28 @@ function compareAxioms ({
         , maskSizeZ: maskSizeZ
         , fromZ: axioms2C.rhsZ
         , toZ: axioms2C.lhsZ
-        , firstRewriteOnlyFlag: firstRewriteOnlyFlag })
+        , firstRewriteOnlyFlag: firstRewriteOnlyFlag });
 
-    , _resultObj._lhsReduce = replaceBitfieldsInProofStepBigEndian ({
+    _resultObj._lhsReduce = replaceBitfieldsInProofStepBigEndian ({
         proofStepZ: axioms1C.lhsZ
         , maskSizeZ: maskSizeZ
         , fromZ: axioms2C.lhsZ
         , toZ: axioms2C.rhsZ
-        , firstRewriteOnlyFlag: firstRewriteOnlyFlag })
+        , firstRewriteOnlyFlag: firstRewriteOnlyFlag });
 
-    , _resultObj._rhsExpand = replaceBitfieldsInProofStepBigEndian ({
+    _resultObj._rhsExpand = replaceBitfieldsInProofStepBigEndian ({
         proofStepZ: axioms1C.rhsZ
         , maskSizeZ: maskSizeZ
         , fromZ: axioms2C.rhsZ
         , toZ: axioms2C.lhsZ
-        , firstRewriteOnlyFlag: firstRewriteOnlyFlag })
+        , firstRewriteOnlyFlag: firstRewriteOnlyFlag });
 
-    , _resultObj._rhsReduce = replaceBitfieldsInProofStepBigEndian ({
+    _resultObj._rhsReduce = replaceBitfieldsInProofStepBigEndian ({
         proofStepZ: axioms1C.rhsZ
         , maskSizeZ: maskSizeZ
         , fromZ: axioms2C.lhsZ
         , toZ: axioms2C.rhsZ
-        , firstRewriteOnlyFlag: firstRewriteOnlyFlag }) ;
+        , firstRewriteOnlyFlag: firstRewriteOnlyFlag });
 
     clock ({ valueS: "compareAxioms" });
     
@@ -496,18 +505,18 @@ function initAxiomCallGraphs ({
     
     const I = AxiomsArray.length;
     const II = AxiomsArray.length * 2 - 1;
-
+    
     // 2-pass as acting src and targ
     for (let i = 0; i < II; ++i){
         const ii = (i < I ? i : I - i%I - 2) ;
         processAxioms ({
             axiomsA: [AxiomsArray[ii]]
             , maskSizeZ: maskSizeZ
-            , firstRewriteOnlyFlag: firstRewriteOnlyFlag
+            , firstRewriteOnlyFlag: true
             , stackA: stackA
             , cb: cb });
-    }    
-
+    }  
+    
     clock ({ valueS: 'initAxiomCallGraphs'});
 
 } // end initAxiomCallGraphs
