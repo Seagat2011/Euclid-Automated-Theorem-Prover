@@ -281,11 +281,11 @@ function compareAxioms ({
         , firstRewriteOnlyFlag: firstRewriteOnlyFlag })
 
     , resultObj._rhsReduce = replaceBitfieldsInProofStepBigEndian ({
-        proofStepZ: axioms1C.lhsZ
+        proofStepZ: axioms1C.rhsZ
         , maskSizeZ: maskSizeZ
-        , fromZ: axioms2C.rhsZ
-        , toZ: axioms2C.lhsZ
-        , firstRewriteOnlyFlag: firstRewriteOnlyFlag })
+        , fromZ: axioms2C.lhsZ
+        , toZ: axioms2C.rhsZ
+        , firstRewriteOnlyFlag: firstRewriteOnlyFlag }) ;
 
     return { axioms2C, resultObj };
 
@@ -417,7 +417,9 @@ function initAxiomsArrayF ({ proofStatementsA = [] }) {
         axiomObj.guidZ = indexZ < thisArrayA.length - 1 ? guidZ++ : 0n;
 
         valueS
+            // tokens
             .split (tokenDelimeterRE)
+            // token library
             .map ((thatValueS, thatIndexZ, thatArrayA) => {
                 if (!tokenLibraryD[thatValueS]) {
                     tokenLibraryD[thatValueS] = 1n << uuidZ++;
@@ -425,15 +427,25 @@ function initAxiomsArrayF ({ proofStatementsA = [] }) {
                 }
                 return thatValueS;
             })
+            // map tokens to values
             .forEach ((thatValueS, thatIndexZ, thatArrayA) => {
                 if (thatValueS.match (tokenOperatorsRE)) {
                     swapSubnetsFlag = true;
-                } else if (swapSubnetsFlag) {
-                    axiomObj.rhsZ = (axiomObj.rhsZ << maskSizeZ) | tokenLibraryD[thatValueS];
-                } else {
+                } else if (!swapSubnetsFlag) {
                     axiomObj.lhsZ = (axiomObj.lhsZ << maskSizeZ) | tokenLibraryD[thatValueS];
+                } else {
+                    axiomObj.rhsZ = (axiomObj.rhsZ << maskSizeZ) | tokenLibraryD[thatValueS];
                 }
             });
+
+        return axiomObj;
+    })
+    // lhs > rhs
+    .map ((axiomObj, thatIndexZ, thatArrayA) => {
+        const lhsGreaterFlag = (axiomObj.lhsZ >= axiomObj.rhsZ);
+
+        axiomObj.lhZ = lhsGreaterFlag ? axiomObj.lhsZ : axiomObj.rhsZ ;
+        axiomObj.rhZ = lhsGreaterFlag ? axiomObj.rhsZ : axiomObj.lhsZ ;
 
         return axiomObj;
     });
