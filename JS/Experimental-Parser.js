@@ -69,6 +69,8 @@ let rhsExpandProofFoundFlag;
 let rhsReduceProofFoundFlag;
 let tokenDelimeterRE = new RegExp ("\\s+","g");
 let tokenOperatorsRE = new RegExp ("[<~]?=+>?");
+let globalTime = 0;
+let globalTimeRecord = new Map ();
 
 class AxiomClass extends Object {
     constructor () {
@@ -132,6 +134,20 @@ class CloneableObjectClass {
         }
     }
 } // end class CloneableObjectClass
+
+function clock ({ valueS }) {
+    if (valueS) {
+        const localTime = performance.now () - globalTime;
+        let currentValue = globalTimeRecord.get (valueS) || 0;
+        currentValue += localTime;
+        globalTimeRecord.set (valueS, currentValue);
+        globalTime = localTime;
+    } else {
+        for (const [key, val] of globalTimeRecord) {
+            console.info (`Total runtime (${key}): ${val} Milliseconds`);
+        }
+    }
+} // end clock
 
 function initCallGraphs ({
     axioms1C
@@ -200,7 +216,10 @@ function replaceBitfieldsInProofStepBigEndian ({
     , fromZ
     , toZ
     , firstRewriteOnlyFlag = false 
-}) {
+}) {    
+
+    clock ({ valueS: "replaceBitfieldsInProofStepBigEndian" });
+
     const fromResolutionZ = _resolutionOf ({ valueZ: fromZ });
     const proofStepResolutionZ = _resolutionOf ({ valueZ: proofStepZ });
 
@@ -248,9 +267,10 @@ function replaceBitfieldsInProofStepBigEndian ({
 
     let lastPushedValue = null;
 
+    // ensure all offsets align to (Resolution % maskSizeZ) boundaries
     const proofstepOffsetZ = proofStepResolutionZ - bitsRemainingZ;
-    let fromOffsetZ = (fromResolutionZ - maskSizeZ);// + fromOffsetBitsRemainingZ;
-    const fromOffsetResetZ = (fromResolutionZ + fromOffsetBitsRemainingZ) - maskSizeZ;
+    let fromOffsetZ = fromResolutionZ - fromOffsetBitsRemainingZ;
+    const fromOffsetResetZ = fromResolutionZ - fromOffsetBitsRemainingZ;
     const toOffsetZ = toResolutionZ + (maskSizeZ - toOffsetBitsRemainingZ);
 
     for (let ii = proofstepOffsetZ; ii >= 0n; ii -= maskSizeZ) {
@@ -265,13 +285,13 @@ function replaceBitfieldsInProofStepBigEndian ({
                 resultZ = (resultZ << toOffsetZ) | toZ;
                 const intermediateOffsetZ = ii;
 
-                const intermediateOffsetMaskZ = (1n << intermediateOffsetZ) - 1n;
+                const intermediateMaskZ = (1n << intermediateOffsetZ) - 1n;
 
-                const intermediateRewriteZ = (resultZ << intermediateOffsetZ) | (proofStepZ & intermediateOffsetMaskZ);
+                const intermediateRewriteZ = (resultZ << intermediateOffsetZ) | (proofStepZ & intermediateMaskZ);
 
                 if (lastPushedValue !== intermediateRewriteZ) {
-                ret.push (intermediateRewriteZ);
-                lastPushedValue = intermediateRewriteZ;
+                    ret.push (intermediateRewriteZ);
+                    lastPushedValue = intermediateRewriteZ;
                 }
 
                 if (!fullRewriteFoundFlag) {
@@ -288,6 +308,8 @@ function replaceBitfieldsInProofStepBigEndian ({
             return [];
         }
     } // end loop
+
+    clock ({ valueS: 'replaceBitfieldsInProofStepBigEndian'});
 
     fastForwardQueue[_fastForwardKey] = [...ret];
 
@@ -307,6 +329,8 @@ function compareAxioms ({
 
     if (axioms1C.guidZ === axioms2C.guidZ)
         return {};
+
+    clock ({ valueS: "compareAxioms" });
 
     let _resultObj = {
         _lhsExpand: false
@@ -343,6 +367,8 @@ function compareAxioms ({
         , toZ: axioms2C.rhsZ
         , firstRewriteOnlyFlag: firstRewriteOnlyFlag }) ;
 
+    clock ({ valueS: "compareAxioms" });
+    
     return { axioms2C, _resultObj };
 
 } // end compareAxioms
@@ -354,6 +380,9 @@ function processAxioms ({
     , stackA = []
     , cb = null
 }) {
+
+    clock ({ valueS: "processAxioms" });
+    
     axiomsA.forEach (axioms1C => {
         AxiomsArray
         .map (axioms2C =>
@@ -370,6 +399,9 @@ function processAxioms ({
             stackA: stackA
         }))
     });
+
+    clock ({ valueS: 'processAxioms' });
+    
 } // end processAxioms
 
 function _resolutionOf ({ valueZ }) {
@@ -402,6 +434,8 @@ function isEmpty ({ targ }) {
 } // end isNotEmpty
 
 function initAxiomsArrayF ({ proofStatementsA = [] }) {
+
+    clock ({ valueS: "initAxiomsArrayF" });
 
     // First pass: build token library and calculate maskSizeZ
     proofStatementsA.forEach (statement => {
@@ -444,6 +478,8 @@ function initAxiomsArrayF ({ proofStatementsA = [] }) {
             axiomObj.rhsZ = lhsZ;
         }
 
+        clock ({ valueS: 'initAxiomsArrayF' })
+
         return axiomObj;
     });
 } // end initAxiomsArrayF
@@ -456,6 +492,8 @@ function initAxiomCallGraphs ({
     , cb = null
 }) {
 
+    clock ({ valueS: "initAxiomCallGraphs" });
+    
     const I = AxiomsArray.length;
     const II = AxiomsArray.length * 2 - 1;
 
@@ -468,7 +506,9 @@ function initAxiomCallGraphs ({
             , firstRewriteOnlyFlag: firstRewriteOnlyFlag
             , stackA: stackA
             , cb: cb });
-    }
+    }    
+
+    clock ({ valueS: 'initAxiomCallGraphs'});
 
 } // end initAxiomCallGraphs
 
@@ -486,6 +526,8 @@ function main () {
     const theoremA = AxiomsArray.pop (); // Theorem is the last element!
 
     rewriteQueue.push ([theoremA]);
+
+    clock ({ valueS: "main" });
 
     const startTimeZ = performance.now ();
 
@@ -571,9 +613,14 @@ function main () {
         if (ProofFoundFlag)
             break;
 
+        clock ({ valueS: "main" });
+
     } while (rewriteQueue.length && !ProofFoundFlag);
 
     const endTimeZ = performance.now ();
+
+    
+    clock ({});
 
     const totalTimeZ = endTimeZ - startTimeZ;
 
