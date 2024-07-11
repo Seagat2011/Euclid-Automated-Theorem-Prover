@@ -141,10 +141,10 @@ function initCallGraphs ({
     if (_resultObj == null) return;
 
     const retArray = [
-        { isLHS: true, isExpand: true, values: _resultObj._lhsExpand },
-        { isLHS: true, isExpand: false, values: _resultObj._lhsReduce },
-        { isLHS: false, isExpand: true, values: _resultObj._rhsExpand },
-        { isLHS: false, isExpand: false, values: _resultObj._rhsReduce }
+        { isLHS: true, isExpand: true, values: _resultObj._lhsExpand }
+        , { isLHS: true, isExpand: false, values: _resultObj._lhsReduce }
+        , { isLHS: false, isExpand: true, values: _resultObj._rhsExpand }
+        , { isLHS: false, isExpand: false, values: _resultObj._rhsReduce }
     ]
     .forEach (({ isLHS, isExpand, values }) => {
         if (!values?.length) return;
@@ -161,10 +161,10 @@ function rewriteProofstepF ({
     if (_resultObj == null) return;
 
     const operations = [
-        { isLHS: true, isExpand: true, values: _resultObj._lhsExpand },
-        { isLHS: true, isExpand: false, values: _resultObj._lhsReduce },
-        { isLHS: false, isExpand: true, values: _resultObj._rhsExpand },
-        { isLHS: false, isExpand: false, values: _resultObj._rhsReduce }
+        { isLHS: true, isExpand: true, values: _resultObj._lhsExpand }
+        , { isLHS: true, isExpand: false, values: _resultObj._lhsReduce }
+        , { isLHS: false, isExpand: true, values: _resultObj._rhsExpand }
+        , { isLHS: false, isExpand: false, values: _resultObj._rhsReduce }
     ];
 
     const resultsA = operations.map (({ isLHS, isExpand, values }) => {
@@ -224,7 +224,7 @@ function replaceBitfieldsInProofStepBigEndian ({
     const chunkMask = (1n << maskSizeZ) - 1n;
     const toResolutionZ = _resolutionOf ({ valueZ: toZ });
 
-    let fromOffsetZ = (fromResolutionZ - maskSizeZ);
+    //let fromOffsetZ = (fromResolutionZ - maskSizeZ);
     const nonMatchSubnetLengthsFlag = (fromResolutionZ !== proofStepResolutionZ);
 
     let bitsRemainingZ = proofStepResolutionZ;
@@ -248,12 +248,12 @@ function replaceBitfieldsInProofStepBigEndian ({
 
     let lastPushedValue = null;
 
-    const proofStepResolutionStartOffsetZ = (proofStepResolutionZ - maskSizeZ) + bitsRemainingZ;
-    const fromResolutionStartOffsetZ = (fromResolutionZ - maskSizeZ);
-    const fromResolutionResetZ = (fromResolutionZ - maskSizeZ);
-    const toResolutionStartOffsetZ = toResolutionZ + (maskSizeZ - toOffsetBitsRemainingZ);
+    const proofstepOffsetZ = proofStepResolutionZ - bitsRemainingZ;
+    let fromOffsetZ = (fromResolutionZ - maskSizeZ);// + fromOffsetBitsRemainingZ;
+    const fromOffsetResetZ = (fromResolutionZ + fromOffsetBitsRemainingZ) - maskSizeZ;
+    const toOffsetZ = toResolutionZ + (maskSizeZ - toOffsetBitsRemainingZ);
 
-    for (let ii = proofStepResolutionStartOffsetZ; ii >= 0n; ii -= maskSizeZ) {
+    for (let ii = proofstepOffsetZ; ii >= 0n; ii -= maskSizeZ) {
         const chunk = (proofStepZ >> ii) & chunkMask;
         const chunkFrom = (fromZ >> fromOffsetZ) & chunkMask;
 
@@ -261,8 +261,8 @@ function replaceBitfieldsInProofStepBigEndian ({
             if (fromOffsetZ > 0n) {
                 fromOffsetZ -= maskSizeZ;
             } else {
-                fromOffsetZ = fromResolutionResetZ;
-                resultZ = (resultZ << toResolutionStartOffsetZ) | toZ;
+                fromOffsetZ = fromOffsetResetZ;
+                resultZ = (resultZ << toOffsetZ) | toZ;
                 const intermediateOffsetZ = ii;
 
                 const intermediateOffsetMaskZ = (1n << intermediateOffsetZ) - 1n;
