@@ -52,7 +52,7 @@ let uuidZ = 0n;
 let maskSizeZ = 0n;
 let AxiomsArray = [];
 let ProofFoundFlag;
-let fastForwardQueue = new Map ();
+let fastForwardQueue = {};
 let rewriteQueue = [];
 const rewriteOpcodesO = {
     _lhsExpand: 1n,
@@ -68,283 +68,7 @@ let lhsReduceProofFoundFlag;
 let rhsExpandProofFoundFlag;
 let rhsReduceProofFoundFlag;
 let tokenDelimeterRE = new RegExp ("\\s+","g");
-let tokenOperatorsRE = new RegExp ("[<~]?=+>?")
-
-function replaceBitfieldsInProofStepBigEndian ({
-        proofStepZ
-        , maskSizeZ
-        , fromZ
-        , toZ
-        , firstRewriteOnlyFlag = false }) {
-    const fromResolutionZ = _resolutionOf ({ valueZ: fromZ });
-    const proofStepResolutionZ = _resolutionOf ({ valueZ: proofStepZ });
-
-    const subnetNotFoundFlag = (fromResolutionZ > proofStepResolutionZ);
-
-    let ret = [];
-
-    if (subnetNotFoundFlag)
-        return ret;
-
-    const _fastForwardKey = `${proofStepZ}:${fromZ}:${toZ}`;
-
-    if (fastForwardQueue.has (_fastForwardKey)) {
-        ret = fastForwardQueue.get (_fastForwardKey);
-
-        return ret;
-    }
-
-    let resultZ = 0n;
-    let fullRewriteFoundFlag = false;
-    const chunkMask = (1n << maskSizeZ) - 1n;
-    const toResolutionZ = _resolutionOf ({ valueZ: toZ });
-
-    let fromOffsetZ = (fromResolutionZ - maskSizeZ);
-    const nonMatchSubnetLengthsFlag = (fromResolutionZ !== proofStepResolutionZ);
-
-    let bitsRemainingZ = proofStepResolutionZ;
-    let fromOffsetBitsRemainingZ = fromResolutionZ;
-    let toOffsetBitsRemainingZ = toResolutionZ;
-
-    // ensure read/write masks are properly aligned
-    while (bitsRemainingZ > maskSizeZ
-        || fromOffsetBitsRemainingZ > maskSizeZ
-        || toOffsetBitsRemainingZ > maskSizeZ) {
-
-        if (bitsRemainingZ > maskSizeZ)
-            bitsRemainingZ -= maskSizeZ;
-
-        if (fromOffsetBitsRemainingZ > maskSizeZ)
-            fromOffsetBitsRemainingZ -= maskSizeZ;
-
-        if (toOffsetBitsRemainingZ > maskSizeZ)
-            toOffsetBitsRemainingZ -= maskSizeZ;
-    }
-
-    let lastPushedValue = null;
-
-    const proofStepResolutionStartOffsetZ = (proofStepResolutionZ - maskSizeZ) + bitsRemainingZ;
-    const fromResolutionStartOffsetZ = (fromResolutionZ - maskSizeZ);
-    const fromResolutionResetZ = (fromResolutionZ - maskSizeZ);
-    const toResolutionStartOffsetZ = toResolutionZ + (maskSizeZ - toOffsetBitsRemainingZ);
-
-    for (let ii = proofStepResolutionStartOffsetZ; ii >= 0n; ii -= maskSizeZ) {
-    const chunk = (proofStepZ >> ii) & chunkMask;
-    const chunkFrom = (fromZ >> fromOffsetZ) & chunkMask;
-
-        if (chunk === chunkFrom) {
-            if (fromOffsetZ > 0n) {
-                fromOffsetZ -= maskSizeZ;
-            } else {
-                fromOffsetZ = fromResolutionResetZ;
-                resultZ = (resultZ << toResolutionStartOffsetZ) | toZ;
-                const intermediateOffsetZ = ii;
-
-                const intermediateOffsetMaskZ = (1n << intermediateOffsetZ) - 1n;
-
-                const intermediateRewriteZ = (resultZ << intermediateOffsetZ) | (proofStepZ & intermediateOffsetMaskZ);
-
-                if (lastPushedValue !== intermediateRewriteZ) {
-                ret.push (intermediateRewriteZ);
-                lastPushedValue = intermediateRewriteZ;
-                }
-
-                if (!fullRewriteFoundFlag) {
-                    if (firstRewriteOnlyFlag)
-                        return ret;
-
-                    fullRewriteFoundFlag = true;
-                }
-
-            }
-        } else if (nonMatchSubnetLengthsFlag) {
-            resultZ = (resultZ << maskSizeZ) | chunk;
-        } else {
-            return [];
-        }
-    } // end loop
-
-    fastForwardQueue.set (_fastForwardKey, [...ret]);
-
-    // No full rewrites found
-    if (!fullRewriteFoundFlag)
-        return [];
-
-    return ret;
-} // end replaceBitfieldsInProofStepBigEndian
-
-function initCallGraphs ({
-        axioms1C
-        , resultObj
-        , stackA }) {
-
-    if (isNotEmpty ({ targ:resultObj })) {
-        const axioms2C = resultObj.axioms2C;
-        const _resultObj = resultObj.resultObj;
-
-        const retArray = [
-            _resultObj._lhsExpand
-            , _resultObj._lhsReduce
-            , _resultObj._rhsExpand
-            , _resultObj._rhsReduce
-        ]
-        .forEach ((valueA, indexZ, thisArrayA) => {
-            if (valueA.length) {
-                switch (indexZ) {
-                    case 0: axioms1C._lhsExpandCallGraph[axioms2C.guidZ] = true; break;
-                    case 1: axioms1C._lhsReduceCallGraph[axioms2C.guidZ] = true; break;
-                    case 2: axioms1C._rhsExpandCallGraph[axioms2C.guidZ] = true; break;
-                    case 3: axioms1C._lhsReduceCallGraph[axioms2C.guidZ] = true; break;
-                }
-            }
-        });
-    }
-} // end initCallGraphs
-
-function rewriteProofstepF({
-    axioms1C,
-    resultObj: { axioms2C, _resultObj } = {},
-    stackA
-}) {
-    if (_resultObj == null) return;
-
-    const operations = [
-        { isLHS: true, isExpand: true, values: _resultObj._lhsExpand },
-        { isLHS: true, isExpand: false, values: _resultObj._lhsReduce },
-        { isLHS: false, isExpand: true, values: _resultObj._rhsExpand },
-        { isLHS: false, isExpand: false, values: _resultObj._rhsReduce }
-    ];
-
-    const resultsA = operations.map(({ isLHS, isExpand, values }) => {
-        if (!values?.length) return false;
-
-        let currentProofChain = [...stackA];
-        for (let valueZ of values) {
-            let proofStep = new ProofStepObjectClass();
-
-            proofStep.guidZ = axioms2C.guidZ;
-            proofStep[isLHS ? 'lhsZ' : 'rhsZ'] = valueZ;
-            proofStep[isLHS ? 'rhsZ' : 'lhsZ'] = isLHS ? axioms2C.rhsZ : axioms2C.lhsZ;
-            proofStep.rewriteOpcodeZ = rewriteOpcodesO[`_${isLHS ? 'lhs' : 'rhs'}${isExpand ? 'Expand' : 'Reduce'}`];
-
-            const proofFound = (proofStep.lhsZ === proofStep.rhsZ);
-            currentProofChain.push(proofStep);
-
-            rewriteQueue.push(currentProofChain);
-
-            if (proofFound) return [...currentProofChain];
-        }
-
-        return false;
-    });
-
-    [ lhsExpandProofFoundFlag, lhsReduceProofFoundFlag, rhsExpandProofFoundFlag, rhsReduceProofFoundFlag ] = resultsA;
-
-} // end rewriteProofstepF
-
-function compareAxioms ({
-        axioms1C
-        , axioms2C
-        , maskSizeZ
-        , firstRewriteOnlyFlag = false
-        }) {
-
-    if (axioms1C.guidZ === axioms2C.guidZ)
-        return {};
-
-    let resultObj = {
-        _lhsExpand: false
-        , _lhsReduce: false
-        , _rhsExpand: false
-        , _rhsReduce: false
-    };
-
-    resultObj._lhsExpand = replaceBitfieldsInProofStepBigEndian ({
-        proofStepZ: axioms1C.lhsZ
-        , maskSizeZ: maskSizeZ
-        , fromZ: axioms2C.rhsZ
-        , toZ: axioms2C.lhsZ
-        , firstRewriteOnlyFlag: firstRewriteOnlyFlag })
-
-    , resultObj._lhsReduce = replaceBitfieldsInProofStepBigEndian ({
-        proofStepZ: axioms1C.lhsZ
-        , maskSizeZ: maskSizeZ
-        , fromZ: axioms2C.lhsZ
-        , toZ: axioms2C.rhsZ
-        , firstRewriteOnlyFlag: firstRewriteOnlyFlag })
-
-    , resultObj._rhsExpand = replaceBitfieldsInProofStepBigEndian ({
-        proofStepZ: axioms1C.rhsZ
-        , maskSizeZ: maskSizeZ
-        , fromZ: axioms2C.rhsZ
-        , toZ: axioms2C.lhsZ
-        , firstRewriteOnlyFlag: firstRewriteOnlyFlag })
-
-    , resultObj._rhsReduce = replaceBitfieldsInProofStepBigEndian ({
-        proofStepZ: axioms1C.rhsZ
-        , maskSizeZ: maskSizeZ
-        , fromZ: axioms2C.lhsZ
-        , toZ: axioms2C.rhsZ
-        , firstRewriteOnlyFlag: firstRewriteOnlyFlag }) ;
-
-    return { axioms2C, resultObj };
-
-} // end compareAxioms
-
-function processAxioms ({
-        axiomsA
-        , maskSizeZ
-        , firstRewriteOnlyFlag = false
-        , stackA = []
-        , cb = null }) {
-
-    axiomsA.forEach (axioms1C => {
-        AxiomsArray
-        .map (axioms2C =>
-            compareAxioms ({
-                axioms1C: axioms1C
-                , axioms2C: axioms2C
-                , maskSizeZ: maskSizeZ
-                , firstRewriteOnlyFlag: firstRewriteOnlyFlag
-            })
-        )
-        .forEach (result => cb ({
-            axioms1C: axioms1C
-            , resultObj: result
-            , stackA: stackA
-            }))
-    });
-
-} // end processAxioms
-
-function _resolutionOf ({ valueZ }) {
-    const I = BigInt (valueZ.toString (2).length);
-
-    return I;
-} // end _resolutionOf
-
-function _lastElementOf ({ valueA }) {
-    let ret;
-    const ii = valueA.length - 1;
-
-    if (valueA[ii]) {
-        ret = valueA[ii];
-    }
-
-    return ret;
-} // end _lastElementOf
-
-function isNotEmpty ({ targ }) {
-    const resultFlag = Object.keys (targ).length > 0;
-
-    return resultFlag;
-} // end isNotEmpty
-
-function isEmpty ({ targ }) {
-    const resultFlag = isNotEmpty ({ targ: targ });
-
-    return !resultFlag;
-} // end isNotEmpty
+let tokenOperatorsRE = new RegExp ("[<~]?=+>?");
 
 class AxiomClass extends Object {
     constructor () {
@@ -409,9 +133,276 @@ class CloneableObjectClass {
     }
 } // end class CloneableObjectClass
 
+function initCallGraphs ({
+    axioms1C
+    , resultObj: { axioms2C, _resultObj } = {}
+    , stackA
+}) {
+    if (_resultObj == null) return;
+
+    const retArray = [
+        { isLHS: true, isExpand: true, values: _resultObj._lhsExpand },
+        { isLHS: true, isExpand: false, values: _resultObj._lhsReduce },
+        { isLHS: false, isExpand: true, values: _resultObj._rhsExpand },
+        { isLHS: false, isExpand: false, values: _resultObj._rhsReduce }
+    ]
+    .forEach(({ isLHS, isExpand, values }) => {
+        if (!values?.length) return;
+
+        axioms1C[`${isLHS ? '_lhs' : '_rhs'}${isExpand ? 'Expand' : 'Reduce'}CallGraph`][axioms2C.guidZ] = true;            
+    });
+} // end initCallGraphs
+
+function rewriteProofstepF({
+    axioms1C    
+    , resultObj: { axioms2C, resultObj: _resultObj } = {}
+    , stackA
+}) {
+    if (_resultObj == null) return;
+
+    const operations = [
+        { isLHS: true, isExpand: true, values: _resultObj._lhsExpand },
+        { isLHS: true, isExpand: false, values: _resultObj._lhsReduce },
+        { isLHS: false, isExpand: true, values: _resultObj._rhsExpand },
+        { isLHS: false, isExpand: false, values: _resultObj._rhsReduce }
+    ];
+
+    const resultsA = operations.map(({ isLHS, isExpand, values }) => {
+        if (!values?.length) return false;
+
+        let currentProofChain = [...stackA];
+        for (let valueZ of values) {
+            let proofStep = new ProofStepObjectClass();
+
+            proofStep.guidZ = axioms2C.guidZ;
+            proofStep[isLHS ? 'lhsZ' : 'rhsZ'] = valueZ;
+            proofStep[isLHS ? 'rhsZ' : 'lhsZ'] = isLHS ? axioms2C.rhsZ : axioms2C.lhsZ;
+            proofStep.rewriteOpcodeZ = rewriteOpcodesO[`_${isLHS ? 'lhs' : 'rhs'}${isExpand ? 'Expand' : 'Reduce'}`];
+
+            const proofFound = (proofStep.lhsZ === proofStep.rhsZ);
+            currentProofChain.push(proofStep);
+
+            rewriteQueue.push(currentProofChain);
+
+            if (proofFound) return [...currentProofChain];
+        }
+
+        return false;
+    });
+
+    [ lhsExpandProofFoundFlag, lhsReduceProofFoundFlag, rhsExpandProofFoundFlag, rhsReduceProofFoundFlag ] = resultsA;
+
+} // end rewriteProofstepF
+
+function replaceBitfieldsInProofStepBigEndian ({
+    proofStepZ
+    , maskSizeZ
+    , fromZ
+    , toZ
+    , firstRewriteOnlyFlag = false 
+}) {
+    const fromResolutionZ = _resolutionOf ({ valueZ: fromZ });
+    const proofStepResolutionZ = _resolutionOf ({ valueZ: proofStepZ });
+
+    const subnetNotFoundFlag = (fromResolutionZ > proofStepResolutionZ);
+
+    let ret = [];
+
+    if (subnetNotFoundFlag)
+        return ret;
+
+    const _fastForwardKey = `${proofStepZ}:${fromZ}:${toZ}`;
+
+    if (fastForwardQueue[_fastForwardKey]) {
+        ret = fastForwardQueue[_fastForwardKey];
+
+        return ret;
+    }
+
+    let resultZ = 0n;
+    let fullRewriteFoundFlag = false;
+    const chunkMask = (1n << maskSizeZ) - 1n;
+    const toResolutionZ = _resolutionOf ({ valueZ: toZ });
+
+    let fromOffsetZ = (fromResolutionZ - maskSizeZ);
+    const nonMatchSubnetLengthsFlag = (fromResolutionZ !== proofStepResolutionZ);
+
+    let bitsRemainingZ = proofStepResolutionZ;
+    let fromOffsetBitsRemainingZ = fromResolutionZ;
+    let toOffsetBitsRemainingZ = toResolutionZ;
+
+    // ensure read/write masks are properly aligned
+    while (bitsRemainingZ > maskSizeZ
+        || fromOffsetBitsRemainingZ > maskSizeZ
+        || toOffsetBitsRemainingZ > maskSizeZ) {
+
+        if (bitsRemainingZ > maskSizeZ)
+            bitsRemainingZ -= maskSizeZ;
+
+        if (fromOffsetBitsRemainingZ > maskSizeZ)
+            fromOffsetBitsRemainingZ -= maskSizeZ;
+
+        if (toOffsetBitsRemainingZ > maskSizeZ)
+            toOffsetBitsRemainingZ -= maskSizeZ;
+    }
+
+    let lastPushedValue = null;
+
+    const proofStepResolutionStartOffsetZ = (proofStepResolutionZ - maskSizeZ) + bitsRemainingZ;
+    const fromResolutionStartOffsetZ = (fromResolutionZ - maskSizeZ);
+    const fromResolutionResetZ = (fromResolutionZ - maskSizeZ);
+    const toResolutionStartOffsetZ = toResolutionZ + (maskSizeZ - toOffsetBitsRemainingZ);
+
+    for (let ii = proofStepResolutionStartOffsetZ; ii >= 0n; ii -= maskSizeZ) {
+        const chunk = (proofStepZ >> ii) & chunkMask;
+        const chunkFrom = (fromZ >> fromOffsetZ) & chunkMask;
+
+        if (chunk === chunkFrom) {
+            if (fromOffsetZ > 0n) {
+                fromOffsetZ -= maskSizeZ;
+            } else {
+                fromOffsetZ = fromResolutionResetZ;
+                resultZ = (resultZ << toResolutionStartOffsetZ) | toZ;
+                const intermediateOffsetZ = ii;
+
+                const intermediateOffsetMaskZ = (1n << intermediateOffsetZ) - 1n;
+
+                const intermediateRewriteZ = (resultZ << intermediateOffsetZ) | (proofStepZ & intermediateOffsetMaskZ);
+
+                if (lastPushedValue !== intermediateRewriteZ) {
+                ret.push (intermediateRewriteZ);
+                lastPushedValue = intermediateRewriteZ;
+                }
+
+                if (!fullRewriteFoundFlag) {
+                    if (firstRewriteOnlyFlag)
+                        return ret;
+
+                    fullRewriteFoundFlag = true;
+                }
+
+            }
+        } else if (nonMatchSubnetLengthsFlag) {
+            resultZ = (resultZ << maskSizeZ) | chunk;
+        } else {
+            return [];
+        }
+    } // end loop
+
+    fastForwardQueue[_fastForwardKey] = [...ret];
+
+    // No full rewrites found
+    if (!fullRewriteFoundFlag)
+        return [];
+
+    return ret;
+} // end replaceBitfieldsInProofStepBigEndian
+
+function compareAxioms ({
+    axioms1C
+    , axioms2C
+    , maskSizeZ
+    , firstRewriteOnlyFlag = false
+}) {
+
+    if (axioms1C.guidZ === axioms2C.guidZ)
+        return {};
+
+    let _resultObj = {
+        _lhsExpand: false
+        , _lhsReduce: false
+        , _rhsExpand: false
+        , _rhsReduce: false
+    };
+
+    _resultObj._lhsExpand = replaceBitfieldsInProofStepBigEndian ({
+        proofStepZ: axioms1C.lhsZ
+        , maskSizeZ: maskSizeZ
+        , fromZ: axioms2C.rhsZ
+        , toZ: axioms2C.lhsZ
+        , firstRewriteOnlyFlag: firstRewriteOnlyFlag })
+
+    , _resultObj._lhsReduce = replaceBitfieldsInProofStepBigEndian ({
+        proofStepZ: axioms1C.lhsZ
+        , maskSizeZ: maskSizeZ
+        , fromZ: axioms2C.lhsZ
+        , toZ: axioms2C.rhsZ
+        , firstRewriteOnlyFlag: firstRewriteOnlyFlag })
+
+    , _resultObj._rhsExpand = replaceBitfieldsInProofStepBigEndian ({
+        proofStepZ: axioms1C.rhsZ
+        , maskSizeZ: maskSizeZ
+        , fromZ: axioms2C.rhsZ
+        , toZ: axioms2C.lhsZ
+        , firstRewriteOnlyFlag: firstRewriteOnlyFlag })
+
+    , _resultObj._rhsReduce = replaceBitfieldsInProofStepBigEndian ({
+        proofStepZ: axioms1C.rhsZ
+        , maskSizeZ: maskSizeZ
+        , fromZ: axioms2C.lhsZ
+        , toZ: axioms2C.rhsZ
+        , firstRewriteOnlyFlag: firstRewriteOnlyFlag }) ;
+
+    return { axioms2C, _resultObj };
+
+} // end compareAxioms
+
+function processAxioms ({
+    axiomsA
+    , maskSizeZ
+    , firstRewriteOnlyFlag = false
+    , stackA = []
+    , cb = null
+}) {
+    axiomsA.forEach(axioms1C => {
+        AxiomsArray
+        .map(axioms2C =>
+            compareAxioms({
+                axioms1C: axioms1C,
+                axioms2C: axioms2C,
+                maskSizeZ: maskSizeZ,
+                firstRewriteOnlyFlag: firstRewriteOnlyFlag
+            })
+        )
+        .forEach(result => cb({
+            axioms1C: axioms1C,
+            resultObj: result,  // contains { axioms2C, _resultObj }
+            stackA: stackA
+        }))
+    });
+} // end processAxioms
+
+function _resolutionOf ({ valueZ }) {
+    const I = BigInt (valueZ.toString (2).length);
+
+    return I;
+} // end _resolutionOf
+
+function _lastElementOf ({ valueA }) {
+    let ret;
+    const ii = valueA.length - 1;
+
+    if (valueA[ii]) {
+        ret = valueA[ii];
+    }
+
+    return ret;
+} // end _lastElementOf
+
+function isNotEmpty ({ targ }) {
+    const resultFlag = Object.keys (targ).length > 0;
+
+    return resultFlag;
+} // end isNotEmpty
+
+function isEmpty ({ targ }) {
+    const resultFlag = isNotEmpty ({ targ: targ });
+
+    return !resultFlag;
+} // end isNotEmpty
+
 function initAxiomsArrayF ({ proofStatementsA = [] }) {
     return proofStatementsA.map ((valueS, indexZ, thisArrayA) => {
-        let swapSubnetsFlag;
         let axiomObj = new AxiomClass ();
 
         axiomObj.guidZ = indexZ < thisArrayA.length - 1 ? guidZ++ : 0n;
@@ -419,16 +410,23 @@ function initAxiomsArrayF ({ proofStatementsA = [] }) {
         valueS
             // tokens
             .split (tokenDelimeterRE)
-            // token library
+            // finalize token library, maskSizeZ calibration
             .map ((thatValueS, thatIndexZ, thatArrayA) => {
                 if (!tokenLibraryD[thatValueS]) {
                     tokenLibraryD[thatValueS] = 1n << uuidZ++;
                     maskSizeZ++;
                 }
                 return thatValueS;
-            })
-            // map tokens to values
-            .forEach ((thatValueS, thatIndexZ, thatArrayA) => {
+            });
+
+        return axiomObj;
+    })
+    // map tokens to values
+    .map ((axiomObj, thatIndexZ, thatArrayA) => {
+        let swapSubnetsFlag;
+        proofStatementsA[thatIndexZ]
+            .split  (tokenDelimeterRE)
+            .forEach ((thatValueS, thatIndexZ, thatArrayA) =>{
                 if (thatValueS.match (tokenOperatorsRE)) {
                     swapSubnetsFlag = true;
                 } else if (!swapSubnetsFlag) {
@@ -444,23 +442,25 @@ function initAxiomsArrayF ({ proofStatementsA = [] }) {
     .map ((axiomObj, thatIndexZ, thatArrayA) => {
         const lhsGreaterFlag = (axiomObj.lhsZ >= axiomObj.rhsZ);
 
-        axiomObj.lhZ = lhsGreaterFlag ? axiomObj.lhsZ : axiomObj.rhsZ ;
-        axiomObj.rhZ = lhsGreaterFlag ? axiomObj.rhsZ : axiomObj.lhsZ ;
+        axiomObj.lhsZ = lhsGreaterFlag ? axiomObj.lhsZ : axiomObj.rhsZ ;
+        axiomObj.rhsZ = lhsGreaterFlag ? axiomObj.rhsZ : axiomObj.lhsZ ;
 
         return axiomObj;
     });
 } // end initAxiomsArrayF
 
 function initAxiomCallGraphs ({
-        axiomsA
-        , maskSizeZ
-        , firstRewriteOnlyFlag = true
-        , stackA = []
-        , cb = null }) {
+    axiomsA
+    , maskSizeZ
+    , firstRewriteOnlyFlag = true
+    , stackA = []
+    , cb = null
+}) {
 
     const I = AxiomsArray.length;
     const II = AxiomsArray.length * 2 - 1;
 
+    // 2-pass as acting src and targ
     for (let i = 0; i < II; ++i){
         const ii = (i < I ? i : I - i%I - 2) ;
         processAxioms ({
@@ -500,16 +500,16 @@ function main () {
         const _lhsFastKeyS = `lhs:${proofStepC.lhsZ}`;
         const _rhsFastKeyS = `rhs:${proofStepC.rhsZ}`;
 
-        !fastForwardQueue.has (_lhsFastKeyS) && (fastForwardQueue.set (_lhsFastKeyS, [...proofstackA]));
-        !fastForwardQueue.has (_rhsFastKeyS) && (fastForwardQueue.set (_rhsFastKeyS, [...proofstackA]));
+        !fastForwardQueue[_lhsFastKeyS] && (fastForwardQueue[_lhsFastKeyS] = [...proofstackA]);
+        !fastForwardQueue[_rhsFastKeyS] && (fastForwardQueue[_rhsFastKeyS] = [...proofstackA]);
 
         const _lhsFastKeySearchS = `rhs:${proofStepC.lhsZ}`;
         const _rhsFastKeySearchS = `lhs:${proofStepC.rhsZ}`;
 
-        if (fastForwardQueue.has (_lhsFastKeySearchS)) {
+        if (fastForwardQueue[_lhsFastKeySearchS]) {
             QED = [...proofstackA];
 
-            fastForwardQueue.get (_lhsFastKeySearchS)
+            fastForwardQueue[_lhsFastKeySearchS]
             .map ((valueZ, indexZ, thisArrayA) => {
                 const _lhsFastKeyO = new ProofStepObjectClass ();
 
@@ -528,10 +528,10 @@ function main () {
             break;
         }
 
-        if (fastForwardQueue.has (_rhsFastKeySearchS)) {
+        if (fastForwardQueue[_rhsFastKeySearchS]) {
             QED = [...proofstackA];
 
-            fastForwardQueue.get (_rhsFastKeySearchS)
+            fastForwardQueue[_rhsFastKeySearchS]
             .map ((valueZ, indexZ, thisArrayA) => {
                 const _rhsFastKeyO = new ProofStepObjectClass ();
 
