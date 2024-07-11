@@ -62,7 +62,7 @@ const rewriteOpcodesO = {
     _lhsFastForwaard: 5n,
     _rhsFastForward: 6n,
 };
-let tokenLibraryD = {};
+let tokenLibraryMap = new Map ();
 let lhsExpandProofFoundFlag;
 let lhsReduceProofFoundFlag;
 let rhsExpandProofFoundFlag;
@@ -146,14 +146,14 @@ function initCallGraphs ({
         { isLHS: false, isExpand: true, values: _resultObj._rhsExpand },
         { isLHS: false, isExpand: false, values: _resultObj._rhsReduce }
     ]
-    .forEach(({ isLHS, isExpand, values }) => {
+    .forEach (({ isLHS, isExpand, values }) => {
         if (!values?.length) return;
 
         axioms1C[`${isLHS ? '_lhs' : '_rhs'}${isExpand ? 'Expand' : 'Reduce'}CallGraph`][axioms2C.guidZ] = true;            
     });
 } // end initCallGraphs
 
-function rewriteProofstepF({
+function rewriteProofstepF ({
     axioms1C    
     , resultObj: { axioms2C, resultObj: _resultObj } = {}
     , stackA
@@ -167,12 +167,12 @@ function rewriteProofstepF({
         { isLHS: false, isExpand: false, values: _resultObj._rhsReduce }
     ];
 
-    const resultsA = operations.map(({ isLHS, isExpand, values }) => {
+    const resultsA = operations.map (({ isLHS, isExpand, values }) => {
         if (!values?.length) return false;
 
         let currentProofChain = [...stackA];
         for (let valueZ of values) {
-            let proofStep = new ProofStepObjectClass();
+            let proofStep = new ProofStepObjectClass ();
 
             proofStep.guidZ = axioms2C.guidZ;
             proofStep[isLHS ? 'lhsZ' : 'rhsZ'] = valueZ;
@@ -180,9 +180,9 @@ function rewriteProofstepF({
             proofStep.rewriteOpcodeZ = rewriteOpcodesO[`_${isLHS ? 'lhs' : 'rhs'}${isExpand ? 'Expand' : 'Reduce'}`];
 
             const proofFound = (proofStep.lhsZ === proofStep.rhsZ);
-            currentProofChain.push(proofStep);
+            currentProofChain.push (proofStep);
 
-            rewriteQueue.push(currentProofChain);
+            rewriteQueue.push (currentProofChain);
 
             if (proofFound) return [...currentProofChain];
         }
@@ -354,17 +354,17 @@ function processAxioms ({
     , stackA = []
     , cb = null
 }) {
-    axiomsA.forEach(axioms1C => {
+    axiomsA.forEach (axioms1C => {
         AxiomsArray
-        .map(axioms2C =>
-            compareAxioms({
+        .map (axioms2C =>
+            compareAxioms ({
                 axioms1C: axioms1C,
                 axioms2C: axioms2C,
                 maskSizeZ: maskSizeZ,
                 firstRewriteOnlyFlag: firstRewriteOnlyFlag
             })
         )
-        .forEach(result => cb({
+        .forEach (result => cb ({
             axioms1C: axioms1C,
             resultObj: result,  // contains { axioms2C, _resultObj }
             stackA: stackA
@@ -402,48 +402,47 @@ function isEmpty ({ targ }) {
 } // end isNotEmpty
 
 function initAxiomsArrayF ({ proofStatementsA = [] }) {
-    return proofStatementsA.map ((valueS, indexZ, thisArrayA) => {
-        let axiomObj = new AxiomClass ();
 
-        axiomObj.guidZ = indexZ < thisArrayA.length - 1 ? guidZ++ : 0n;
+    // First pass: build token library and calculate maskSizeZ
+    proofStatementsA.forEach (statement => {
+        statement.split (tokenDelimeterRE).forEach (token => {
+            if (!tokenLibraryMap.has (token)) {
+                tokenLibraryMap.set (token, 1n << uuidZ++);
+                maskSizeZ++;
+            }
+        });
+    });
 
-        valueS
-            // tokens
-            .split (tokenDelimeterRE)
-            // finalize token library, maskSizeZ calibration
-            .map ((thatValueS, thatIndexZ, thatArrayA) => {
-                if (!tokenLibraryD[thatValueS]) {
-                    tokenLibraryD[thatValueS] = 1n << uuidZ++;
-                    maskSizeZ++;
-                }
-                return thatValueS;
-            });
+    // Second pass: create and populate axiom objects
+    return proofStatementsA.map ((statement, indexZ) => {
+        const axiomObj = new AxiomClass ();
+        axiomObj.guidZ = indexZ < proofStatementsA.length - 1 ? BigInt (indexZ + 1) : 0n;
 
-        return axiomObj;
-    })
-    // map tokens to values
-    .map ((axiomObj, thatIndexZ, thatArrayA) => {
-        let swapSubnetsFlag;
-        proofStatementsA[thatIndexZ]
-            .split  (tokenDelimeterRE)
-            .forEach ((thatValueS, thatIndexZ, thatArrayA) =>{
-                if (thatValueS.match (tokenOperatorsRE)) {
-                    swapSubnetsFlag = true;
-                } else if (!swapSubnetsFlag) {
-                    axiomObj.lhsZ = (axiomObj.lhsZ << maskSizeZ) | tokenLibraryD[thatValueS];
+        let swapSubnetsFlag = false;
+        let lhsZ = 0n;
+        let rhsZ = 0n;
+
+        statement.split (tokenDelimeterRE).forEach (token => {
+            if (token.match (tokenOperatorsRE)) {
+                swapSubnetsFlag = true;
+            } else {
+                const tokenValue = tokenLibraryMap.get (token);
+                if (!swapSubnetsFlag) {
+                    lhsZ = (lhsZ << maskSizeZ) | tokenValue;
                 } else {
-                    axiomObj.rhsZ = (axiomObj.rhsZ << maskSizeZ) | tokenLibraryD[thatValueS];
+                    rhsZ = (rhsZ << maskSizeZ) | tokenValue;
                 }
-            });
+            }
+        });
 
-        return axiomObj;
-    })
-    // lhs > rhs
-    .map ((axiomObj, thatIndexZ, thatArrayA) => {
-        const lhsGreaterFlag = (axiomObj.lhsZ >= axiomObj.rhsZ);
-
-        axiomObj.lhsZ = lhsGreaterFlag ? axiomObj.lhsZ : axiomObj.rhsZ ;
-        axiomObj.rhsZ = lhsGreaterFlag ? axiomObj.rhsZ : axiomObj.lhsZ ;
+        // Ensure lhs > rhs for proper expand/reduce operation
+        if (lhsZ >= rhsZ) {
+            axiomObj.lhsZ = lhsZ;
+            axiomObj.rhsZ = rhsZ;
+        } else {
+            axiomObj.lhsZ = rhsZ;
+            axiomObj.rhsZ = lhsZ;
+        }
 
         return axiomObj;
     });
