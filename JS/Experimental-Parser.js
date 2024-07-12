@@ -186,12 +186,11 @@ function rewriteProofstepF ({
     if (_resultObj == null) return;
 
     const resultsA = [
-            { values: _resultObj._lhsExpand }
-            , { values: _resultObj._lhsReduce }
-            , { values: _resultObj._rhsExpand }
-            , { values: _resultObj._rhsReduce }
-        ]
-    .map (({ values }, indexZ, thisArrayA) => {
+        { values: _resultObj._lhsExpand }
+        , { values: _resultObj._lhsReduce }
+        , { values: _resultObj._rhsExpand }
+        , { values: _resultObj._rhsReduce }
+    ].map (({ values }, indexZ, thisArrayA) => {
         if (!values?.length) return false;
 
         let currentProofChain = [...stackA];
