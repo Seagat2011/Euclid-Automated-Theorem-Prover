@@ -180,31 +180,55 @@ if (isNotEmpty ({ targ:resultObj })) {
 
 function rewriteProofstepF ({
     axioms1C    
-    , resultObj: { axioms2C, resultObj: _resultObj } = {}
+    , resultObj: { axioms2C, _resultObj } = {}
     , stackA
 }) {
     if (_resultObj == null) return;
 
-    const operations = [
-        { isLHS: true, isExpand: true, values: _resultObj._lhsExpand }
-        , { isLHS: true, isExpand: false, values: _resultObj._lhsReduce }
-        , { isLHS: false, isExpand: true, values: _resultObj._rhsExpand }
-        , { isLHS: false, isExpand: false, values: _resultObj._rhsReduce }
-    ];
-
-    const resultsA = operations.map (({ isLHS, isExpand, values }) => {
+    const resultsA = [
+            { values: _resultObj._lhsExpand }
+            , { values: _resultObj._lhsReduce }
+            , { values: _resultObj._rhsExpand }
+            , { values: _resultObj._rhsReduce }
+        ]
+    .map (({ values }, indexZ, thisArrayA) => {
         if (!values?.length) return false;
 
         let currentProofChain = [...stackA];
+
         for (let valueZ of values) {
             let proofStep = new ProofStepObjectClass ();
 
             proofStep.guidZ = axioms2C.guidZ;
-            proofStep[isLHS ? 'lhsZ' : 'rhsZ'] = valueZ;
-            proofStep[isLHS ? 'rhsZ' : 'lhsZ'] = isLHS ? axioms2C.rhsZ : axioms2C.lhsZ;
-            proofStep.rewriteOpcodeZ = rewriteOpcodesO[`_${isLHS ? 'lhs' : 'rhs'}${isExpand ? 'Expand' : 'Reduce'}`];
+
+            switch (indexZ) {
+                case 0:
+                proofStep.lhsZ = valueZ;
+                proofStep.rhsZ = axioms1C.rhsZ;
+                proofStep.rewriteOpcodeZ = rewriteOpcodesO._lhsExpand;
+                break;
+
+                case 1:
+                proofStep.lhsZ = valueZ;
+                proofStep.rhsZ = axioms1C.rhsZ;
+                proofStep.rewriteOpcodeZ = rewriteOpcodesO._lhsReduce;
+                break;
+
+                case 2:
+                proofStep.lhsZ = axioms1C.lhsZ;
+                proofStep.rhsZ = valueZ;
+                proofStep.rewriteOpcodeZ = rewriteOpcodesO._rhsExpand;
+                break;
+
+                case 3:
+                proofStep.lhsZ = axioms1C.lhsZ;
+                proofStep.rhsZ = valueZ;
+                proofStep.rewriteOpcodeZ = rewriteOpcodesO._rhsReduce;
+                break;
+            }
 
             const proofFound = (proofStep.lhsZ === proofStep.rhsZ);
+
             currentProofChain.push (proofStep);
 
             rewriteQueue.push (currentProofChain);
@@ -534,7 +558,14 @@ function main () {
 
     const theoremA = AxiomsArray.pop (); // Theorem is the last element!
 
-    rewriteQueue.push ([theoremA]);
+    let proofStep = new ProofStepObjectClass ();
+
+    proofStep.guidZ = theoremA.guidZ;
+    proofStep.lhsZ = theoremA.lhsZ;
+    proofStep.rhsZ = theoremA.rhsZ;
+    proofStep.rewriteOpcodeZ = 0n;
+
+    rewriteQueue.push ([proofStep]);
 
     clock ({ valueS: "main" });
 
