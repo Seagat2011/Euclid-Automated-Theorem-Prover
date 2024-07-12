@@ -26,11 +26,11 @@
 
     EXAMPLE:
     const ProofStatementA = [
-        // axioms and lemmas
+        // Axioms and Lemmas
         "1 + 1 = 2",
-        "2 + 2 = 4"
-        // prove
-        1 + 2 + 1 = 4
+        "2 + 2 = 4",
+        // Theorem to prove
+        "1 + 2 + 1 = 4",
     ];
 
     SCRIPT TYPE:
