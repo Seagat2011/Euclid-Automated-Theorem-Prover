@@ -39,11 +39,14 @@
 */
 
 const ProofStatementsA = [
-    // axioms and lemmas
+    // Axioms and Lemmas
     "1 + 1 = 2",
+    "2 + 1 = 3",
     "2 + 2 = 4",
-    // prove
-    "1 + 2 + 1 = 4",
+    "3 + 1 = 4",
+
+    // Prove
+    "1 + 1 + 2 = 3 + 1",
 ]
 
 let QED;
