@@ -19,7 +19,8 @@
     Add FastForward support
 
     TODO
-    Add async support
+    Add Multi-threaded support via iinline Web Workers
+    Add async/await support
 
     STYLEGUIDE:
     http://google-styleguide.googlecode.com/svn/trunk/javascriptguide.xml
@@ -41,12 +42,9 @@
 const ProofStatementsA = [
     // Axioms and Lemmas
     "1 + 1 = 2",
-    "2 + 1 = 3",
     "2 + 2 = 4",
-    "3 + 1 = 4",
-
-    // Prove
-    "1 + 1 + 2 = 3 + 1",
+    // Theorem to prove
+    "1 + 2 + 1 = 4",
 ]
 
 let QED;
@@ -54,6 +52,7 @@ let guidZ = 1n; // 0n reserved (AXIOM ROOT)
 let uuidZ = 0n;
 let maskSizeZ = 0n;
 let AxiomsArray = [];
+let AxiomsArrayH = {}; // quick lookup
 let ProofFoundFlag;
 let fastForwardQueue = {};
 let rewriteQueue = [];
@@ -82,6 +81,8 @@ class AxiomClass extends Object {
         this.guidZ = null;
         this.lhsZ = 0n;
         this.rhsZ = 0n;
+        this._lhsCallGraph = {};
+        this._rhsCallGraph = {};
         this._lhsExpandCallGraph = {};
         this._lhsReduceCallGraph = {};
         this._rhsExpandCallGraph = {};
@@ -172,10 +173,10 @@ if (isNotEmpty ({ targ:resultObj })) {
             return;
 
         switch (indexZ) {
-            case 0: axioms1C._lhsExpandCallGraph[axioms2C.guidZ] = true; break;
-            case 1: axioms1C._lhsReduceCallGraph[axioms2C.guidZ] = true; break;
-            case 2: axioms1C._rhsExpandCallGraph[axioms2C.guidZ] = true; break;
-            case 3: axioms1C._rhsReduceCallGraph[axioms2C.guidZ] = true; break;
+            case 0: axioms1C._lhsExpandCallGraph[axioms2C.guidZ] = true; axioms1C._lhsCallGraph[axioms2C.guidZ] = true; break;
+            case 1: axioms1C._lhsReduceCallGraph[axioms2C.guidZ] = true; axioms1C._lhsCallGraph[axioms2C.guidZ] = true; break;
+            case 2: axioms1C._rhsExpandCallGraph[axioms2C.guidZ] = true; axioms1C._rhsCallGraph[axioms2C.guidZ] = true; break;
+            case 3: axioms1C._rhsReduceCallGraph[axioms2C.guidZ] = true; axioms1C._rhsCallGraph[axioms2C.guidZ] = true; break;
         }
     });
 }
@@ -374,33 +375,40 @@ function compareAxioms ({
         , _rhsReduce: false
     };
 
-    _resultObj._lhsExpand = replaceBitfieldsInProofStepBigEndian ({
-        proofStepZ: axioms1C.lhsZ
-        , maskSizeZ: maskSizeZ
-        , fromZ: axioms2C.rhsZ
-        , toZ: axioms2C.lhsZ
-        , firstRewriteOnlyFlag: firstRewriteOnlyFlag });
+    const lhsCallGraphFlag = AxiomsArrayH[axioms1C.guidZ]._lhsCallGraph [axioms2C.guidZ] != null || firstRewriteOnlyFlag;
+    const rhsCallGraphFlag = AxiomsArrayH[axioms1C.guidZ]._rhsCallGraph [axioms2C.guidZ] != null || firstRewriteOnlyFlag;
 
-    _resultObj._lhsReduce = replaceBitfieldsInProofStepBigEndian ({
-        proofStepZ: axioms1C.lhsZ
-        , maskSizeZ: maskSizeZ
-        , fromZ: axioms2C.lhsZ
-        , toZ: axioms2C.rhsZ
-        , firstRewriteOnlyFlag: firstRewriteOnlyFlag });
+    if (lhsCallGraphFlag) {
+        _resultObj._lhsExpand = replaceBitfieldsInProofStepBigEndian ({
+            proofStepZ: axioms1C.lhsZ
+            , maskSizeZ: maskSizeZ
+            , fromZ: axioms2C.rhsZ
+            , toZ: axioms2C.lhsZ
+            , firstRewriteOnlyFlag: firstRewriteOnlyFlag });
+            
+        _resultObj._lhsReduce = replaceBitfieldsInProofStepBigEndian ({
+            proofStepZ: axioms1C.lhsZ
+            , maskSizeZ: maskSizeZ
+            , fromZ: axioms2C.lhsZ
+            , toZ: axioms2C.rhsZ
+            , firstRewriteOnlyFlag: firstRewriteOnlyFlag });
+    }
 
-    _resultObj._rhsExpand = replaceBitfieldsInProofStepBigEndian ({
-        proofStepZ: axioms1C.rhsZ
-        , maskSizeZ: maskSizeZ
-        , fromZ: axioms2C.rhsZ
-        , toZ: axioms2C.lhsZ
-        , firstRewriteOnlyFlag: firstRewriteOnlyFlag });
+    if (rhsCallGraphFlag) {
+        _resultObj._rhsExpand = replaceBitfieldsInProofStepBigEndian ({
+            proofStepZ: axioms1C.rhsZ
+            , maskSizeZ: maskSizeZ
+            , fromZ: axioms2C.rhsZ
+            , toZ: axioms2C.lhsZ
+            , firstRewriteOnlyFlag: firstRewriteOnlyFlag });
 
-    _resultObj._rhsReduce = replaceBitfieldsInProofStepBigEndian ({
-        proofStepZ: axioms1C.rhsZ
-        , maskSizeZ: maskSizeZ
-        , fromZ: axioms2C.lhsZ
-        , toZ: axioms2C.rhsZ
-        , firstRewriteOnlyFlag: firstRewriteOnlyFlag });
+        _resultObj._rhsReduce = replaceBitfieldsInProofStepBigEndian ({
+            proofStepZ: axioms1C.rhsZ
+            , maskSizeZ: maskSizeZ
+            , fromZ: axioms2C.lhsZ
+            , toZ: axioms2C.rhsZ
+            , firstRewriteOnlyFlag: firstRewriteOnlyFlag });
+    }
 
     clock ({ valueS: "compareAxioms" });
     
@@ -513,6 +521,9 @@ function initAxiomsArrayF ({ proofStatementsA = [] }) {
             axiomObj.rhsZ = lhsZ;
         }
 
+        // Catalog for quick-lookup
+        AxiomsArrayH[axiomObj.guidZ] = axiomObj;
+
         clock ({ valueS: 'initAxiomsArrayF' })
 
         return axiomObj;
@@ -558,7 +569,7 @@ function main () {
         , stackA: []
         , cb: initCallGraphs });
 
-    const theoremA = AxiomsArray.pop (); // Theorem is the last element!
+    const theoremA = _lastElementOf({ valueA: AxiomsArray }); // Theorem is the last element!
 
     let proofStep = new ProofStepObjectClass ();
 
