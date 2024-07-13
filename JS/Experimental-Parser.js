@@ -15,12 +15,14 @@
     DESCRIPTION:
     Experimental Parser
 
-    UPDATES
+    UPDATED
+    Add CallGraph support
+    Add Session runtime support (during debug mode)
     Add FastForward support
 
-    TODO
-    Add Multi-threaded support via iinline Web Workers
-    Add async/await support
+    TODOS
+    Add Multi-thread support via inline Web Workers
+    Add async/await and Promise.All support
 
     STYLEGUIDE:
     http://google-styleguide.googlecode.com/svn/trunk/javascriptguide.xml
@@ -56,6 +58,7 @@ let AxiomsArrayH = {}; // quick lookup
 let ProofFoundFlag;
 let fastForwardQueue = {};
 let rewriteQueue = [];
+let sessionRuntimeClockFlag; // debug only
 const rewriteOpcodesO = {
     _lhsExpand: 1n,
     _lhsReduce: 2n,
@@ -140,6 +143,8 @@ class CloneableObjectClass {
 } // end class CloneableObjectClass
 
 function clock ({ valueS }) {
+    if (!sessionRuntimeClockFlag) return;
+
     if (valueS) {
         const localTime = performance.now () - globalTime;
         let currentValue = globalTimeRecord.get (valueS) || 0;
