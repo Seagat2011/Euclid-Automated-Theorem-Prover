@@ -695,5 +695,14 @@ function main () {
 try   {
     main ();
 } catch (e) {
-    console.info (`An error occured: ${e}`);
+
+    e.stack = e.stack
+        .split(/\n/g)
+            .filter(s => s)
+                .map((s,idx,me) => `${me.length-idx-1}: ${s}`)
+                    .join("\n");
+
+    const { columnNumber, fileName, lineNumber, message, stack } = e;
+
+    console.info (`An error occured: ${message}\n\nline: ${lineNumber}; col: ${columnNumber}\n\ntrace:\n${stack}`);
 }
