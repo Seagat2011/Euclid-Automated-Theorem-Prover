@@ -106,6 +106,15 @@ function Solve(INDIR){
             },g_origin);
         console.clear();
     } catch(e) {
-       solutionEditor.innerText=[`Error: ${e.message}...`,e.stack.replace(/@/g,' >> ')].join('\n\n') 
+
+      e.stack = e.stack
+          .split(/\n/g)
+              .filter(s => s)
+                  .map((s,idx,me) => `${me.length-idx-1}: ${s}`)
+                      .join("\n");
+
+      const { columnNumber, fileName, lineNumber, message, stack } = e;
+
+       solutionEditor.innerText=`An error occured: ${message}\n\nline: ${lineNumber}; col: ${columnNumber}\n\ntrace:\n${stack}`
     }
 }
