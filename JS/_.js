@@ -378,10 +378,10 @@ function compareAxioms ({
         , _rhsReduce: false
     };
 
-    const lhsCallGraphFlag = AxiomsArrayH[axioms1C.guidZ]._lhsCallGraph [axioms2C.guidZ] != null || firstRewriteOnlyFlag;
-    const rhsCallGraphFlag = AxiomsArrayH[axioms1C.guidZ]._rhsCallGraph [axioms2C.guidZ] != null || firstRewriteOnlyFlag;
+    //const lhsCallGraphFlag = AxiomsArrayH[axioms1C.guidZ]._lhsCallGraph [axioms2C.guidZ] != null || firstRewriteOnlyFlag;
+    //const rhsCallGraphFlag = AxiomsArrayH[axioms1C.guidZ]._rhsCallGraph [axioms2C.guidZ] != null || firstRewriteOnlyFlag;
 
-    if (lhsCallGraphFlag) {
+    //if (lhsCallGraphFlag) {
         _resultObj._lhsExpand = replaceBitfieldsInProofStepBigEndian ({
             proofStepZ: axioms1C.lhsZ
             , maskSizeZ: maskSizeZ
@@ -395,9 +395,9 @@ function compareAxioms ({
             , fromZ: axioms2C.lhsZ
             , toZ: axioms2C.rhsZ
             , firstRewriteOnlyFlag: firstRewriteOnlyFlag });
-    }
+    //}
 
-    if (rhsCallGraphFlag) {
+    //if (rhsCallGraphFlag) {
         _resultObj._rhsExpand = replaceBitfieldsInProofStepBigEndian ({
             proofStepZ: axioms1C.rhsZ
             , maskSizeZ: maskSizeZ
@@ -411,7 +411,7 @@ function compareAxioms ({
             , fromZ: axioms2C.lhsZ
             , toZ: axioms2C.rhsZ
             , firstRewriteOnlyFlag: firstRewriteOnlyFlag });
-    }
+    //}
 
     clock ({ valueS: "compareAxioms" });
     
