@@ -41,17 +41,9 @@
 
 */
 
-const ProofStatementsA = [
-    // Axioms and Lemmas
-    "1 + 1 = 2",
-    "2 + 2 = 4",
-    // Theorem to prove
-    "1 + 2 + 1 = 4",
-]
-
 let QED;
 let guidZ = 1n; // 0n reserved (AXIOM ROOT)
-let uuidZ = 0n;
+let uuidZ = 1n;
 let maskSizeZ = 0n;
 let AxiomsArray = [];
 let AxiomsArrayH = {}; // quick lookup
@@ -89,6 +81,7 @@ class AxiomClass extends Object {
         this.guidZ = null;
         this.lhsZ = 0n;
         this.rhsZ = 0n;
+        this._callGraph = {};
         this._lhsCallGraph = {};
         this._rhsCallGraph = {};
         this._lhsExpandCallGraph = {};
@@ -169,27 +162,27 @@ function initCallGraphs ({
     , stackA 
 }) {
 
-if (isNotEmpty ({ targ:resultObj })) {
-    const { axioms2C, _resultObj } = resultObj;
+    if (isNotEmpty ({ targ:resultObj })) {
+        const { axioms2C, _resultObj } = resultObj;
 
-    const retArray = [
-        _resultObj._lhsExpand
-        , _resultObj._lhsReduce
-        , _resultObj._rhsExpand
-        , _resultObj._rhsReduce
-    ]
-    .forEach ((valueA, indexZ, thisArrayA) => {
-        if (valueA?.length < 1)
-            return;
+        const retArray = [
+            _resultObj._lhsExpand
+            , _resultObj._lhsReduce
+            , _resultObj._rhsExpand
+            , _resultObj._rhsReduce
+        ]
+        .forEach ((valueA, indexZ, thisArrayA) => {
+            if (valueA?.length < 1)
+                return;
 
-        switch (indexZ) {
-            case 0: axioms1C._lhsExpandCallGraph[axioms2C.guidZ] = true; axioms1C._lhsCallGraph[axioms2C.guidZ] = true; break;
-            case 1: axioms1C._lhsReduceCallGraph[axioms2C.guidZ] = true; axioms1C._lhsCallGraph[axioms2C.guidZ] = true; break;
-            case 2: axioms1C._rhsExpandCallGraph[axioms2C.guidZ] = true; axioms1C._rhsCallGraph[axioms2C.guidZ] = true; break;
-            case 3: axioms1C._rhsReduceCallGraph[axioms2C.guidZ] = true; axioms1C._rhsCallGraph[axioms2C.guidZ] = true; break;
-        }
-    });
-}
+            switch (indexZ) {
+                case 0: axioms1C._lhsExpandCallGraph[axioms2C.guidZ] = true; axioms1C._lhsCallGraph[axioms2C.guidZ] = true; break;
+                case 1: axioms1C._lhsReduceCallGraph[axioms2C.guidZ] = true; axioms1C._lhsCallGraph[axioms2C.guidZ] = true; break;
+                case 2: axioms1C._rhsExpandCallGraph[axioms2C.guidZ] = true; axioms1C._rhsCallGraph[axioms2C.guidZ] = true; break;
+                case 3: axioms1C._rhsReduceCallGraph[axioms2C.guidZ] = true; axioms1C._rhsCallGraph[axioms2C.guidZ] = true; break;
+            }
+        });
+    }
 } // end initCallGraphs
 
 function rewriteProofstepF ({
@@ -266,8 +259,8 @@ function replaceBitfieldsInProofStepBigEndian ({
 
     clock ({ valueS: "replaceBitfieldsInProofStepBigEndian" });
 
-    const fromResolutionZ = _resolutionOf ({ valueZ: fromZ });
-    const proofStepResolutionZ = _resolutionOf ({ valueZ: proofStepZ });
+    const fromResolutionZ = resolutionOf ({ valueZ: fromZ });
+    const proofStepResolutionZ = resolutionOf ({ valueZ: proofStepZ });
 
     const subnetNotFoundFlag = (fromResolutionZ > proofStepResolutionZ);
 
@@ -287,7 +280,7 @@ function replaceBitfieldsInProofStepBigEndian ({
     let resultZ = 0n;
     let fullRewriteFoundFlag = false;
     const chunkMask = (1n << maskSizeZ) - 1n;
-    const toResolutionZ = _resolutionOf ({ valueZ: toZ });
+    const toResolutionZ = resolutionOf ({ valueZ: toZ });
 
     //let fromOffsetZ = (fromResolutionZ - maskSizeZ);
     const nonMatchSubnetLengthsFlag = (fromResolutionZ !== proofStepResolutionZ);
@@ -457,13 +450,18 @@ function processAxioms ({
     
 } // end processAxioms
 
-function _resolutionOf ({ valueZ }) {
+function resolutionOf ({ valueZ }) {
     const I = BigInt (valueZ.toString (2).length);
 
     return I;
-} // end _resolutionOf
+} // end resolutionOf
 
-function _lastElementOf ({ valueA }) {
+function updateLineNumbers () {
+    const lines = viewArea.value.split ('\n');
+    lineNumbers.innerHTML = lines.map ((_, index) => index + 1).join ('<br>');
+} // end updateLineNumbers
+
+function lastElementOf ({ valueA }) {
     let ret;
     const ii = valueA.length - 1;
 
@@ -472,7 +470,7 @@ function _lastElementOf ({ valueA }) {
     }
 
     return ret;
-} // end _lastElementOf
+} // end lastElementOf
 
 function isNotEmpty ({ targ }) {
     const resultFlag = Object.keys (targ).length > 0;
@@ -491,36 +489,50 @@ function initAxiomsArrayF ({ proofStatementsA = [] }) {
     clock ({ valueS: "initAxiomsArrayF" });
 
     // First pass: build token library and calculate maskSizeZ
-    proofStatementsA.forEach (statement => {
-        statement.split (tokenDelimeterRE).forEach (token => {
-            if (!tokenLibraryMap.has (token)) {
-                tokenLibraryMap.set (token, 1n << uuidZ++);
-                maskSizeZ++;
-            }
-        });
-    });
+    let _proofStatementsA = [];
+    
+    proofStatementsA
+        .split(newlinesRE)
+            .forEach (statement => {
+                if (/^\w/.test(statement)){
+                    const retArray = statement
+                        .split (tokenDelimeterRE);
+
+                    retArray
+                        .forEach (token => {
+                            if (!tokenLibraryMap.has (token)) {
+                                tokenLibraryMap.set (token, uuidZ++);
+                            }
+                        });
+
+                    _proofStatementsA.push (retArray);
+                }
+            });
+
+    maskSizeZ = resolutionOf({ valueZ: uuidZ });
 
     // Second pass: create and populate axiom objects
-    return proofStatementsA.map ((statement, indexZ) => {
+    return _proofStatementsA.map ((statement, indexZ, thisArrayA) => {
         const axiomObj = new AxiomClass ();
-        axiomObj.guidZ = indexZ < proofStatementsA.length - 1 ? BigInt (indexZ + 1) : 0n;
+        axiomObj.guidZ = indexZ < thisArrayA.length - 1 ? BigInt (indexZ + 1) : 0n;
 
         let swapSubnetsFlag = false;
         let lhsZ = 0n;
         let rhsZ = 0n;
 
-        statement.split (tokenDelimeterRE).forEach (token => {
-            if (token.match (tokenOperatorsRE)) {
-                swapSubnetsFlag = true;
-            } else {
-                const tokenValue = tokenLibraryMap.get (token);
-                if (!swapSubnetsFlag) {
-                    lhsZ = (lhsZ << maskSizeZ) | tokenValue;
+        statement
+            .forEach (token => {
+                if (token.match (tokenOperatorsRE)) {
+                    swapSubnetsFlag = true;
                 } else {
-                    rhsZ = (rhsZ << maskSizeZ) | tokenValue;
+                    const tokenValue = tokenLibraryMap.get (token);
+                    if (!swapSubnetsFlag) {
+                        lhsZ = (lhsZ << maskSizeZ) | tokenValue;
+                    } else {
+                        rhsZ = (rhsZ << maskSizeZ) | tokenValue;
+                    }
                 }
-            }
-        });
+            });
 
         // Ensure lhs > rhs for proper expand/reduce operation
         if (lhsZ >= rhsZ) {
@@ -568,9 +580,9 @@ function initAxiomCallGraphs ({
 
 } // end initAxiomCallGraphs
 
-function main () {
+function main (proofStatementsA) {
 
-    AxiomsArray = initAxiomsArrayF ({ proofStatementsA: ProofStatementsA });
+    AxiomsArray = initAxiomsArrayF ({ proofStatementsA: proofStatementsA });
 
     initAxiomCallGraphs ({
         axiomsA: AxiomsArray
@@ -579,7 +591,7 @@ function main () {
         , stackA: []
         , cb: initCallGraphs });
 
-    const theoremA = _lastElementOf({ valueA: AxiomsArray }); // Theorem is the last element!
+    const theoremA = lastElementOf({ valueA: AxiomsArray }); // Theorem is the last element!
 
     let proofStep = new ProofStepObjectClass ();
 
@@ -594,12 +606,14 @@ function main () {
 
     const startTimeZ = performance.now ();
 
+    codeArea.value = "Working...";
+
     do {
 
         // read from (bottom of) rewriteQueue
         proofstackA = rewriteQueue.shift ();
 
-        const proofStepC = _lastElementOf ({ valueA: proofstackA });
+        const proofStepC = lastElementOf ({ valueA: proofstackA });
 
         const _lhsFastKeyS = `lhs:${proofStepC.lhsZ}`;
         const _rhsFastKeyS = `rhs:${proofStepC.rhsZ}`;
@@ -614,18 +628,16 @@ function main () {
             QED = [...proofstackA];
 
             fastForwardQueue[_lhsFastKeySearchS]
-            .map ((valueZ, indexZ, thisArrayA) => {
-                const _lhsFastKeyO = new ProofStepObjectClass ();
+                .forEach ((valueZ, indexZ, thisArrayA) => {
+                    const _lhsFastKeyO = new ProofStepObjectClass ();
 
-                _lhsFastKeyO.guidZ = valueZ.guidZ;
-                _lhsFastKeyO.lhsZ = proofStepC.lhsZ;
-                _lhsFastKeyO.rhsZ = valueZ.rhsZ;
-                _lhsFastKeyO.rewriteOpcodeZ = rewriteOpcodesO._lhsFastForwaard;
+                    _lhsFastKeyO.guidZ = valueZ.guidZ;
+                    _lhsFastKeyO.lhsZ = proofStepC.lhsZ;
+                    _lhsFastKeyO.rhsZ = valueZ.rhsZ;
+                    _lhsFastKeyO.rewriteOpcodeZ = rewriteOpcodesO._lhsFastForwaard;
 
-                QED.push (_lhsFastKeyO);
-
-                return valueZ;
-            });
+                    QED.push (_lhsFastKeyO);
+                });
 
             ProofFoundFlag = true;
 
@@ -636,18 +648,16 @@ function main () {
             QED = [...proofstackA];
 
             fastForwardQueue[_rhsFastKeySearchS]
-            .map ((valueZ, indexZ, thisArrayA) => {
-                const _rhsFastKeyO = new ProofStepObjectClass ();
+                .forEach ((valueZ, indexZ, thisArrayA) => {
+                    const _rhsFastKeyO = new ProofStepObjectClass ();
 
-                _rhsFastKeyO.guidZ = valueZ.guidZ;
-                _rhsFastKeyO.lhsZ = valueZ.lhsZ;
-                _rhsFastKeyO.rhsZ = proofStepC.rhsZ;
-                _rhsFastKeyO.rewriteOpcodeZ = rewriteOpcodesO._lhsFastForwaard;
+                    _rhsFastKeyO.guidZ = valueZ.guidZ;
+                    _rhsFastKeyO.lhsZ = valueZ.lhsZ;
+                    _rhsFastKeyO.rhsZ = proofStepC.rhsZ;
+                    _rhsFastKeyO.rewriteOpcodeZ = rewriteOpcodesO._lhsFastForwaard;
 
-                QED.push (_rhsFastKeyO);
-
-                return valueZ;
-            });
+                    QED.push (_rhsFastKeyO);
+                });
 
             ProofFoundFlag = true;
 
@@ -687,13 +697,28 @@ function main () {
 
     const totalTimeZ = endTimeZ - startTimeZ;
 
+    let resultArray = []
+
     if (QED) {
+        resultArray.push ('Proof found!');
         console.info ("Proof found!", "\n", QED, "\n", "Q.E.D.");
+
+        let proofArray = ['['];
+        QED.forEach ((valueObj, indexZ, thisArrayA) => {
+            proofArray.push (`{ guidZ: ${valueObj.guidZ}n, lhsZ: ${valueObj.lhsZ}n, rhsZ: ${valueObj.rhsZ}n, rewriteOpcodeZ: ${valueObj.rewriteOpcodeZ}n },`);
+        });
+        proofArray.push ('];');
+
+        resultArray.push (proofArray.join ('\n'), 'Q.E.D.');
     } else {
-        console.info ("No proof found.")
+        resultArray.push ('No proof found.');
+        console.info ("No proof found.");
     }
 
-    console.info (`Total runtime: ${totalTimeZ} Milliseconds`)
+    console.info (`Total runtime: ${totalTimeZ} Milliseconds`);
+    resultArray.push (`Total runtime: ${totalTimeZ} Milliseconds`);
+
+    codeArea.value = resultArray.join('\n\n');
 
 } // end main
 
@@ -731,8 +756,6 @@ try   {
     codeArea.value = '';
 
     updateLineNumbers ();
-
-    main ();
 
 } catch (e) {
 
