@@ -56,7 +56,7 @@ const rewriteOpcodesO = {
     _lhsReduce: 2n,
     _rhsExpand: 3n,
     _rhsReduce: 4n,
-    _lhsFastForwaard: 5n,
+    _lhsFastForward: 5n,
     _rhsFastForward: 6n,
 };
 const rewriteOpcodeZtoString = {
@@ -647,7 +647,7 @@ function resetProof () {
     rhsReduceProofFoundFlag = false;
 } // end resetProof
 
-function manageProofStep(proofStepC, proofstackA) {
+function checkProofStep(proofStepC, proofstackA) {
     const lhsFastKey = createFastKey('lhs', proofStepC.lhsZ);
     const rhsFastKey = createFastKey('rhs', proofStepC.rhsZ);
 
@@ -657,10 +657,10 @@ function manageProofStep(proofStepC, proofstackA) {
     const lhsFastKeySearch = createFastKey('rhs', proofStepC.lhsZ);
     const rhsFastKeySearch = createFastKey('lhs', proofStepC.rhsZ);
 
-    const lhsResult = processQueue('lhs', lhsFastKeySearch, proofStepC.lhsZ, null);
+    const lhsResult = queryFastForwardQueue('lhs', lhsFastKeySearch, proofStepC.lhsZ, null);
     if (lhsResult) return lhsResult;
 
-    const rhsResult = processQueue('rhs', rhsFastKeySearch, null, proofStepC.rhsZ);
+    const rhsResult = queryFastForwardQueue('rhs', rhsFastKeySearch, null, proofStepC.rhsZ);
     if (rhsResult) return rhsResult;
 
     return { QED: null, ProofFoundFlag: false };
@@ -683,11 +683,11 @@ function manageProofStep(proofStepC, proofstackA) {
         proofStep.guidZ = valueObj.guidZ;
         proofStep.lhsZ = lhsFlag ? lhs : valueObj.lhsZ;
         proofStep.rhsZ = lhsFlag ? valueObj.rhsZ : rhs;
-        proofStep.rewriteOpcodeZ = lhsFlag ? rewriteOpcodesO._lhsFastForwaard : rewriteOpcodesO._rhsFastForwaard;
+        proofStep.rewriteOpcodeZ = lhsFlag ? rewriteOpcodesO._lhsFastForward : rewriteOpcodesO._rhsFastForwaard;
         return proofStep;
     }
 
-    function processQueue(indirS, searchKey, lhs, rhs) {
+    function queryFastForwardQueue(indirS, searchKey, lhs, rhs) {
         if (fastForwardQueue[searchKey]) {
             const _QED = [...proofstackA];
             fastForwardQueue[searchKey].forEach((value) => {
@@ -698,7 +698,7 @@ function manageProofStep(proofStepC, proofstackA) {
         return null;
     }
 
-} // end manageProofStep
+} // end checkProofStep
 
 async function main (proofStatementsA) {
 
@@ -713,7 +713,7 @@ async function main (proofStatementsA) {
         , stackA: []
         , cb: initCallGraphs });
  */
-    const theoremA = lastElementOf({ valueA: AxiomsArray }); // Theorem is the last element!
+    const theoremA = AxiomsArray.pop (); // lastElementOf({ valueA: AxiomsArray }); // Theorem is the last element!
 
     let proofStep = new ProofStepObjectClass ();
 
@@ -735,12 +735,12 @@ async function main (proofStatementsA) {
 
         const proofStepC = lastElementOf ({ valueA: proofstackA });
 
-        const result = manageProofStep(proofStepC, proofstackA);
+        const result = checkProofStep(proofStepC, proofstackA);
 
         if (result.ProofFoundFlag) {
-          // Use result.QED
-          QED = result.QED;
-          break;
+            // Use result.QED
+            QED = result.QED;
+            break;
         }
 
         // clone rewrite candidates for each subnet
