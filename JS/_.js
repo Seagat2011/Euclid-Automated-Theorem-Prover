@@ -59,7 +59,16 @@ const rewriteOpcodesO = {
     _lhsFastForwaard: 5n,
     _rhsFastForward: 6n,
 };
+const rewriteOpcodeZtoString = {
+    [rewriteOpcodesO._lhsExpand]: "lhs expand",
+    [rewriteOpcodesO._lhsReduce]: "lhs reduce",
+    [rewriteOpcodesO._rhsExpand]: "rhs expand",
+    [rewriteOpcodesO._rhsReduce]: "rhs reduce",
+    [rewriteOpcodesO._lhsFastForward]: "lhs fast-forward",
+    [rewriteOpcodesO._rhsFastForward]: "rhs fast-forward",
+};
 let tokenLibraryMap = new Map ();
+let tokenLibraryInverseMap = new Map ();
 let lhsExpandProofFoundFlag;
 let lhsReduceProofFoundFlag;
 let rhsExpandProofFoundFlag;
@@ -248,6 +257,36 @@ function rewriteProofstepF ({
     [ lhsExpandProofFoundFlag, lhsReduceProofFoundFlag, rhsExpandProofFoundFlag, rhsReduceProofFoundFlag ] = resultsA;
 
 } // end rewriteProofstepF
+
+function convertBitstream2tokens ({ proofStepZ, maskSizeZ }) {    
+
+    clock ({ valueS: "bitstream2tokens" });
+
+    let ret = [];
+    const chunkMask = (1n << maskSizeZ) - 1n;
+    const proofStepResolutionZ = resolutionOf ({ valueZ: proofStepZ });
+
+    let bitsRemainingZ = proofStepResolutionZ;
+
+    // ensure read/write masks are properly aligned
+    while (bitsRemainingZ > maskSizeZ) {
+
+        if (bitsRemainingZ > maskSizeZ)
+            bitsRemainingZ -= maskSizeZ;
+
+    }
+
+    // ensure all offsets align to (Resolution % maskSizeZ) boundaries
+    const proofstepOffsetZ = proofStepResolutionZ - bitsRemainingZ;
+
+    for (let ii = proofstepOffsetZ; ii >= 0n; ii -= maskSizeZ) {
+        const chunk = (proofStepZ >> ii) & chunkMask;
+        tokenLibraryInverseMap.has (chunk) && ret.push (tokenLibraryInverseMap.get (chunk));
+    } // end loop
+
+    return ret;
+
+} // end convertBitstream2tokens
 
 function replaceBitfieldsInProofStepBigEndian ({
     proofStepZ
@@ -501,7 +540,9 @@ function initAxiomsArrayF ({ proofStatementsA = [] }) {
                     retArray
                         .forEach (token => {
                             if (!tokenLibraryMap.has (token)) {
-                                tokenLibraryMap.set (token, uuidZ++);
+                                tokenLibraryMap.set (token, uuidZ);
+                                tokenLibraryInverseMap.set (uuidZ, token);
+                                uuidZ++;
                             }
                         });
 
@@ -600,6 +641,7 @@ function resetProof () {
     fastForwardQueue = {};
     ProofFoundFlag = false;
     tokenLibraryMap = new Map ();
+    tokenLibraryInverseMap = new Map ();
     sessionRuntimeClockFlag = false; // debug only
     lhsExpandProofFoundFlag = false;
     lhsReduceProofFoundFlag = false;
@@ -730,11 +772,17 @@ async function main (proofStatementsA) {
         resultArray.push ('Proof found!');
         console.info ("Proof found!", "\n", QED, "\n", "Q.E.D.");
 
-        let proofArray = ['['];
+        let proofArray = []; //['['];
         QED.forEach ((valueObj, indexZ, thisArrayA) => {
-            proofArray.push (`{ guidZ: ${valueObj.guidZ}n, lhsZ: ${valueObj.lhsZ}n, rhsZ: ${valueObj.rhsZ}n, rewriteOpcodeZ: ${valueObj.rewriteOpcodeZ}n },`);
+            //proofArray.push (`{ guidZ: ${valueObj.guidZ}n, lhsZ: ${valueObj.lhsZ}n, rhsZ: ${valueObj.rhsZ}n, rewriteOpcodeZ: ${valueObj.rewriteOpcodeZ}n },`);
+            const phraseString = valueObj.guidZ > 0 
+                ? `(${ rewriteOpcodeZtoString[valueObj.rewriteOpcodeZ] }) via axiom_${ valueObj.guidZ }` 
+                : `(root)` ;
+            const lhsStringArray = convertBitstream2tokens ({ proofStepZ: valueObj.lhsZ, maskSizeZ: maskSizeZ });
+            const rhsStringArray = convertBitstream2tokens ({ proofStepZ: valueObj.rhsZ, maskSizeZ: maskSizeZ });
+            proofArray.push ( `${ lhsStringArray.join (' ') } = ${ rhsStringArray.join (' ') }, ${ phraseString }`);
         });
-        proofArray.push ('];');
+        //proofArray.push ('];');
 
         resultArray.push (proofArray.join ('\n'), 'Q.E.D.');
     } else {
