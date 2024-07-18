@@ -320,8 +320,7 @@ function replaceBitfieldsInProofStepBigEndian ({
     let fullRewriteFoundFlag = false;
     const chunkMask = (1n << maskSizeZ) - 1n;
     const toResolutionZ = resolutionOf ({ valueZ: toZ });
-
-    //let fromOffsetZ = (fromResolutionZ - maskSizeZ);
+    
     const nonMatchSubnetLengthsFlag = (fromResolutionZ !== proofStepResolutionZ);
 
     let bitsRemainingZ = proofStepResolutionZ;
@@ -427,7 +426,7 @@ function compareAxioms ({
             , fromZ: axioms2C.rhsZ
             , toZ: axioms2C.lhsZ
             , firstRewriteOnlyFlag: firstRewriteOnlyFlag });
-            
+
         _resultObj._lhsReduce = replaceBitfieldsInProofStepBigEndian ({
             proofStepZ: axioms1C.lhsZ
             , maskSizeZ: maskSizeZ
@@ -453,7 +452,7 @@ function compareAxioms ({
     //}
 
     clock ({ valueS: "compareAxioms" });
-    
+
     return { axioms2C, _resultObj };
 
 } // end compareAxioms
@@ -467,7 +466,7 @@ function processAxioms ({
 }) {
 
     clock ({ valueS: "processAxioms" });
-    
+
     axiomsA.forEach (axioms1C => {
         AxiomsArray
         .map (axioms2C =>
@@ -486,7 +485,7 @@ function processAxioms ({
     });
 
     clock ({ valueS: 'processAxioms' });
-    
+
 } // end processAxioms
 
 function resolutionOf ({ valueZ }) {
@@ -529,7 +528,7 @@ function initAxiomsArrayF ({ proofStatementsA = [] }) {
 
     // First pass: build token library and calculate maskSizeZ
     let _proofStatementsA = [];
-    
+
     proofStatementsA
         .split(newlinesRE)
             .forEach (statement => {
@@ -596,7 +595,7 @@ function initAxiomsArrayF ({ proofStatementsA = [] }) {
         }); // end _proofStatementsA.forEach 
 
     clock ({ valueS: 'initAxiomsArrayF' })
-    
+
     return axiomObjArray;
 
 } // end initAxiomsArrayF
@@ -610,10 +609,10 @@ function initAxiomCallGraphs ({
 }) {
 
     clock ({ valueS: "initAxiomCallGraphs" });
-    
+
     const I = AxiomsArray.length;
     const II = AxiomsArray.length * 2 - 1;
-    
+
     // 2-pass as acting src and targ
     for (let i = 0; i < II; ++i){
         const ii = (i < I ? i : I - i%I - 2) ;
@@ -624,7 +623,7 @@ function initAxiomCallGraphs ({
             , stackA: stackA
             , cb: cb });
     }  
-    
+
     clock ({ valueS: 'initAxiomCallGraphs'});
 
 } // end initAxiomCallGraphs
@@ -652,19 +651,19 @@ function resetProof () {
 function manageProofStep(proofStepC, proofstackA) {
     const lhsFastKey = createFastKey('lhs', proofStepC.lhsZ);
     const rhsFastKey = createFastKey('rhs', proofStepC.rhsZ);
-  
+
     updateFastForwardQueue(lhsFastKey);
     updateFastForwardQueue(rhsFastKey);
-  
+
     const lhsFastKeySearch = createFastKey('rhs', proofStepC.lhsZ);
     const rhsFastKeySearch = createFastKey('lhs', proofStepC.rhsZ);
-  
+
     const lhsResult = processQueue('lhs', lhsFastKeySearch, proofStepC.lhsZ, null);
     if (lhsResult) return lhsResult;
-  
+
     const rhsResult = processQueue('rhs', rhsFastKeySearch, null, proofStepC.rhsZ);
     if (rhsResult) return rhsResult;
-  
+
     return { QED: null, ProofFoundFlag: false };
 
     // Local function declarations
@@ -699,7 +698,7 @@ function manageProofStep(proofStepC, proofstackA) {
         }
         return null;
     }
-    
+
 } // end manageProofStep
 
 async function main (proofStatementsA) {
@@ -736,7 +735,7 @@ async function main (proofStatementsA) {
         proofstackA = rewriteQueue.shift ();
 
         const proofStepC = lastElementOf ({ valueA: proofstackA });
-        
+
         const result = manageProofStep(proofStepC, proofstackA);
 
         if (result.ProofFoundFlag) {
@@ -773,7 +772,6 @@ async function main (proofStatementsA) {
 
     const endTimeZ = performance.now ();
 
-    
     clock ({});
 
     const totalTimeZ = endTimeZ - startTimeZ;
@@ -784,16 +782,14 @@ async function main (proofStatementsA) {
         resultArray.push ('Proof found!');
         console.info ("Proof found!", "\n", QED, "\n", "Q.E.D.");
 
-        let proofArray = []; //['['];
+        let proofArray = [];
         QED.forEach ((valueObj, indexZ, thisArrayA) => {
-            //proofArray.push (`{ guidZ: ${valueObj.guidZ}n, lhsZ: ${valueObj.lhsZ}n, rhsZ: ${valueObj.rhsZ}n, rewriteOpcodeZ: ${valueObj.rewriteOpcodeZ}n },`);
             const phraseString =  
                 `(${ indexZ > 0 ? rewriteOpcodeZtoString[valueObj.rewriteOpcodeZ] : "root"}) via ${ valueObj.guidZ > 0 ? `axiom_${valueObj.guidZ}` : "root" }`;
             const lhsStringArray = convertBitstream2tokens ({ proofStepZ: valueObj.lhsZ, maskSizeZ: maskSizeZ });
             const rhsStringArray = convertBitstream2tokens ({ proofStepZ: valueObj.rhsZ, maskSizeZ: maskSizeZ });
             proofArray.push ( `${ lhsStringArray.join (' ') } = ${ rhsStringArray.join (' ') }, ${ phraseString }`);
         });
-        //proofArray.push ('];');
 
         resultArray.push (proofArray.join ('\n'), 'Q.E.D.');
     } else {
@@ -808,7 +804,7 @@ async function main (proofStatementsA) {
 
 } // end main
 
-try   {
+try {
 
     viewArea.addEventListener ('keyup', function () {
         updateLineNumbers ();
