@@ -588,7 +588,7 @@ function initAxiomCallGraphs ({
 
 } // end initAxiomCallGraphs
  */
-function main (proofStatementsA) {
+async function main (proofStatementsA) {
 
     AxiomsArray = initAxiomsArrayF ({ proofStatementsA: proofStatementsA });
 /* 
@@ -613,8 +613,6 @@ function main (proofStatementsA) {
     clock ({ valueS: "main" });
 
     const startTimeZ = performance.now ();
-
-    codeArea.value = "Working...";
 
     do {
 
