@@ -588,7 +588,28 @@ function initAxiomCallGraphs ({
 
 } // end initAxiomCallGraphs
  */
+
+function resetProof () {
+    QED = null;
+    guidZ = 1n; // 0n reserved (AXIOM ROOT)
+    uuidZ = 1n;
+    maskSizeZ = 0n;
+    AxiomsArray = [];
+    AxiomsArrayH = {}; // quick lookup
+    rewriteQueue = [];
+    fastForwardQueue = {};
+    ProofFoundFlag = false;
+    tokenLibraryMap = new Map ();
+    sessionRuntimeClockFlag = false; // debug only
+    lhsExpandProofFoundFlag = false;
+    lhsReduceProofFoundFlag = false;
+    rhsExpandProofFoundFlag = false;
+    rhsReduceProofFoundFlag = false;
+} // end resetProof
+
 async function main (proofStatementsA) {
+
+    resetProof ();
 
     AxiomsArray = initAxiomsArrayF ({ proofStatementsA: proofStatementsA });
 /* 
