@@ -539,9 +539,9 @@ function initAxiomsArrayF ({ proofStatementsA = [] }) {
                     retArray
                         .forEach (token => {
                             if (!tokenLibraryMap.has (token)) {
-                                tokenLibraryMap.set (token, uuidZ);
-                                tokenLibraryInverseMap.set (uuidZ, token);
-                                uuidZ++;
+                                tokenLibraryMap.set (token, guidZ);
+                                tokenLibraryInverseMap.set (guidZ, token);
+                                guidZ++;
                             }
                         });
 
@@ -549,7 +549,7 @@ function initAxiomsArrayF ({ proofStatementsA = [] }) {
                 }
             }); // end proofStatementsA.split
 
-    maskSizeZ = resolutionOf({ valueZ: uuidZ });
+    maskSizeZ = resolutionOf({ valueZ: guidZ });
 
     // Second pass: create and populate axiom objects
     let axiomObjArray =[];
@@ -631,8 +631,7 @@ function initAxiomCallGraphs ({
 
 function resetProof () {
     QED = null;
-    guidZ = 1n; // 0n reserved (AXIOM ROOT)
-    uuidZ = 1n;
+    guidZ = uuidZ; // 0n reserved (AXIOM ROOT)
     maskSizeZ = 0n;
     AxiomsArray = [];
     AxiomsArrayH = {}; // quick lookup
