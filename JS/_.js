@@ -77,7 +77,7 @@ let tokenDelimeterRE = new RegExp ("\\s+","g");
 let tokenOperatorsRE = new RegExp ("[<~]?=+>?");
 let globalTime = 0;
 let globalTimeRecord = new Map ();
-const newlinesRE = new RegExp ("\\n+","gm");
+const newlinesRE = new RegExp ("[\\s\\t]*\\n+[\\t\\s]*","gm");
 const lineCommentsRE = new RegExp ("^\/\/");
 const codeArea = document.getElementById ('_code_');
 const viewArea = document.getElementById ('_view_');
@@ -787,9 +787,8 @@ async function main (proofStatementsA) {
         let proofArray = []; //['['];
         QED.forEach ((valueObj, indexZ, thisArrayA) => {
             //proofArray.push (`{ guidZ: ${valueObj.guidZ}n, lhsZ: ${valueObj.lhsZ}n, rhsZ: ${valueObj.rhsZ}n, rewriteOpcodeZ: ${valueObj.rewriteOpcodeZ}n },`);
-            const phraseString = valueObj.guidZ > 0 
-                ? `(${ rewriteOpcodeZtoString[valueObj.rewriteOpcodeZ] }) via axiom_${ valueObj.guidZ }` 
-                : `(root)` ;
+            const phraseString =  
+                `(${ indexZ > 0 ? rewriteOpcodeZtoString[valueObj.rewriteOpcodeZ] : "root"}) via ${ valueObj.guidZ > 0 ? `axiom_${valueObj.guidZ}` : "root" }`;
             const lhsStringArray = convertBitstream2tokens ({ proofStepZ: valueObj.lhsZ, maskSizeZ: maskSizeZ });
             const rhsStringArray = convertBitstream2tokens ({ proofStepZ: valueObj.rhsZ, maskSizeZ: maskSizeZ });
             proofArray.push ( `${ lhsStringArray.join (' ') } = ${ rhsStringArray.join (' ') }, ${ phraseString }`);
