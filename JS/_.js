@@ -649,6 +649,59 @@ function resetProof () {
     rhsReduceProofFoundFlag = false;
 } // end resetProof
 
+function manageProofStep(proofStepC, proofstackA) {
+    const lhsFastKey = createFastKey('lhs', proofStepC.lhsZ);
+    const rhsFastKey = createFastKey('rhs', proofStepC.rhsZ);
+  
+    updateFastForwardQueue(lhsFastKey);
+    updateFastForwardQueue(rhsFastKey);
+  
+    const lhsFastKeySearch = createFastKey('rhs', proofStepC.lhsZ);
+    const rhsFastKeySearch = createFastKey('lhs', proofStepC.rhsZ);
+  
+    const lhsResult = processQueue('lhs', lhsFastKeySearch, proofStepC.lhsZ, null);
+    if (lhsResult) return lhsResult;
+  
+    const rhsResult = processQueue('rhs', rhsFastKeySearch, null, proofStepC.rhsZ);
+    if (rhsResult) return rhsResult;
+  
+    return { QED: null, ProofFoundFlag: false };
+
+    // Local function declarations
+
+    function createFastKey(prefix, value) {
+        return `${prefix}:${value}`;
+    }
+
+    function updateFastForwardQueue(key) {
+        if (!fastForwardQueue[key]) {
+            fastForwardQueue[key] = [...proofstackA];
+        }
+    }
+
+    function createProofStep(indirS, lhs, rhs, valueObj) {
+        const proofStep = new ProofStepObjectClass();
+        const lhsFlag = /^lhs/.test(indirS);
+        proofStep.guidZ = valueObj.guidZ;
+        proofStep.lhsZ = lhsFlag ? lhs : valueObj.lhsZ;
+        proofStep.rhsZ = lhsFlag ? valueObj.rhsZ : rhs;
+        proofStep.rewriteOpcodeZ = lhsFlag ? rewriteOpcodesO._lhsFastForwaard : rewriteOpcodesO._rhsFastForwaard;
+        return proofStep;
+    }
+
+    function processQueue(indirS, searchKey, lhs, rhs) {
+        if (fastForwardQueue[searchKey]) {
+            const _QED = [...proofstackA];
+            fastForwardQueue[searchKey].forEach((value) => {
+                _QED.push(createProofStep(indirS, lhs, rhs, value));
+            });
+            return { QED: _QED, ProofFoundFlag: true };
+        }
+        return null;
+    }
+    
+} // end manageProofStep
+
 async function main (proofStatementsA) {
 
     resetProof ();
@@ -683,54 +736,13 @@ async function main (proofStatementsA) {
         proofstackA = rewriteQueue.shift ();
 
         const proofStepC = lastElementOf ({ valueA: proofstackA });
+        
+        const result = manageProofStep(proofStepC, proofstackA);
 
-        const _lhsFastKeyS = `lhs:${proofStepC.lhsZ}`;
-        const _rhsFastKeyS = `rhs:${proofStepC.rhsZ}`;
-
-        !fastForwardQueue[_lhsFastKeyS] && (fastForwardQueue[_lhsFastKeyS] = [...proofstackA]);
-        !fastForwardQueue[_rhsFastKeyS] && (fastForwardQueue[_rhsFastKeyS] = [...proofstackA]);
-
-        const _lhsFastKeySearchS = `rhs:${proofStepC.lhsZ}`;
-        const _rhsFastKeySearchS = `lhs:${proofStepC.rhsZ}`;
-
-        if (fastForwardQueue[_lhsFastKeySearchS]) {
-            QED = [...proofstackA];
-
-            fastForwardQueue[_lhsFastKeySearchS]
-                .forEach ((valueZ, indexZ, thisArrayA) => {
-                    const _lhsFastKeyO = new ProofStepObjectClass ();
-
-                    _lhsFastKeyO.guidZ = valueZ.guidZ;
-                    _lhsFastKeyO.lhsZ = proofStepC.lhsZ;
-                    _lhsFastKeyO.rhsZ = valueZ.rhsZ;
-                    _lhsFastKeyO.rewriteOpcodeZ = rewriteOpcodesO._lhsFastForwaard;
-
-                    QED.push (_lhsFastKeyO);
-                });
-
-            ProofFoundFlag = true;
-
-            break;
-        }
-
-        if (fastForwardQueue[_rhsFastKeySearchS]) {
-            QED = [...proofstackA];
-
-            fastForwardQueue[_rhsFastKeySearchS]
-                .forEach ((valueZ, indexZ, thisArrayA) => {
-                    const _rhsFastKeyO = new ProofStepObjectClass ();
-
-                    _rhsFastKeyO.guidZ = valueZ.guidZ;
-                    _rhsFastKeyO.lhsZ = valueZ.lhsZ;
-                    _rhsFastKeyO.rhsZ = proofStepC.rhsZ;
-                    _rhsFastKeyO.rewriteOpcodeZ = rewriteOpcodesO._lhsFastForwaard;
-
-                    QED.push (_rhsFastKeyO);
-                });
-
-            ProofFoundFlag = true;
-
-            break;
+        if (result.ProofFoundFlag) {
+          // Use result.QED
+          QED = result.QED;
+          break;
         }
 
         // clone rewrite candidates for each subnet
