@@ -494,7 +494,7 @@ function initAxiomsArrayF ({ proofStatementsA = [] }) {
     proofStatementsA
         .split(newlinesRE)
             .forEach (statement => {
-                if (/^\w/.test(statement)){
+                if (/^[\w\{]/.test(statement)){
                     const retArray = statement
                         .split (tokenDelimeterRE);
 
@@ -507,51 +507,59 @@ function initAxiomsArrayF ({ proofStatementsA = [] }) {
 
                     _proofStatementsA.push (retArray);
                 }
-            });
+            }); // end proofStatementsA.split
 
     maskSizeZ = resolutionOf({ valueZ: uuidZ });
 
     // Second pass: create and populate axiom objects
-    return _proofStatementsA.map ((statement, indexZ, thisArrayA) => {
-        const axiomObj = new AxiomClass ();
-        axiomObj.guidZ = indexZ < thisArrayA.length - 1 ? BigInt (indexZ + 1) : 0n;
+    let axiomObjArray =[];
 
-        let swapSubnetsFlag = false;
-        let lhsZ = 0n;
-        let rhsZ = 0n;
+    _proofStatementsA
+        .forEach ((statement, indexZ, thisArrayA) => {
+            let i = 0n;
+            let contentsZArray = [0n];
 
-        statement
-            .forEach (token => {
-                if (token.match (tokenOperatorsRE)) {
-                    swapSubnetsFlag = true;
-                } else {
-                    const tokenValue = tokenLibraryMap.get (token);
-                    if (!swapSubnetsFlag) {
-                        lhsZ = (lhsZ << maskSizeZ) | tokenValue;
+            statement
+                .forEach (token => {
+                    if (token.match (tokenOperatorsRE)) {
+                        ++i;
                     } else {
-                        rhsZ = (rhsZ << maskSizeZ) | tokenValue;
+                        if (i >= contentsZArray.length) {
+                            contentsZArray.push (0n);
+                        }
+                        const tokenValue = tokenLibraryMap.get (token);
+                        contentsZArray[i] = (contentsZArray[i] << maskSizeZ) | tokenValue;
                     }
-                }
-            });
+                });
 
-        // Ensure lhs > rhs for proper expand/reduce operation
-        if (lhsZ >= rhsZ) {
-            axiomObj.lhsZ = lhsZ;
-            axiomObj.rhsZ = rhsZ;
-        } else {
-            axiomObj.lhsZ = rhsZ;
-            axiomObj.rhsZ = lhsZ;
-        }
+            contentsZArray
+                .forEach ((_, j, thatArray) => {
+                    if (j > 0n) {
+                        i = 0n;
+                        do {
+                            const axiomObj = new AxiomClass ();
+                            axiomObj.guidZ = indexZ < thisArrayA.length - 1 ? BigInt (indexZ + 1) : 0n;
 
-        // Catalog for quick-lookup
-        AxiomsArrayH[axiomObj.guidZ] = axiomObj;
+                            // Ensure lhs > rhs for proper expand/reduce operation
+                            axiomObj.lhsZ = thatArray[i] >= thatArray[j] ? thatArray[i] : thatArray[j] ;
+                            axiomObj.rhsZ = thatArray[i] >= thatArray[j] ? thatArray[j] : thatArray[i] ;
 
-        clock ({ valueS: 'initAxiomsArrayF' })
+                            // Catalog for quick-lookup
+                            AxiomsArrayH[axiomObj.guidZ] = axiomObj;
 
-        return axiomObj;
-    });
+                            axiomObjArray.push (axiomObj);
+
+                        } while (++i < j);
+                    }
+                });
+        }); // end _proofStatementsA.forEach 
+
+    clock ({ valueS: 'initAxiomsArrayF' })
+    
+    return axiomObjArray;
+
 } // end initAxiomsArrayF
-
+/* 
 function initAxiomCallGraphs ({
     axiomsA
     , maskSizeZ
@@ -579,18 +587,18 @@ function initAxiomCallGraphs ({
     clock ({ valueS: 'initAxiomCallGraphs'});
 
 } // end initAxiomCallGraphs
-
+ */
 function main (proofStatementsA) {
 
     AxiomsArray = initAxiomsArrayF ({ proofStatementsA: proofStatementsA });
-
+/* 
     initAxiomCallGraphs ({
         axiomsA: AxiomsArray
         , maskSizeZ: maskSizeZ
         , firstRewriteOnlyFlag: true
         , stackA: []
         , cb: initCallGraphs });
-
+ */
     const theoremA = lastElementOf({ valueA: AxiomsArray }); // Theorem is the last element!
 
     let proofStep = new ProofStepObjectClass ();
