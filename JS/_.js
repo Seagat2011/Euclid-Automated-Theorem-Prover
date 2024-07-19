@@ -583,6 +583,8 @@ function initAxiomsArrayF ({ proofStatementsA = [] }) {
                     }
                 });
 
+            let _guid2PartZ = 0n;
+
             contentsZArray
                 .forEach((_, i, array) => {
                     for (let j = i + 1; j < array.length; j++) {
@@ -593,7 +595,7 @@ function initAxiomsArrayF ({ proofStatementsA = [] }) {
                         if (!visitedMap.has (visitedString)) {
                             visitedMap.set (visitedString, true);
                             const axiomObj = new AxiomClass();
-                            axiomObj.guidZ = indexZ < thisArrayA.length - 1 ? _guidZ++ : 0n;
+                            axiomObj.guidZ = indexZ < thisArrayA.length - 1 ? `${_guidZ}.${_guid2PartZ++}` : 0n;
                     
                             // Ensure lhs > rhs for proper expand/reduce operation
                             axiomObj.lhsZ = lhsZ;
@@ -606,6 +608,9 @@ function initAxiomsArrayF ({ proofStatementsA = [] }) {
                         }
                     }
                 });
+
+            _guidZ++;
+
         }); // end _proofStatementsA.forEach 
 
     clock ({ valueS: 'initAxiomsArrayF' })
