@@ -170,6 +170,15 @@ function initCallGraphs ({
     , resultObj
     , stackA 
 }) {
+/* 
+    let proofStepObj = new ProofStepObjectClass ();
+    proofStepObj.guidZ = axioms1C.guidZ;
+    proofStepObj.lhsZ = axioms1C.lhsZ;
+    proofStepObj.rhsZ = axioms1C.rhsZ;
+    proofStepObj.rewriteOpcodeZ = 0n;
+    fastForwardQueue[`lhs:${axioms1C.lhsZ}`] = [proofStepObj];
+    fastForwardQueue[`rhs:${axioms1C.rhsZ}`] = [proofStepObj];
+     */
 
     if (isNotEmpty ({ targ:resultObj })) {
         const { axioms2C, _resultObj } = resultObj;
@@ -599,7 +608,7 @@ function initAxiomsArrayF ({ proofStatementsA = [] }) {
     return axiomObjArray;
 
 } // end initAxiomsArrayF
-/* 
+
 function initAxiomCallGraphs ({
     axiomsA
     , maskSizeZ
@@ -627,7 +636,6 @@ function initAxiomCallGraphs ({
     clock ({ valueS: 'initAxiomCallGraphs'});
 
 } // end initAxiomCallGraphs
- */
 
 function resetProof () {
     QED = null;
@@ -658,10 +666,12 @@ function checkProofStep(proofStepC, proofstackA) {
     const rhsFastKeySearch = createFastKey('lhs', proofStepC.rhsZ);
 
     const lhsResult = queryFastForwardQueue('lhs', lhsFastKeySearch, proofStepC.lhsZ, null);
-    if (lhsResult) return lhsResult;
+    if (lhsResult) 
+        return lhsResult;
 
     const rhsResult = queryFastForwardQueue('rhs', rhsFastKeySearch, null, proofStepC.rhsZ);
-    if (rhsResult) return rhsResult;
+    if (rhsResult) 
+        return rhsResult;
 
     return { QED: null, ProofFoundFlag: false };
 
@@ -683,14 +693,14 @@ function checkProofStep(proofStepC, proofstackA) {
         proofStep.guidZ = valueObj.guidZ;
         proofStep.lhsZ = lhsFlag ? lhs : valueObj.lhsZ;
         proofStep.rhsZ = lhsFlag ? valueObj.rhsZ : rhs;
-        proofStep.rewriteOpcodeZ = lhsFlag ? rewriteOpcodesO._lhsFastForward : rewriteOpcodesO._rhsFastForwaard;
+        proofStep.rewriteOpcodeZ = lhsFlag ? rewriteOpcodesO._lhsFastForward : rewriteOpcodesO._rhsFastForward;
         return proofStep;
     }
 
     function queryFastForwardQueue(indirS, searchKey, lhs, rhs) {
         if (fastForwardQueue[searchKey]) {
             const _QED = [...proofstackA];
-            fastForwardQueue[searchKey].forEach((value) => {
+            fastForwardQueue[searchKey].forEach((value, indexZ, thisArray) => {
                 _QED.push(createProofStep(indirS, lhs, rhs, value));
             });
             return { QED: _QED, ProofFoundFlag: true };
@@ -711,8 +721,8 @@ async function main (proofStatementsA) {
         , maskSizeZ: maskSizeZ
         , firstRewriteOnlyFlag: true
         , stackA: []
-        , cb: initCallGraphs });
- */
+        , cb: initCallGraphs }); */
+
     const theoremA = AxiomsArray.pop (); // lastElementOf({ valueA: AxiomsArray }); // Theorem is the last element!
 
     let proofStep = new ProofStepObjectClass ();
