@@ -561,7 +561,9 @@ function initAxiomsArrayF ({ proofStatementsA = [] }) {
     maskSizeZ = resolutionOf({ valueZ: guidZ });
 
     // Second pass: create and populate axiom objects
-    let axiomObjArray =[];
+    let _guidZ = 1n;
+    let axiomObjArray = [];
+    let visitedMap = new Map ();
 
     _proofStatementsA
         .forEach ((statement, indexZ, thisArrayA) => {
@@ -582,23 +584,26 @@ function initAxiomsArrayF ({ proofStatementsA = [] }) {
                 });
 
             contentsZArray
-                .forEach ((_, j, thatArray) => {
-                    if (j > 0n) {
-                        i = 0n;
-                        do {
-                            const axiomObj = new AxiomClass ();
-                            axiomObj.guidZ = indexZ < thisArrayA.length - 1 ? BigInt (indexZ + 1) : 0n;
+                .forEach((_, i, array) => {
+                    for (let j = i + 1; j < array.length; j++) {
+                        const lhsZ = array[i] >= array[j] ? array[i] : array[j];
+                        const rhsZ = array[i] >= array[j] ? array[j] : array[i];
+                        const visitedString = `${lhsZ}:${rhsZ}`;
 
+                        if (!visitedMap.has (visitedString)) {
+                            visitedMap.set (visitedString, true);
+                            const axiomObj = new AxiomClass();
+                            axiomObj.guidZ = indexZ < thisArrayA.length - 1 ? _guidZ++ : 0n;
+                    
                             // Ensure lhs > rhs for proper expand/reduce operation
-                            axiomObj.lhsZ = thatArray[i] >= thatArray[j] ? thatArray[i] : thatArray[j] ;
-                            axiomObj.rhsZ = thatArray[i] >= thatArray[j] ? thatArray[j] : thatArray[i] ;
-
+                            axiomObj.lhsZ = lhsZ;
+                            axiomObj.rhsZ = rhsZ;
+                    
                             // Catalog for quick-lookup
                             AxiomsArrayH[axiomObj.guidZ] = axiomObj;
-
-                            axiomObjArray.push (axiomObj);
-
-                        } while (++i < j);
+                    
+                            axiomObjArray.push(axiomObj);
+                        }
                     }
                 });
         }); // end _proofStatementsA.forEach 
