@@ -46,7 +46,7 @@ let guidZ = 1n; // 0n reserved (AXIOM ROOT)
 let uuidZ = 1n;
 let maskSizeZ = 0n;
 let PRIMARYKEY = {};
-let LASTPRIMEIDX = 3n;
+let LASTPRIME = 3n;
 let AxiomsArray = [];
 let AxiomsArrayH = {}; // quick lookup
 let ProofFoundFlag;
@@ -523,7 +523,7 @@ function resetProof () {
     maskSizeZ = 0n;
     AxiomsArray = [];
     AxiomsArrayH = {}; // quick lookup
-    LASTPRIMEIDX = 3n;
+    LASTPRIME = 3n;
     rewriteQueue = [];
     fastForwardQueue = {};
     ProofFoundFlag = false;
@@ -553,9 +553,9 @@ function initAxiomsArrayF ({ proofStatementsA = [] }) {
                     retArray
                         .forEach (token => {
                             if (!tokenLibraryMap.has (token)) {
-                                const _uuid = nextPrime ();
-                                tokenLibraryMap.set (token, _uuid);
-                                tokenLibraryInverseMap.set (_uuid, token);
+                                const local_uuid = nextPrime ();
+                                tokenLibraryMap.set (token, local_uuid);
+                                tokenLibraryInverseMap.set (local_uuid, token);
                             }
                         });
 
@@ -563,7 +563,7 @@ function initAxiomsArrayF ({ proofStatementsA = [] }) {
                 }
             }); // end proofStatementsA.split
 
-    maskSizeZ = resolutionOf({ valueZ: LASTPRIMEIDX });
+    maskSizeZ = resolutionOf({ valueZ: LASTPRIME });
 
     // Second pass: create and populate axiom objects
     let _guidZ = 1n;
@@ -688,25 +688,25 @@ function compareAxioms ({
         const rhsExpandFastForward = `rhs:${axioms1C.guidZ}:expand:${axioms2C.guidZ}`;
         const rhsReduceFastForward = `rhs:${axioms1C.guidZ}:reduce:${axioms2C.guidZ}`;
         
-        if (fastForwardQueue[lhsExpandFastForward] && axioms1C.lhsPrimaryKeyZ%axioms2C.rhsPrimaryKeyZ == 0n){
+        if (fastForwardQueue[lhsExpandFastForward] && axioms1C.lhsPrimaryKeyZ%axioms2C.rhsPrimaryKeyZ === 0n){
             _resultObj._lhsExpand = [axioms1C.lhsPrimaryKeyZ/axioms2C.rhsPrimaryKeyZ*axioms2C.lhsPrimaryKeyZ];
         }
-        if (fastForwardQueue[lhsReduceFastForward] && axioms1C.lhsPrimaryKeyZ%axioms2C.lhsPrimaryKeyZ == 0n){
+        if (fastForwardQueue[lhsReduceFastForward] && axioms1C.lhsPrimaryKeyZ%axioms2C.lhsPrimaryKeyZ === 0n){
             _resultObj._lhsReduce = [axioms1C.lhsPrimaryKeyZ/axioms2C.lhsPrimaryKeyZ*axioms2C.rhsPrimaryKeyZ];
         }    
-        if (fastForwardQueue[rhsExpandFastForward] && axioms1C.rhsPrimaryKeyZ%axioms2C.rhsPrimaryKeyZ == 0n){
+        if (fastForwardQueue[rhsExpandFastForward] && axioms1C.rhsPrimaryKeyZ%axioms2C.rhsPrimaryKeyZ === 0n){
             _resultObj._rhsExpand = [axioms1C.rhsPrimaryKeyZ/axioms2C.rhsPrimaryKeyZ*axioms2C.lhsPrimaryKeyZ];
         }
-        if (fastForwardQueue[rhsReduceFastForward] && axioms1C.rhsPrimaryKeyZ%axioms2C.lhsPrimaryKeyZ == 0n){
+        if (fastForwardQueue[rhsReduceFastForward] && axioms1C.rhsPrimaryKeyZ%axioms2C.lhsPrimaryKeyZ === 0n){
             _resultObj._rhsReduce = [axioms1C.rhsPrimaryKeyZ/axioms2C.lhsPrimaryKeyZ*axioms2C.rhsPrimaryKeyZ];
         }
 
      } else {
         
-        _resultObj._lhsExpand = axioms1C.lhsPrimaryKeyZ%axioms2C.rhsPrimaryKeyZ == 0n;
-        _resultObj._lhsReduce = axioms1C.lhsPrimaryKeyZ%axioms2C.lhsPrimaryKeyZ == 0n;
-        _resultObj._rhsExpand = axioms1C.rhsPrimaryKeyZ%axioms2C.rhsPrimaryKeyZ == 0n;
-        _resultObj._rhsReduce = axioms1C.rhsPrimaryKeyZ%axioms2C.lhsPrimaryKeyZ == 0n;
+        _resultObj._lhsExpand = axioms1C.lhsPrimaryKeyZ%axioms2C.rhsPrimaryKeyZ === 0n;
+        _resultObj._lhsReduce = axioms1C.lhsPrimaryKeyZ%axioms2C.lhsPrimaryKeyZ === 0n;
+        _resultObj._rhsExpand = axioms1C.rhsPrimaryKeyZ%axioms2C.rhsPrimaryKeyZ === 0n;
+        _resultObj._rhsReduce = axioms1C.rhsPrimaryKeyZ%axioms2C.lhsPrimaryKeyZ === 0n;
 
      }
 
@@ -1107,24 +1107,24 @@ function initAxiomCallGraphs ({
 } // end initAxiomCallGraphs
 
 function isPrime (num) {
-    if (num <= BigInt(1)) return false;
-    if (num <= BigInt(3)) return true;
+    if (num <= 1n) return false;
+    if (num <= 3n) return true;
 
     // Check divisibility from 2 to the square root of num
-    for (let i = BigInt(2); i * i <= num; ++i) {
-      if (num % i === 0) return false;
+    for (let i = 2n; i * i <= num; ++i) {
+      if (num % i === 0n) return false;
     }
     return true;
 } // end isPrime
 
 function nextPrime () {
-    var num = LASTPRIMEIDX;
-    while (1) {
+    var num = LASTPRIME;
+    while (true) {
       if (isPrime(num)) {
-        LASTPRIMEIDX = num + BigInt(2);
+        LASTPRIME = num + 2n;
         return num;
       }
-      num += BigInt(2); // only check odd numbers //
+      num += 2n; // only check odd numbers //
     }
 } // end nextPrime
 
