@@ -355,7 +355,7 @@ async function main (proofStatementsA) {
                             _axiom1C.guidZ = _valueZ.guidZ;
                             _axiom1C.rewriteOpcodeZ = _valueZ.rewriteOpcodeZ;
                             const __axiom2C = AxiomsArrayH[_valueZ.guidZ];
-                            phraseString.push( `(${rewriteOpcodeZtoString[rewriteOpcodeZ]}) via axiom_${_valueZ.guidZ}`);
+                            phraseString.push( `(${rewriteOpcodeZtoString[rewriteOpcodeZ]}) via axiom_${_valueZ.guidZ} (using fast-forward lhs)`);
 
                             switch(rewriteOpcodeZ) {
                                 case 1n:
@@ -432,7 +432,7 @@ async function main (proofStatementsA) {
                             rewriteOpcodeZ = _valueZ.rewriteOpcodeZ;
                             _axiom1C.guidZ = _valueZ.guidZ;
                             _axiom1C.rewriteOpcodeZ = _valueZ.rewriteOpcodeZ;
-                            phraseString.push( `(${rewriteOpcodeZtoString[rewriteOpcodeZ]}) via axiom_${_valueZ.guidZ}`);
+                            phraseString.push( `(${rewriteOpcodeZtoString[rewriteOpcodeZ]}) via axiom_${_valueZ.guidZ} (using fast-forward rhs)`);
                             const __axiom2C = AxiomsArrayH[_valueZ.guidZ];
 
                             switch(rewriteOpcodeZ) {
