@@ -202,9 +202,6 @@ async function main (proofStatementsA) {
             , stackA: proofstackA
             , cb: rewriteProofstepF });
 
-        //if (QED && (QED.length > 0))
-            //break;
-
         if (!ProofFoundFlag){
             QED = lhsExpandProofFoundFlag
             || lhsReduceProofFoundFlag
@@ -229,9 +226,20 @@ async function main (proofStatementsA) {
 
     let resultArray = [];
 
-    if (QED) {
-        resultArray.push ('Proof found!');
-        console.info ("Proof found!", "\n", QED, "\n", "Q.E.D.");
+    let proofStatusFlag = "";
+    let QED_Flag = "";
+
+    if (!QED && proofstackA.length > 1){
+        proofStatusFlag = "Partial-proof found.";
+        QED = proofstackA;
+    } else if (QED) {
+        proofStatusFlag = "Proof found!";
+        QED_Flag = "Q.E.D.";
+    }
+
+    if (proofStatusFlag) {
+        resultArray.push (proofStatusFlag);
+        console.info (proofStatusFlag, /* "\n", QED, */ "\n", QED_Flag);
         
         let _axiom1C = new ProofStepObjectClass ();
         let proofArray = [];
@@ -291,7 +299,7 @@ async function main (proofStatementsA) {
             } // end if (indexZ > 0)
         }); // end QED.forEach
 
-        resultArray.push (proofArray.join ('\n'), 'Q.E.D.');
+        resultArray.push (proofArray.join ('\n'), QED_Flag);
         
         function processProofStep (_axiom1C, _axiom2C, maskSizeZ) {
 
@@ -688,20 +696,20 @@ function compareAxioms ({
         const rhsExpandFastForward = `rhs:${axioms1C.guidZ}:expand:${axioms2C.guidZ}`;
         const rhsReduceFastForward = `rhs:${axioms1C.guidZ}:reduce:${axioms2C.guidZ}`;
         
-        if (fastForwardQueue[lhsExpandFastForward] && axioms1C.lhsPrimaryKeyZ%axioms2C.rhsPrimaryKeyZ === 0n){
+        if (fastForwardQueue[lhsExpandFastForward] /* && axioms1C.lhsPrimaryKeyZ%axioms2C.rhsPrimaryKeyZ === 0n */){
             _resultObj._lhsExpand = [axioms1C.lhsPrimaryKeyZ/axioms2C.rhsPrimaryKeyZ*axioms2C.lhsPrimaryKeyZ];
         }
-        if (fastForwardQueue[lhsReduceFastForward] && axioms1C.lhsPrimaryKeyZ%axioms2C.lhsPrimaryKeyZ === 0n){
+        if (fastForwardQueue[lhsReduceFastForward] /* && axioms1C.lhsPrimaryKeyZ%axioms2C.lhsPrimaryKeyZ === 0n */){
             _resultObj._lhsReduce = [axioms1C.lhsPrimaryKeyZ/axioms2C.lhsPrimaryKeyZ*axioms2C.rhsPrimaryKeyZ];
         }    
-        if (fastForwardQueue[rhsExpandFastForward] && axioms1C.rhsPrimaryKeyZ%axioms2C.rhsPrimaryKeyZ === 0n){
+        if (fastForwardQueue[rhsExpandFastForward] /* && axioms1C.rhsPrimaryKeyZ%axioms2C.rhsPrimaryKeyZ === 0n */){
             _resultObj._rhsExpand = [axioms1C.rhsPrimaryKeyZ/axioms2C.rhsPrimaryKeyZ*axioms2C.lhsPrimaryKeyZ];
         }
-        if (fastForwardQueue[rhsReduceFastForward] && axioms1C.rhsPrimaryKeyZ%axioms2C.lhsPrimaryKeyZ === 0n){
+        if (fastForwardQueue[rhsReduceFastForward] /* && axioms1C.rhsPrimaryKeyZ%axioms2C.lhsPrimaryKeyZ === 0n */){
             _resultObj._rhsReduce = [axioms1C.rhsPrimaryKeyZ/axioms2C.lhsPrimaryKeyZ*axioms2C.rhsPrimaryKeyZ];
         }
 
-     } else {
+     } else if (axioms2C.guidZ != 0n){
         
         _resultObj._lhsExpand = axioms1C.lhsPrimaryKeyZ%axioms2C.rhsPrimaryKeyZ === 0n;
         _resultObj._lhsReduce = axioms1C.lhsPrimaryKeyZ%axioms2C.lhsPrimaryKeyZ === 0n;
@@ -894,13 +902,19 @@ function initCallGraphs ({
         .forEach ((valueA, indexZ, thisArrayA) => {
             if (valueA == false)
                 return;
-
+            /*
+            fastForwardQueue[lhsExpandFastForward] = true;
+            fastForwardQueue[lhsReduceFastForward] = true;
+            fastForwardQueue[rhsExpandFastForward] = true;
+            fastForwardQueue[rhsReduceFastForward] = true;
+            */ 
             switch (indexZ) {
                 case 0: fastForwardQueue[lhsExpandFastForward] = true; break;
                 case 1: fastForwardQueue[lhsReduceFastForward] = true; break;
                 case 2: fastForwardQueue[rhsExpandFastForward] = true; break;
                 case 3: fastForwardQueue[rhsReduceFastForward] = true; break;
             }
+            
         });
     }
 } // end initCallGraphs
