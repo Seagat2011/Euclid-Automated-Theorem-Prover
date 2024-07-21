@@ -94,13 +94,13 @@ class AxiomClass extends Object {
         this.rhsZ = 0n;
         this.lhsPrimaryKeyZ = 1n;
         this.rhsPrimaryKeyZ = 1n;
-        this._callGraph = {};
-        this._lhsCallGraph = {};
-        this._rhsCallGraph = {};
-        this._lhsExpandCallGraph = {};
-        this._lhsReduceCallGraph = {};
-        this._rhsExpandCallGraph = {};
-        this._rhsReduceCallGraph = {};
+        this._callGraph = new Map ();
+        this._lhsCallGraph = new Map ();
+        this._rhsCallGraph = new Map ();
+        this._lhsExpandCallGraph = new Map ();
+        this._lhsReduceCallGraph = new Map ();
+        this._rhsExpandCallGraph = new Map ();
+        this._rhsReduceCallGraph = new Map ();
     }
 } // end class AxiomClass
 
@@ -192,25 +192,8 @@ async function main (proofStatementsA) {
 
         const proofStepC = lastElementOf ({ valueA: proofstackA });
 
-        // clone rewrite candidates for each subnet
-        const _pfc = new CloneableObjectClass (proofStepC);
-
-        processAxioms ({
-            axiomsA: [_pfc]
-            , maskSizeZ: maskSizeZ
-            , firstRewriteOnlyFlag: false
-            , stackA: proofstackA
-            , cb: rewriteProofstepF });
-
-        if (!ProofFoundFlag){
-            QED = lhsExpandProofFoundFlag
-            || lhsReduceProofFoundFlag
-            || rhsExpandProofFoundFlag
-            || rhsReduceProofFoundFlag;
-
-            ProofFoundFlag = QED && (QED.length > 0);
-        }
-
+        rewriteSubnets({ proofStepC: proofStepC, proofstack: proofstackA });
+        
         if (ProofFoundFlag)
             break;
 
@@ -229,10 +212,10 @@ async function main (proofStatementsA) {
     let proofStatusFlag = "";
     let QED_Flag = "";
 
-    if (!QED && proofstackA.length > 1){
+    if (!ProofFoundFlag && proofstackA.length > 1){
         proofStatusFlag = "Partial-proof found.";
         QED = proofstackA;
-    } else if (QED) {
+    } else if (ProofFoundFlag) {
         proofStatusFlag = "Proof found!";
         QED_Flag = "Q.E.D.";
     }
@@ -724,6 +707,105 @@ function compareAxioms ({
 
 } // end compareAxioms
 
+function rewriteSubnets ({
+    proofStepC
+    , proofstack
+}) {
+
+    const axiom1C = AxiomsArrayH[proofStepC.guidZ];
+
+    clock ({ valueS: "rewriteSubnets" });
+
+    rewriteSubnet_lhsExpand({ _proofStepC: proofStepC, _proofstack: proofstack, _subnetH: axiom1C._lhsExpandCallGraph });
+    rewriteSubnet_lhsReduce({ _proofStepC: proofStepC, _proofstack: proofstack, _subnetH: axiom1C._lhsReduceCallGraph });
+    rewriteSubnet_rhsExpand({ _proofStepC: proofStepC, _proofstack: proofstack, _subnetH: axiom1C._rhsExpandCallGraph });
+    rewriteSubnet_rhsReduce({ _proofStepC: proofStepC, _proofstack: proofstack, _subnetH: axiom1C._rhsReduceCallGraph });
+
+    function rewriteSubnet_lhsExpand ({ _proofStepC, _proofstack, _subnetH }) {
+        if (ProofFoundFlag)
+            return;
+
+        for (let [indexZ, _] of _subnetH) {
+            const _axiom2C = AxiomsArrayH[indexZ];
+            if (_proofStepC.lhsPrimaryKeyZ % _axiom2C.rhsPrimaryKeyZ === 0n) {
+                const newProofStepC = new CloneableObjectClass (_proofStepC);
+                newProofStepC.guidZ = _axiom2C.guidZ;
+                newProofStepC.rewriteOpcodeZ = rewriteOpcodesO._lhsExpand;
+                newProofStepC.lhsPrimaryKeyZ = newProofStepC.lhsPrimaryKeyZ / _axiom2C.rhsPrimaryKeyZ * _axiom2C.lhsPrimaryKeyZ;
+                const newProofStack = [..._proofstack, newProofStepC];
+                rewriteQueue.push(newProofStack);
+                updateProofFoundFlag ({ _proofStepC: newProofStepC, _proofstack: newProofStack});
+            }
+        }
+    }
+
+    function rewriteSubnet_lhsReduce ({ _proofStepC, _proofstack, _subnetH }) {
+        if (ProofFoundFlag)
+            return;
+
+        for (let [indexZ, _] of _subnetH) {
+            const _axiom2C = AxiomsArrayH[indexZ];
+            if (_proofStepC.lhsPrimaryKeyZ % _axiom2C.lhsPrimaryKeyZ === 0n) {
+                const newProofStepC = new CloneableObjectClass (_proofStepC);
+                newProofStepC.guidZ = _axiom2C.guidZ;
+                newProofStepC.rewriteOpcodeZ = rewriteOpcodesO._lhsReduce;
+                newProofStepC.lhsPrimaryKeyZ = newProofStepC.lhsPrimaryKeyZ / _axiom2C.lhsPrimaryKeyZ * _axiom2C.rhsPrimaryKeyZ;
+                const newProofStack = [..._proofstack, newProofStepC];
+                rewriteQueue.push([..._proofstack, newProofStepC]);
+                updateProofFoundFlag ({ _proofStepC: newProofStepC, _proofstack: newProofStack});
+            }
+        }
+    }
+
+    function rewriteSubnet_rhsExpand ({ _proofStepC, _proofstack, _subnetH }) {
+        if (ProofFoundFlag)
+            return;
+
+        for (let [indexZ, _] of _subnetH) {
+            const _axiom2C = AxiomsArrayH[indexZ];
+            if (_proofStepC.rhsPrimaryKeyZ % _axiom2C.rhsPrimaryKeyZ === 0n) {
+                const newProofStepC = new CloneableObjectClass (_proofStepC);
+                newProofStepC.guidZ = _axiom2C.guidZ;
+                newProofStepC.rewriteOpcodeZ = rewriteOpcodesO._rhsExpand;
+                newProofStepC.rhsPrimaryKeyZ = newProofStepC.rhsPrimaryKeyZ / _axiom2C.rhsPrimaryKeyZ * _axiom2C.lhsPrimaryKeyZ;
+                const newProofStack = [..._proofstack, newProofStepC];
+                rewriteQueue.push([..._proofstack, newProofStepC]);
+                updateProofFoundFlag ({ _proofStepC: newProofStepC, _proofstack: newProofStack});
+            }
+        }
+    }
+
+    function rewriteSubnet_rhsReduce ({ _proofStepC, _proofstack, _subnetH }) {
+        if (ProofFoundFlag)
+            return;
+
+        for (let [indexZ, _] of _subnetH) {
+            const _axiom2C = AxiomsArrayH[indexZ];
+            if (_proofStepC.rhsPrimaryKeyZ % _axiom2C.lhsPrimaryKeyZ === 0n) {
+                const newProofStepC = new CloneableObjectClass (_proofStepC);
+                newProofStepC.guidZ = _axiom2C.guidZ;
+                newProofStepC.rewriteOpcodeZ = rewriteOpcodesO._rhsReduce;
+                newProofStepC.rhsPrimaryKeyZ = newProofStepC.rhsPrimaryKeyZ / _axiom2C.lhsPrimaryKeyZ * _axiom2C.rhsPrimaryKeyZ;
+                const newProofStack = [..._proofstack, newProofStepC];
+                rewriteQueue.push([..._proofstack, newProofStepC]);
+                updateProofFoundFlag ({ _proofStepC: newProofStepC, _proofstack: newProofStack});
+            }
+        }
+    }
+
+    function updateProofFoundFlag({ _proofStepC, _proofstack }) {
+        if (ProofFoundFlag)
+            return;
+
+        ProofFoundFlag = (_proofStepC.lhsPrimaryKeyZ == _proofStepC.rhsPrimaryKeyZ);
+
+        if (ProofFoundFlag)
+            QED = _proofstack;
+
+    }
+
+} // end rewriteSubnets
+
 function rewriteProofstepF ({
     axioms1C    
     , resultObj: { axioms2C, _resultObj } = {}
@@ -888,11 +970,6 @@ function initCallGraphs ({
     if (isNotEmpty ({ targ:resultObj })) {
         const { axioms2C, _resultObj } = resultObj;
 
-        const lhsExpandFastForward = `lhs:${axioms1C.guidZ}:expand:${axioms2C.guidZ}`;
-        const lhsReduceFastForward = `lhs:${axioms1C.guidZ}:reduce:${axioms2C.guidZ}`;
-        const rhsExpandFastForward = `rhs:${axioms1C.guidZ}:expand:${axioms2C.guidZ}`;
-        const rhsReduceFastForward = `rhs:${axioms1C.guidZ}:reduce:${axioms2C.guidZ}`;
-
         const retArray = [
             _resultObj._lhsExpand
             , _resultObj._lhsReduce
@@ -902,17 +979,12 @@ function initCallGraphs ({
         .forEach ((valueA, indexZ, thisArrayA) => {
             if (valueA == false)
                 return;
-            /*
-            fastForwardQueue[lhsExpandFastForward] = true;
-            fastForwardQueue[lhsReduceFastForward] = true;
-            fastForwardQueue[rhsExpandFastForward] = true;
-            fastForwardQueue[rhsReduceFastForward] = true;
-            */ 
+            
             switch (indexZ) {
-                case 0: fastForwardQueue[lhsExpandFastForward] = true; break;
-                case 1: fastForwardQueue[lhsReduceFastForward] = true; break;
-                case 2: fastForwardQueue[rhsExpandFastForward] = true; break;
-                case 3: fastForwardQueue[rhsReduceFastForward] = true; break;
+                case 0: axioms1C._lhsExpandCallGraph.set (axioms2C.guidZ, true); break;
+                case 1: axioms1C._lhsReduceCallGraph.set (axioms2C.guidZ, true); break;
+                case 2: axioms1C._rhsExpandCallGraph.set (axioms2C.guidZ, true); break;
+                case 3: axioms1C._rhsReduceCallGraph.set (axioms2C.guidZ, true); break;
             }
             
         });
