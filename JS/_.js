@@ -187,7 +187,7 @@ async function main (proofStatementsA) {
 
     do {
 
-        // read from (bottom of) rewriteQueue
+        // read from (bottom of) the rewriteQueue
         proofstackA = rewriteQueue.shift ();
 
         const proofStepC = lastElementOf ({ valueA: proofstackA });
@@ -672,32 +672,12 @@ function compareAxioms ({
         , _rhsReduce: false
     };
 
-    if (!firstRewriteOnlyFlag){
-
-        const lhsExpandFastForward = `lhs:${axioms1C.guidZ}:expand:${axioms2C.guidZ}`;
-        const lhsReduceFastForward = `lhs:${axioms1C.guidZ}:reduce:${axioms2C.guidZ}`;
-        const rhsExpandFastForward = `rhs:${axioms1C.guidZ}:expand:${axioms2C.guidZ}`;
-        const rhsReduceFastForward = `rhs:${axioms1C.guidZ}:reduce:${axioms2C.guidZ}`;
+    if (firstRewriteOnlyFlag && axioms2C.guidZ != 0n){
         
-        if (fastForwardQueue[lhsExpandFastForward] /* && axioms1C.lhsPrimaryKeyZ%axioms2C.rhsPrimaryKeyZ === 0n */){
-            _resultObj._lhsExpand = [axioms1C.lhsPrimaryKeyZ/axioms2C.rhsPrimaryKeyZ*axioms2C.lhsPrimaryKeyZ];
-        }
-        if (fastForwardQueue[lhsReduceFastForward] /* && axioms1C.lhsPrimaryKeyZ%axioms2C.lhsPrimaryKeyZ === 0n */){
-            _resultObj._lhsReduce = [axioms1C.lhsPrimaryKeyZ/axioms2C.lhsPrimaryKeyZ*axioms2C.rhsPrimaryKeyZ];
-        }    
-        if (fastForwardQueue[rhsExpandFastForward] /* && axioms1C.rhsPrimaryKeyZ%axioms2C.rhsPrimaryKeyZ === 0n */){
-            _resultObj._rhsExpand = [axioms1C.rhsPrimaryKeyZ/axioms2C.rhsPrimaryKeyZ*axioms2C.lhsPrimaryKeyZ];
-        }
-        if (fastForwardQueue[rhsReduceFastForward] /* && axioms1C.rhsPrimaryKeyZ%axioms2C.lhsPrimaryKeyZ === 0n */){
-            _resultObj._rhsReduce = [axioms1C.rhsPrimaryKeyZ/axioms2C.lhsPrimaryKeyZ*axioms2C.rhsPrimaryKeyZ];
-        }
-
-     } else if (axioms2C.guidZ != 0n){
-        
-        _resultObj._lhsExpand = axioms1C.lhsPrimaryKeyZ%axioms2C.rhsPrimaryKeyZ === 0n;
-        _resultObj._lhsReduce = axioms1C.lhsPrimaryKeyZ%axioms2C.lhsPrimaryKeyZ === 0n;
-        _resultObj._rhsExpand = axioms1C.rhsPrimaryKeyZ%axioms2C.rhsPrimaryKeyZ === 0n;
-        _resultObj._rhsReduce = axioms1C.rhsPrimaryKeyZ%axioms2C.lhsPrimaryKeyZ === 0n;
+        _resultObj._lhsExpand = axioms1C.lhsPrimaryKeyZ % axioms2C.rhsPrimaryKeyZ === 0n;
+        _resultObj._lhsReduce = axioms1C.lhsPrimaryKeyZ % axioms2C.lhsPrimaryKeyZ === 0n;
+        _resultObj._rhsExpand = axioms1C.rhsPrimaryKeyZ % axioms2C.rhsPrimaryKeyZ === 0n;
+        _resultObj._rhsReduce = axioms1C.rhsPrimaryKeyZ % axioms2C.lhsPrimaryKeyZ === 0n;
 
      }
 
