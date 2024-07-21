@@ -622,70 +622,46 @@ function initAxiomsArrayF ({ proofStatementsA = [] }) {
 
 } // end initAxiomsArrayF
 
-function processAxioms ({
-    axiomsA
-    , maskSizeZ
-    , firstRewriteOnlyFlag = false
-    , stackA = []
-    , cb = null
+function processAxioms({
+    axiomsA,
+    maskSizeZ,
+    firstRewriteOnlyFlag = false,
+    stackA = [],
+    cb = null
 }) {
+    clock({ valueS: "processAxioms" });
 
-    clock ({ valueS: "processAxioms" });
+    axiomsA.forEach(axioms1C => {
+        AxiomsArray.forEach(axioms2C => {
+            if (axioms1C.guidZ === axioms2C.guidZ) {
+                return; // Skip comparison if GUIDs are the same
+            }
 
-    axiomsA.forEach (axioms1C => {
-        AxiomsArray
-        .map (axioms2C =>
-            compareAxioms ({
+            let _resultObj = {
+                _lhsExpand: false,
+                _lhsReduce: false,
+                _rhsExpand: false,
+                _rhsReduce: false
+            };
+
+            if (firstRewriteOnlyFlag && axioms2C.guidZ != 0n) {
+                _resultObj._lhsExpand = axioms1C.lhsPrimaryKeyZ % axioms2C.rhsPrimaryKeyZ === 0n;
+                _resultObj._lhsReduce = axioms1C.lhsPrimaryKeyZ % axioms2C.lhsPrimaryKeyZ === 0n;
+                _resultObj._rhsExpand = axioms1C.rhsPrimaryKeyZ % axioms2C.rhsPrimaryKeyZ === 0n;
+                _resultObj._rhsReduce = axioms1C.rhsPrimaryKeyZ % axioms2C.lhsPrimaryKeyZ === 0n;
+            }
+
+            cb({
                 axioms1C: axioms1C,
-                axioms2C: axioms2C,
-                maskSizeZ: maskSizeZ,
-                firstRewriteOnlyFlag: firstRewriteOnlyFlag
-            })
-        )
-        .forEach (result => cb ({
-            axioms1C: axioms1C,
-            resultObj: result,  // contains { axioms2C, _resultObj }
-            stackA: stackA
-        }))
+                resultObj: { axioms2C, _resultObj },
+                stackA: stackA
+            });
+        });
     });
 
-    clock ({ valueS: 'processAxioms' });
-
+    clock({ valueS: 'processAxioms' });
+    
 } // end processAxioms
-
-function compareAxioms ({
-    axioms1C
-    , axioms2C
-    , maskSizeZ
-    , firstRewriteOnlyFlag = false
-}) {
-
-    if (axioms1C.guidZ === axioms2C.guidZ)
-        return {};
-
-    clock ({ valueS: "compareAxioms" });
-
-    let _resultObj = {
-        _lhsExpand: false
-        , _lhsReduce: false
-        , _rhsExpand: false
-        , _rhsReduce: false
-    };
-
-    if (firstRewriteOnlyFlag && axioms2C.guidZ != 0n){
-        
-        _resultObj._lhsExpand = axioms1C.lhsPrimaryKeyZ % axioms2C.rhsPrimaryKeyZ === 0n;
-        _resultObj._lhsReduce = axioms1C.lhsPrimaryKeyZ % axioms2C.lhsPrimaryKeyZ === 0n;
-        _resultObj._rhsExpand = axioms1C.rhsPrimaryKeyZ % axioms2C.rhsPrimaryKeyZ === 0n;
-        _resultObj._rhsReduce = axioms1C.rhsPrimaryKeyZ % axioms2C.lhsPrimaryKeyZ === 0n;
-
-     }
-
-    clock ({ valueS: "compareAxioms" });
-
-    return { axioms2C, _resultObj };
-
-} // end compareAxioms
 
 function rewriteSubnets ({
     proofStepC
@@ -947,7 +923,7 @@ function initCallGraphs ({
     , stackA 
 }) {
 
-    if (isNotEmpty ({ targ:resultObj })) {
+    if (isNotEmpty ({ targ: resultObj })) {
         const { axioms2C, _resultObj } = resultObj;
 
         const retArray = [
