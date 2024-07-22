@@ -1,4 +1,36 @@
 
+/* 
+                    const lhsReduceFastForwardKey = `rhs:${_axiom1C.lhsPrimaryKeyZ}`;
+
+                    const lhsFasftForwardResultAway = fastForwardQueue[lhsReduceFastForwardKey];
+
+                    lhsFasftForwardResultAway.forEach((_valueZ, tooIndexZ, tooArray) => {
+                        if (tooIndexZ > 0) {
+                            rewriteOpcodeZ = _valueZ.rewriteOpcodeZ;
+                            _axiom1C.guidZ = _valueZ.guidZ;
+                            _axiom1C.rewriteOpcodeZ = _valueZ.rewriteOpcodeZ;
+                            const __axiom2C = AxiomsArrayH[_valueZ.guidZ];
+                            phraseString.push( `(${rewriteOpcodeZtoString[rewriteOpcodeZ]}) via axiom_${_valueZ.guidZ} (using fast-forward lhs)`);
+                            
+                            processProofStep(_axiom1C, __axiom2C, maskSizeZ);
+                            
+                        } else {
+                            switch(_valueZ.rewriteOpcodeZ){
+                                case 1n:
+                                case 2n:
+                                // overwite lhs
+                                _axiom1C.lhsZ = _valueZ.lhsZ;
+                                break;
+
+                                case 3n:
+                                case 4n:
+                                // overwrite rhs
+                                _axiom1C.rhsZ = _valueZ.rhsZ;
+                            }
+                        } // end if (tooIndexZ)
+                    });
+                    break;
+ */
 
 function rewriteSubnet_lhsExpand ({ _proofStepC, _proofstack, _subnetH }) {
     if (ProofFoundFlag)
