@@ -1,4 +1,133 @@
 
+case 5n: // lhs f/f
+const lhsReduceFastForwardKey = `rhs:${_axiom1C.lhsPrimaryKeyZ}`;
+
+const lhsFasftForwardResultAway = fastForwardQueue[lhsReduceFastForwardKey];
+
+lhsFasftForwardResultAway.forEach((_valueZ, tooIndexZ, tooArray) => {
+    if (tooIndexZ > 0) {
+        rewriteOpcodeZ = _valueZ.rewriteOpcodeZ;
+        _axiom1C.guidZ = _valueZ.guidZ;
+        _axiom1C.rewriteOpcodeZ = _valueZ.rewriteOpcodeZ;
+        const __axiom2C = AxiomsArrayH[_valueZ.guidZ];
+        phraseString.push( `(${rewriteOpcodeZtoString[rewriteOpcodeZ]}) via axiom_${_valueZ.guidZ} (using fast-forward lhs)`);
+        
+        processProofStep(_axiom1C, __axiom2C, maskSizeZ);
+        /* 
+        switch(rewriteOpcodeZ) {
+            case 1n:
+                // lhs expand
+                lhsStringArray = convertBitstream2tokens({ proofStepZ: _axiom1C.rhsZ, maskSizeZ });
+                rewriteResultZArray = replaceBitfieldsInProofStepBigEndian({ 
+                    proofStepZ: _axiom1C.lhsZ, 
+                    maskSizeZ, 
+                    fromZ: __axiom2C.rhsZ,
+                    toZ: __axiom2C.lhsZ 
+                });
+                break;
+
+            case 2n:
+                // lhs reduce
+                lhsStringArray = convertBitstream2tokens({ proofStepZ: _axiom1C.rhsZ, maskSizeZ });
+                rewriteResultZArray = replaceBitfieldsInProofStepBigEndian({ 
+                    proofStepZ: _axiom1C.lhsZ, 
+                    maskSizeZ, 
+                    fromZ: __axiom2C.lhsZ,
+                    toZ: __axiom2C.rhsZ 
+                });
+                break;
+
+            case 3n: 
+                // rhs expand
+                rhsStringArray = convertBitstream2tokens({ proofStepZ: _axiom1C.lhsZ, maskSizeZ });
+                rewriteResultZArray = replaceBitfieldsInProofStepBigEndian({ 
+                    proofStepZ: _axiom1C.rhsZ, 
+                    maskSizeZ, 
+                    fromZ: __axiom2C.rhsZ,
+                    toZ: __axiom2C.lhsZ 
+                });
+                break;
+
+            case 4n:
+                // rhs reduce
+                rhsStringArray = convertBitstream2tokens({ proofStepZ: _axiom1C.lhsZ, maskSizeZ });
+                rewriteResultZArray = replaceBitfieldsInProofStepBigEndian({ 
+                    proofStepZ: _axiom1C.rhsZ, 
+                    maskSizeZ, 
+                    fromZ: __axiom2C.lhsZ,
+                    toZ: __axiom2C.rhsZ 
+                });
+                break;
+
+        } // end switch(rewriteOpcodeZ)
+         */
+    } else {
+        switch(_valueZ.rewriteOpcodeZ){
+            case 1n:
+            case 2n:
+            // overwite lhs
+            _axiom1C.lhsZ = _valueZ.lhsZ;
+            break;
+
+            case 3n:
+            case 4n:
+            // overwrite rhs
+            _axiom1C.rhsZ = _valueZ.rhsZ;
+        }
+    } // end if (tooIndexZ)
+});
+
+break;
+
+                            /* 
+                            switch(rewriteOpcodeZ) {
+                                case 1n:
+                                    // lhs expand
+                                    lhsStringArray = convertBitstream2tokens({ proofStepZ: _axiom1C.rhsZ, maskSizeZ });
+                                    rewriteResultZArray = replaceBitfieldsInProofStepBigEndian({ 
+                                        proofStepZ: _axiom1C.lhsZ, 
+                                        maskSizeZ, 
+                                        fromZ: __axiom2C.rhsZ,
+                                        toZ: __axiom2C.lhsZ 
+                                    });
+                                    break;
+
+                                case 2n:
+                                    // lhs reduce
+                                    lhsStringArray = convertBitstream2tokens({ proofStepZ: _axiom1C.rhsZ, maskSizeZ });
+                                    rewriteResultZArray = replaceBitfieldsInProofStepBigEndian({ 
+                                        proofStepZ: _axiom1C.lhsZ, 
+                                        maskSizeZ, 
+                                        fromZ: __axiom2C.lhsZ,
+                                        toZ: __axiom2C.rhsZ 
+                                    });
+                                    break;
+
+                                case 3n: 
+                                    // rhs expand
+                                    rhsStringArray = convertBitstream2tokens({ proofStepZ: _axiom1C.lhsZ, maskSizeZ });
+                                    rewriteResultZArray = replaceBitfieldsInProofStepBigEndian({ 
+                                        proofStepZ: _axiom1C.rhsZ, 
+                                        maskSizeZ, 
+                                        fromZ: __axiom2C.rhsZ,
+                                        toZ: __axiom2C.lhsZ 
+                                    });
+                                    break;
+
+                                case 4n:
+                                    // rhs reduce
+                                    rhsStringArray = convertBitstream2tokens({ proofStepZ: _axiom1C.lhsZ, maskSizeZ });
+                                    rewriteResultZArray = replaceBitfieldsInProofStepBigEndian({ 
+                                        proofStepZ: _axiom1C.rhsZ, 
+                                        maskSizeZ, 
+                                        fromZ: __axiom2C.lhsZ,
+                                        toZ: __axiom2C.rhsZ 
+                                    });
+                                    break;
+
+                            } // end switch(rewriteOpcodeZ)
+                             */
+
 const lhsExpandFlag = AxiomsArrayH[axioms1C.guidZ]._lhsExpandCallGraph [axioms2C.guidZ] != null || firstRewriteOnlyFlag;
 const lhsReduceFlag = AxiomsArrayH[axioms1C.guidZ]._lhsReduceCallGraph [axioms2C.guidZ] != null || firstRewriteOnlyFlag;
 const rhsExpandFlag = AxiomsArrayH[axioms1C.guidZ]._rhsExpandCallGraph [axioms2C.guidZ] != null || firstRewriteOnlyFlag;
