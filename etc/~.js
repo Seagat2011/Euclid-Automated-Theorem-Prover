@@ -1,4 +1,37 @@
 
+
+function rewriteSubnet_lhsExpand ({ _proofStepC, _proofstack, _subnetH }) {
+    if (ProofFoundFlag)
+        return;
+
+    let _subnetsArray = [];
+
+    _proofStepC.lhsExpandCallGraphMap.length > 1 
+        && _proofStepC
+            .lhsExpandCallGraphMap
+                .forEach((valueZ, indexZ,thisArray) => {
+                    _subnetsArray.push(indexZ);
+                });
+
+    _subnetH
+        .forEach((valueZ, indexZ,thisArray) => {
+        _subnetsArray.push(indexZ);
+    });
+
+    for (let indexZ of _subnetH) {
+        const _axiom2C = AxiomsArrayH[indexZ];
+        if (_proofStepC.lhsPrimaryKeyZ % _axiom2C.rhsPrimaryKeyZ === 0n) {
+            const newProofStepC = new CloneableObjectClass (_proofStepC);
+            newProofStepC.guidZ = _axiom2C.guidZ;
+            newProofStepC.rewriteOpcodeZ = rewriteOpcodesO._lhsExpand;
+            newProofStepC.lhsPrimaryKeyZ = newProofStepC.lhsPrimaryKeyZ / _axiom2C.rhsPrimaryKeyZ * _axiom2C.lhsPrimaryKeyZ;
+            const newProofStack = [..._proofstack, newProofStepC];
+            rewriteQueue.push(newProofStack);
+            updateProofFoundFlag ({ _proofStepC: newProofStepC, _proofstack: newProofStack});
+        }
+    }
+}
+
 case 5n: // lhs f/f
 const lhsReduceFastForwardKey = `rhs:${_axiom1C.lhsPrimaryKeyZ}`;
 
