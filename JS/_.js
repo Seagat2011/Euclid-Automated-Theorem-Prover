@@ -109,8 +109,12 @@ class ProofStepObjectClass extends Object {
         super ();
 
         this.guidZ = null;
-        this.lhsZ;
-        this.rhsZ;
+        this.lhsZ = null;
+        this.rhsZ = null;
+        this.lhsExpandCallGraphMap = new Map();
+        this.lhsReduceCallGraphMap = new Map();
+        this.rhsExpandCallGraphMap = new Map();
+        this.rhsReduceCallGraphMap = new Map();
         this.rewriteOpcodeZ = 0n;
         this.lhsPrimaryKeyZ = 1n;
         this.rhsPrimaryKeyZ = 1n;
@@ -132,6 +136,9 @@ class CloneableObjectClass {
             }
             if (Array.isArray (value)) {
                 return value.map (cloneDeep);
+            }
+            if (value instanceof Map) {
+                return new Map([...value].map(([k, v]) => [cloneDeep(k), cloneDeep(v)]));
             }
 
             const clone = Object.create (Object.getPrototypeOf (value));
@@ -179,9 +186,15 @@ async function main (proofStatementsA) {
     proofStep.lhsPrimaryKeyZ = theoremA.lhsPrimaryKeyZ;
     proofStep.rhsPrimaryKeyZ = theoremA.rhsPrimaryKeyZ;
 
+    // init proofstep call stack
+    theoremA._lhsExpandCallGraph.length > 0 && proofStep.lhsExpandCallGraphMap.set (0n, true);
+    theoremA._lhsReduceCallGraph.length > 0 && proofStep.lhsReduceCallGraphMap.set (0n, true);
+    theoremA._rhsExpandCallGraph.length > 0 && proofStep.rhsExpandCallGraphMap.set (0n, true);
+    theoremA._rhsReduceCallGraph.length > 0 && proofStep.rhsReduceCallGraphMap.set (0n, true);
+
     rewriteQueue.push ([proofStep]);
 
-    clock ({ valueS: "main" });
+    //clock ({ valueS: "main" });
 
     const startTimeZ = performance.now ();
 
@@ -197,13 +210,13 @@ async function main (proofStatementsA) {
         if (ProofFoundFlag)
             break;
 
-        clock ({ valueS: "main" });
+        //clock ({ valueS: "main" });
 
     } while (rewriteQueue.length && !ProofFoundFlag);
 
     const endTimeZ = performance.now ();
 
-    clock ({});
+    //clock ({});
 
     const totalTimeZ = endTimeZ - startTimeZ;
 
@@ -436,7 +449,7 @@ function resetProof () {
 
 function initAxiomsArrayF ({ proofStatementsA = [] }) {
 
-    clock ({ valueS: "initAxiomsArrayF" });
+    //clock ({ valueS: "initAxiomsArrayF" });
 
     // First pass: build token library and calculate maskSizeZ
     let _proofStatementsA = [];
@@ -523,7 +536,7 @@ function initAxiomsArrayF ({ proofStatementsA = [] }) {
 
         }); // end _proofStatementsA.forEach 
 
-    clock ({ valueS: 'initAxiomsArrayF' })
+    //clock ({ valueS: 'initAxiomsArrayF' })
 
     return axiomObjArray;
 
@@ -536,7 +549,7 @@ function processAxioms({
     stackA = [],
     cb = null
 }) {
-    clock({ valueS: "processAxioms" });
+    //clock({ valueS: "processAxioms" });
 
     axiomsA.forEach(axioms1C => {
         AxiomsArray.forEach(axioms2C => {
@@ -544,29 +557,32 @@ function processAxioms({
                 return; // Skip comparison if GUIDs are the same
             }
 
-            let _resultObj = {
-                _lhsExpand: false,
-                _lhsReduce: false,
-                _rhsExpand: false,
-                _rhsReduce: false
-            };
-
             if (firstRewriteOnlyFlag && axioms2C.guidZ != 0n) {
+
+                let _resultObj = {
+                    _lhsExpand: false,
+                    _lhsReduce: false,
+                    _rhsExpand: false,
+                    _rhsReduce: false
+                };
+
                 _resultObj._lhsExpand = axioms1C.lhsPrimaryKeyZ % axioms2C.rhsPrimaryKeyZ === 0n;
                 _resultObj._lhsReduce = axioms1C.lhsPrimaryKeyZ % axioms2C.lhsPrimaryKeyZ === 0n;
                 _resultObj._rhsExpand = axioms1C.rhsPrimaryKeyZ % axioms2C.rhsPrimaryKeyZ === 0n;
                 _resultObj._rhsReduce = axioms1C.rhsPrimaryKeyZ % axioms2C.lhsPrimaryKeyZ === 0n;
+
+                cb({
+                    axioms1C: axioms1C,
+                    resultObj: { axioms2C, _resultObj },
+                    stackA: stackA
+                });
+
             }
 
-            cb({
-                axioms1C: axioms1C,
-                resultObj: { axioms2C, _resultObj },
-                stackA: stackA
-            });
         });
     });
 
-    clock({ valueS: 'processAxioms' });
+    //clock({ valueS: 'processAxioms' });
     
 } // end processAxioms
 
@@ -577,7 +593,7 @@ function rewriteSubnets ({
 
     const axiom1C = AxiomsArrayH[proofStepC.guidZ];
 
-    clock ({ valueS: "rewriteSubnets" });
+    //clock ({ valueS: "rewriteSubnets" });
 
     rewriteSubnet_lhsExpand({ _proofStepC: proofStepC, _proofstack: proofstack, _subnetH: axiom1C._lhsExpandCallGraph });
     rewriteSubnet_lhsReduce({ _proofStepC: proofStepC, _proofstack: proofstack, _subnetH: axiom1C._lhsReduceCallGraph });
@@ -822,7 +838,7 @@ function clock ({ valueS }) {
             console.info (`Total runtime (${key}): ${val} Milliseconds`);
         }
     }
-} // end clock
+} // end //clock
 
 function initCallGraphs ({
     axioms1C
@@ -856,7 +872,7 @@ function initCallGraphs ({
 
 function convertBitstream2tokens ({ proofStepZ, maskSizeZ }) {    
 
-    clock ({ valueS: "bitstream2tokens" });
+    //clock ({ valueS: "bitstream2tokens" });
 
     let ret = [];
     const chunkMask = (1n << maskSizeZ) - 1n;
@@ -892,7 +908,7 @@ function replaceBitfieldsInProofStepBigEndian ({
     , firstRewriteOnlyFlag = false 
 }) {    
 
-    clock ({ valueS: "replaceBitfieldsInProofStepBigEndian" });
+    //clock ({ valueS: "replaceBitfieldsInProofStepBigEndian" });
 
     const fromResolutionZ = resolutionOf ({ valueZ: fromZ });
     const proofStepResolutionZ = resolutionOf ({ valueZ: proofStepZ });
@@ -982,7 +998,7 @@ function replaceBitfieldsInProofStepBigEndian ({
         }
     } // end loop
 
-    clock ({ valueS: 'replaceBitfieldsInProofStepBigEndian'});
+    //clock ({ valueS: 'replaceBitfieldsInProofStepBigEndian'});
 
     fastForwardQueue[_fastForwardKey] = [...ret];
 
@@ -1035,7 +1051,7 @@ function initAxiomCallGraphs ({
     , cb = null
 }) {
 
-    clock ({ valueS: "initAxiomCallGraphs" });
+    //clock ({ valueS: "initAxiomCallGraphs" });
 
     const I = AxiomsArray.length;
     const II = AxiomsArray.length * 2 - 1;
@@ -1051,7 +1067,7 @@ function initAxiomCallGraphs ({
             , cb: cb });
     }  
 
-    clock ({ valueS: 'initAxiomCallGraphs'});
+    //clock ({ valueS: 'initAxiomCallGraphs'});
 
 } // end initAxiomCallGraphs
 
