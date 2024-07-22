@@ -347,53 +347,8 @@ async function main (proofStatementsA) {
                             _axiom1C.rewriteOpcodeZ = _valueZ.rewriteOpcodeZ;
                             const __axiom2C = AxiomsArrayH[_valueZ.guidZ];
                             phraseString.push( `(${rewriteOpcodeZtoString[rewriteOpcodeZ]}) via axiom_${_valueZ.guidZ} (using fast-forward lhs)`);
-
-                            switch(rewriteOpcodeZ) {
-                                case 1n:
-                                    // lhs expand
-                                    lhsStringArray = convertBitstream2tokens({ proofStepZ: _axiom1C.rhsZ, maskSizeZ });
-                                    rewriteResultZArray = replaceBitfieldsInProofStepBigEndian({ 
-                                        proofStepZ: _axiom1C.lhsZ, 
-                                        maskSizeZ, 
-                                        fromZ: __axiom2C.rhsZ,
-                                        toZ: __axiom2C.lhsZ 
-                                    });
-                                    break;
-
-                                case 2n:
-                                    // lhs reduce
-                                    lhsStringArray = convertBitstream2tokens({ proofStepZ: _axiom1C.rhsZ, maskSizeZ });
-                                    rewriteResultZArray = replaceBitfieldsInProofStepBigEndian({ 
-                                        proofStepZ: _axiom1C.lhsZ, 
-                                        maskSizeZ, 
-                                        fromZ: __axiom2C.lhsZ,
-                                        toZ: __axiom2C.rhsZ 
-                                    });
-                                    break;
-
-                                case 3n: 
-                                    // rhs expand
-                                    rhsStringArray = convertBitstream2tokens({ proofStepZ: _axiom1C.lhsZ, maskSizeZ });
-                                    rewriteResultZArray = replaceBitfieldsInProofStepBigEndian({ 
-                                        proofStepZ: _axiom1C.rhsZ, 
-                                        maskSizeZ, 
-                                        fromZ: __axiom2C.rhsZ,
-                                        toZ: __axiom2C.lhsZ 
-                                    });
-                                    break;
-
-                                case 4n:
-                                    // rhs reduce
-                                    rhsStringArray = convertBitstream2tokens({ proofStepZ: _axiom1C.lhsZ, maskSizeZ });
-                                    rewriteResultZArray = replaceBitfieldsInProofStepBigEndian({ 
-                                        proofStepZ: _axiom1C.rhsZ, 
-                                        maskSizeZ, 
-                                        fromZ: __axiom2C.lhsZ,
-                                        toZ: __axiom2C.rhsZ 
-                                    });
-                                    break;
-
-                            } // end switch(rewriteOpcodeZ)
+                            
+                            processProofStep(_axiom1C, __axiom2C, maskSizeZ);
                             
                         } else {
                             switch(_valueZ.rewriteOpcodeZ){
@@ -410,9 +365,7 @@ async function main (proofStatementsA) {
                             }
                         } // end if (tooIndexZ)
                     });
-
                     break;
-
                 case 6n: // rhs f/f
                     const rhsReduceFastForwardKey = `lhs:${_axiom1C.rhsPrimaryKeyZ}`;
 
@@ -424,55 +377,10 @@ async function main (proofStatementsA) {
                             _axiom1C.guidZ = _valueZ.guidZ;
                             _axiom1C.rewriteOpcodeZ = _valueZ.rewriteOpcodeZ;
                             phraseString.push( `(${rewriteOpcodeZtoString[rewriteOpcodeZ]}) via axiom_${_valueZ.guidZ} (using fast-forward rhs)`);
-                            const __axiom2C = AxiomsArrayH[_valueZ.guidZ];
-
-                            switch(rewriteOpcodeZ) {
-                                case 1n:
-                                    // lhs expand
-                                    lhsStringArray = convertBitstream2tokens({ proofStepZ: _axiom1C.rhsZ, maskSizeZ });
-                                    rewriteResultZArray = replaceBitfieldsInProofStepBigEndian({ 
-                                        proofStepZ: _axiom1C.lhsZ, 
-                                        maskSizeZ, 
-                                        fromZ: __axiom2C.rhsZ,
-                                        toZ: __axiom2C.lhsZ 
-                                    });
-                                    break;
-
-                                case 2n:
-                                    // lhs reduce
-                                    lhsStringArray = convertBitstream2tokens({ proofStepZ: _axiom1C.rhsZ, maskSizeZ });
-                                    rewriteResultZArray = replaceBitfieldsInProofStepBigEndian({ 
-                                        proofStepZ: _axiom1C.lhsZ, 
-                                        maskSizeZ, 
-                                        fromZ: __axiom2C.lhsZ,
-                                        toZ: __axiom2C.rhsZ 
-                                    });
-                                    break;
-
-                                case 3n: 
-                                    // rhs expand
-                                    rhsStringArray = convertBitstream2tokens({ proofStepZ: _axiom1C.lhsZ, maskSizeZ });
-                                    rewriteResultZArray = replaceBitfieldsInProofStepBigEndian({ 
-                                        proofStepZ: _axiom1C.rhsZ, 
-                                        maskSizeZ, 
-                                        fromZ: __axiom2C.rhsZ,
-                                        toZ: __axiom2C.lhsZ 
-                                    });
-                                    break;
-
-                                case 4n:
-                                    // rhs reduce
-                                    rhsStringArray = convertBitstream2tokens({ proofStepZ: _axiom1C.lhsZ, maskSizeZ });
-                                    rewriteResultZArray = replaceBitfieldsInProofStepBigEndian({ 
-                                        proofStepZ: _axiom1C.rhsZ, 
-                                        maskSizeZ, 
-                                        fromZ: __axiom2C.lhsZ,
-                                        toZ: __axiom2C.rhsZ 
-                                    });
-                                    break;
-
-                            } // end switch(rewriteOpcodeZ)
+                            const __axiom2C = AxiomsArrayH[_valueZ.guidZ];                            
                             
+                            processProofStep(_axiom1C, __axiom2C, maskSizeZ);
+
                         } else {
                             switch(_valueZ.rewriteOpcodeZ){
                                 case 1n:
@@ -488,7 +396,6 @@ async function main (proofStatementsA) {
                             }
                         } // end if (tooIndexZ)
                     });
-
                     break;
 
             }
