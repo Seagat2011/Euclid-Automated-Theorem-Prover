@@ -58,16 +58,12 @@ const rewriteOpcodesO = {
     _lhsReduce: 2n,
     _rhsExpand: 3n,
     _rhsReduce: 4n,
-    _lhsFastForward: 5n,
-    _rhsFastForward: 6n,
 };
 const rewriteOpcodeZtoString = {
     [rewriteOpcodesO._lhsExpand]: "lhs expand",
     [rewriteOpcodesO._lhsReduce]: "lhs reduce",
     [rewriteOpcodesO._rhsExpand]: "rhs expand",
     [rewriteOpcodesO._rhsReduce]: "rhs reduce",
-    [rewriteOpcodesO._lhsFastForward]: "lhs fast-forward",
-    [rewriteOpcodesO._rhsFastForward]: "rhs fast-forward",
 };
 let tokenLibraryMap = new Map ();
 let tokenLibraryInverseMap = new Map ();
@@ -111,13 +107,14 @@ class ProofStepObjectClass extends Object {
         this.guidZ = null;
         this.lhsZ = null;
         this.rhsZ = null;
-        this.lhsExpandCallGraphMap = new Map();
-        this.lhsReduceCallGraphMap = new Map();
-        this.rhsExpandCallGraphMap = new Map();
-        this.rhsReduceCallGraphMap = new Map();
+        this.lhsExpandCallGraphMap = new Map ();
+        this.lhsReduceCallGraphMap = new Map ();
+        this.rhsExpandCallGraphMap = new Map ();
+        this.rhsReduceCallGraphMap = new Map ();
         this.rewriteOpcodeZ = 0n;
         this.lhsPrimaryKeyZ = 1n;
         this.rhsPrimaryKeyZ = 1n;
+        this.fastForwardFlag = '';
     }
 } // end class ProofStepObjectClass
 
@@ -138,7 +135,7 @@ class CloneableObjectClass {
                 return value.map (cloneDeep);
             }
             if (value instanceof Map) {
-                return new Map([...value].map(([k, v]) => [cloneDeep(k), cloneDeep(v)]));
+                return new Map ([...value].map (([k, v]) => [cloneDeep (k), cloneDeep (v)]));
             }
 
             const clone = Object.create (Object.getPrototypeOf (value));
@@ -185,13 +182,13 @@ async function main (proofStatementsA) {
     proofStep.rewriteOpcodeZ = 0n;
     proofStep.lhsPrimaryKeyZ = theoremA.lhsPrimaryKeyZ;
     proofStep.rhsPrimaryKeyZ = theoremA.rhsPrimaryKeyZ;
-
+/*
     // init proofstep call stack
     theoremA._lhsExpandCallGraph.length > 0 && proofStep.lhsExpandCallGraphMap.set (0n, true);
     theoremA._lhsReduceCallGraph.length > 0 && proofStep.lhsReduceCallGraphMap.set (0n, true);
     theoremA._rhsExpandCallGraph.length > 0 && proofStep.rhsExpandCallGraphMap.set (0n, true);
     theoremA._rhsReduceCallGraph.length > 0 && proofStep.rhsReduceCallGraphMap.set (0n, true);
-
+ */
     rewriteQueue.push ([proofStep]);
 
     //clock ({ valueS: "main" });
@@ -205,14 +202,14 @@ async function main (proofStatementsA) {
 
         const proofStepC = lastElementOf ({ valueA: proofstackA });
 
-        rewriteSubnets({ proofStepC: proofStepC, proofstack: proofstackA });
-        
+        rewriteSubnets ({ proofStepC: proofStepC, proofstack: proofstackA });
+
         if (ProofFoundFlag)
             break;
 
         //clock ({ valueS: "main" });
 
-    } while (rewriteQueue.length && !ProofFoundFlag);
+    } while (rewriteQueue.length);
 
     const endTimeZ = performance.now ();
 
@@ -235,186 +232,95 @@ async function main (proofStatementsA) {
 
     if (proofStatusFlag) {
         resultArray.push (proofStatusFlag);
-        console.info (proofStatusFlag, /* "\n", QED, */ "\n", QED_Flag);
-        
-        let _axiom1C = new ProofStepObjectClass ();
+        console.info (proofStatusFlag, "\n", QED_Flag);
+
+        let axiom1C = new ProofStepObjectClass ();
         let proofArray = [];
-        
-        QED.forEach((valueObj, indexZ, thisArray) => {
+
+        QED.forEach ((valueObj, indexZ, thisArray) => {
             if (indexZ > 0) {
-                _axiom1C.guidZ = valueObj.guidZ;
-                _axiom1C.lhsPrimaryKeyZ = valueObj.lhsPrimaryKeyZ;
-                _axiom1C.rhsPrimaryKeyZ = valueObj.rhsPrimaryKeyZ;
-                _axiom1C.rewriteOpcodeZ = valueObj.rewriteOpcodeZ;
-                const axiom2C = AxiomsArrayH[valueObj.guidZ];
-                
-                let { phraseString, lhsStringArray, rhsStringArray, rewriteResultZArray, rewriteOpcodeZ } 
-                    = processProofStep(_axiom1C, axiom2C, maskSizeZ);
-        
-                rewriteResultZArray.forEach((valueZ, thatIndexZ, thatArray) => {
-                    switch(rewriteOpcodeZ){
+                axiom1C.guidZ = valueObj.guidZ;
+                axiom1C.lhsPrimaryKeyZ = valueObj.lhsPrimaryKeyZ;
+                axiom1C.rhsPrimaryKeyZ = valueObj.rhsPrimaryKeyZ;
+                axiom1C.rewriteOpcodeZ = valueObj.rewriteOpcodeZ;
+                const axiom2C = AxiomsArrayH [valueObj.guidZ];
 
-                        case 1n:
-                        case 2n:
-                            // lhs operations
-                            _axiom1C.lhsZ = valueZ;
-                            rhsStringArray = rhsStringArray.length > 0 
-                                ? rhsStringArray 
-                                : convertBitstream2tokens({ proofStepZ: _axiom1C.rhsZ, maskSizeZ }) ;
-                            const newLhsStringArray = convertBitstream2tokens({ proofStepZ: valueZ, maskSizeZ });
-                            proofArray.push(`${newLhsStringArray.join(' ')} = ${rhsStringArray.join(' ')}, ${phraseString[thatIndexZ]}`);                            
-                            break;
+                const proofStepObj 
+                    = processProofStep(axiom1C, axiom2C, maskSizeZ, valueObj.fastForwardFlag);
 
-                        case 3n:
-                        case 4n:
-                            // rhs operations
-                            _axiom1C.rhsZ = valueZ;
-                            lhsStringArray = lhsStringArray.length > 0 
-                                ? lhsStringArray 
-                                : convertBitstream2tokens({ proofStepZ: _axiom1C.lhsZ, maskSizeZ }) ;
-                            const newRhsStringArray = convertBitstream2tokens({ proofStepZ: valueZ, maskSizeZ });
-                            proofArray.push(`${lhsStringArray.join(' ')} = ${newRhsStringArray.join(' ')}, ${phraseString[thatIndexZ]}`);
-                            break;
+                axiom1C = proofStepObj._axiom1C;
+                proofArray.push ( ...proofStepObj.proofArray );
 
-                    } // end switch(rewriteOpcodeZ)
-                }); // end rewriteResultZArray.forEach
-                
             } else {
                 // Handle the root case
-                _axiom1C.guidZ = valueObj.guidZ;
-                _axiom1C.lhsZ = valueObj.lhsZ;
-                _axiom1C.rhsZ = valueObj.rhsZ;
-                _axiom1C.lhsPrimaryKeyZ = valueObj.lhsPrimaryKeyZ;
-                _axiom1C.rhsPrimaryKeyZ = valueObj.rhsPrimaryKeyZ;
-                _axiom1C.rewriteOpcodeZ = valueObj.rewriteOpcodeZ;
+                axiom1C.guidZ = valueObj.guidZ;
+                axiom1C.lhsZ = valueObj.lhsZ;
+                axiom1C.rhsZ = valueObj.rhsZ;
+                axiom1C.lhsPrimaryKeyZ = valueObj.lhsPrimaryKeyZ;
+                axiom1C.rhsPrimaryKeyZ = valueObj.rhsPrimaryKeyZ;
+                axiom1C.rewriteOpcodeZ = valueObj.rewriteOpcodeZ;
 
-                const lhsStringArray = convertBitstream2tokens({ proofStepZ: _axiom1C.lhsZ, maskSizeZ });
-                const rhsStringArray = convertBitstream2tokens({ proofStepZ: _axiom1C.rhsZ, maskSizeZ });
+                const lhsStringArray = convertBitstream2tokens ({ proofStepZ: axiom1C.lhsZ, maskSizeZ });
+                const rhsStringArray = convertBitstream2tokens ({ proofStepZ: axiom1C.rhsZ, maskSizeZ });
 
-                proofArray.push(`${lhsStringArray.join(' ')} = ${rhsStringArray.join(' ')}, (root)`);
+                proofArray.push (`${lhsStringArray.join (' ')} = ${rhsStringArray.join (' ')}, (root)`);
             } // end if (indexZ > 0)
         }); // end QED.forEach
 
         resultArray.push (proofArray.join ('\n'), QED_Flag);
         
-        function processProofStep (_axiom1C, _axiom2C, maskSizeZ) {
-
-            const _guidZ = _axiom1C.guidZ;
-            let rewriteOpcodeZ = _axiom1C.rewriteOpcodeZ;
+        function processProofStep (_localAxiom1C, _localAxiom2C, _localMaskSizeZ, _localFastForwardFlag) {
+            const _guidZ = _localAxiom1C.guidZ;
+            let rewriteOpcodeZ = _localAxiom1C.rewriteOpcodeZ;
             let phraseString = [];
-
+            let proofArray = [];
+        
             let lhsStringArray = [];
             let rhsStringArray = [];
             let rewriteResultZArray = [];
         
             switch (rewriteOpcodeZ) {
                 case 1n: // lhsExpand
-                    phraseString.push (`(${rewriteOpcodeZtoString[rewriteOpcodeZ]}) via axiom_${_guidZ}`);
-                    rhsStringArray = convertBitstream2tokens({ proofStepZ: _axiom1C.rhsZ, maskSizeZ });
-                    rewriteResultZArray = replaceBitfieldsInProofStepBigEndian({ 
-                        proofStepZ: _axiom1C.lhsZ, 
-                        maskSizeZ, 
-                        fromZ: _axiom2C.rhsZ,
-                        toZ: _axiom2C.lhsZ 
-                    });
-                    break;
                 case 2n: // lhsReduce
-                    phraseString.push (`(${rewriteOpcodeZtoString[rewriteOpcodeZ]}) via axiom_${_guidZ}`);
-                    rhsStringArray = convertBitstream2tokens({ proofStepZ: _axiom1C.rhsZ, maskSizeZ });
-                    rewriteResultZArray = replaceBitfieldsInProofStepBigEndian({ 
-                        proofStepZ: _axiom1C.lhsZ, 
-                        maskSizeZ, 
-                        fromZ: _axiom2C.lhsZ,
-                        toZ: _axiom2C.rhsZ 
+                    phraseString.push(`(${rewriteOpcodeZtoString[rewriteOpcodeZ]}) via axiom_${_guidZ} ${_localFastForwardFlag}`);
+                    rhsStringArray = convertBitstream2tokens({ proofStepZ: _localAxiom1C.rhsZ, maskSizeZ: _localMaskSizeZ });
+                    rewriteResultZArray = replaceBitfieldsInProofStepBigEndian({
+                        proofStepZ: _localAxiom1C.lhsZ,
+                        maskSizeZ: _localMaskSizeZ,
+                        fromZ: rewriteOpcodeZ === 1n ? _localAxiom2C.rhsZ : _localAxiom2C.lhsZ,
+                        toZ: rewriteOpcodeZ === 1n ? _localAxiom2C.lhsZ : _localAxiom2C.rhsZ
                     });
                     break;
                 case 3n: // rhsExpand
-                    phraseString.push (`(${rewriteOpcodeZtoString[rewriteOpcodeZ]}) via axiom_${_guidZ}`);
-                    lhsStringArray = convertBitstream2tokens({ proofStepZ: _axiom1C.lhsZ, maskSizeZ });
-                    rewriteResultZArray = replaceBitfieldsInProofStepBigEndian({ 
-                        proofStepZ: _axiom1C.rhsZ, 
-                        maskSizeZ, 
-                        fromZ: _axiom2C.rhsZ,
-                        toZ: _axiom2C.lhsZ 
-                    });
-                    break;
                 case 4n: // rhsReduce
-                    phraseString.push (`(${rewriteOpcodeZtoString[rewriteOpcodeZ]}) via axiom_${_guidZ}`);
-                    lhsStringArray = convertBitstream2tokens({ proofStepZ: _axiom1C.lhsZ, maskSizeZ });
-                    rewriteResultZArray = replaceBitfieldsInProofStepBigEndian({ 
-                        proofStepZ: _axiom1C.rhsZ, 
-                        maskSizeZ, 
-                        fromZ: _axiom2C.lhsZ,
-                        toZ: _axiom2C.rhsZ 
+                    phraseString.push(`(${rewriteOpcodeZtoString[rewriteOpcodeZ]}) via axiom_${_guidZ} ${_localFastForwardFlag}`);
+                    lhsStringArray = convertBitstream2tokens({ proofStepZ: _localAxiom1C.lhsZ, maskSizeZ: _localMaskSizeZ });
+                    rewriteResultZArray = replaceBitfieldsInProofStepBigEndian({
+                        proofStepZ: _localAxiom1C.rhsZ,
+                        maskSizeZ: _localMaskSizeZ,
+                        fromZ: rewriteOpcodeZ === 3n ? _localAxiom2C.rhsZ : _localAxiom2C.lhsZ,
+                        toZ: rewriteOpcodeZ === 3n ? _localAxiom2C.lhsZ : _localAxiom2C.rhsZ
                     });
                     break;
-                case 5n: // lhs f/f
-                    const lhsReduceFastForwardKey = `rhs:${_axiom1C.lhsPrimaryKeyZ}`;
-
-                    const lhsFasftForwardResultAway = fastForwardQueue[lhsReduceFastForwardKey];
-
-                    lhsFasftForwardResultAway.forEach((_valueZ, tooIndexZ, tooArray) => {
-                        if (tooIndexZ > 0) {
-                            rewriteOpcodeZ = _valueZ.rewriteOpcodeZ;
-                            _axiom1C.guidZ = _valueZ.guidZ;
-                            _axiom1C.rewriteOpcodeZ = _valueZ.rewriteOpcodeZ;
-                            const __axiom2C = AxiomsArrayH[_valueZ.guidZ];
-                            phraseString.push( `(${rewriteOpcodeZtoString[rewriteOpcodeZ]}) via axiom_${_valueZ.guidZ} (using fast-forward lhs)`);
-                            
-                            processProofStep(_axiom1C, __axiom2C, maskSizeZ);
-                            
-                        } else {
-                            switch(_valueZ.rewriteOpcodeZ){
-                                case 1n:
-                                case 2n:
-                                // overwite lhs
-                                _axiom1C.lhsZ = _valueZ.lhsZ;
-                                break;
-
-                                case 3n:
-                                case 4n:
-                                // overwrite rhs
-                                _axiom1C.rhsZ = _valueZ.rhsZ;
-                            }
-                        } // end if (tooIndexZ)
-                    });
-                    break;
-                case 6n: // rhs f/f
-                    const rhsReduceFastForwardKey = `lhs:${_axiom1C.rhsPrimaryKeyZ}`;
-
-                    const rhsFasftForwardResultAway = fastForwardQueue[rhsReduceFastForwardKey];
-
-                    rhsFasftForwardResultAway.forEach((_valueZ, tooIndexZ, tooArray) => {
-                        if (tooIndexZ > 0) {
-                            rewriteOpcodeZ = _valueZ.rewriteOpcodeZ;
-                            _axiom1C.guidZ = _valueZ.guidZ;
-                            _axiom1C.rewriteOpcodeZ = _valueZ.rewriteOpcodeZ;
-                            phraseString.push( `(${rewriteOpcodeZtoString[rewriteOpcodeZ]}) via axiom_${_valueZ.guidZ} (using fast-forward rhs)`);
-                            const __axiom2C = AxiomsArrayH[_valueZ.guidZ];                            
-                            
-                            processProofStep(_axiom1C, __axiom2C, maskSizeZ);
-
-                        } else {
-                            switch(_valueZ.rewriteOpcodeZ){
-                                case 1n:
-                                case 2n:
-                                // overwite rhs
-                                _axiom1C.rhsZ = _valueZ.rhsZ;
-                                break;
-
-                                case 3n:
-                                case 4n:
-                                // overwrite lhs
-                                _axiom1C.lhsZ = _valueZ.lhsZ;
-                            }
-                        } // end if (tooIndexZ)
-                    });
-                    break;
-
-            }
+            } // end if (rewriteOpcodeZ)
         
-            return { phraseString, lhsStringArray, rhsStringArray, rewriteResultZArray, rewriteOpcodeZ };
-        };
+            rewriteResultZArray
+                .forEach((valueZ, thatIndexZ) => {
+                    if (rewriteOpcodeZ === 1n || rewriteOpcodeZ === 2n) {
+                        // lhs operations
+                        _localAxiom1C.lhsZ = valueZ;
+                        const newLhsStringArray = convertBitstream2tokens({ proofStepZ: valueZ, maskSizeZ: _localMaskSizeZ });
+                        proofArray.push(`${newLhsStringArray.join(' ')} = ${rhsStringArray.join(' ')}, ${phraseString[thatIndexZ]}`);
+                    } else {
+                        // rhs operations
+                        _localAxiom1C.rhsZ = valueZ;
+                        const newRhsStringArray = convertBitstream2tokens({ proofStepZ: valueZ, maskSizeZ: _localMaskSizeZ });
+                        proofArray.push(`${lhsStringArray.join(' ')} = ${newRhsStringArray.join(' ')}, ${phraseString[thatIndexZ]}`);
+                    }
+                }); // end rewriteResultZArray.forEach
+        
+            return { proofArray, _axiom1C: _localAxiom1C };
+        } // end processProofStep
 
     } else {
         resultArray.push ('No proof found.');
@@ -424,7 +330,7 @@ async function main (proofStatementsA) {
     console.info (`Total runtime: ${totalTimeZ} Milliseconds`);
     resultArray.push (`Total runtime: ${totalTimeZ} Milliseconds`);
 
-    codeArea.value = resultArray.join('\n\n');
+    codeArea.value = resultArray.join ('\n\n');
 
 } // end main
 
@@ -455,9 +361,9 @@ function initAxiomsArrayF ({ proofStatementsA = [] }) {
     let _proofStatementsA = [];
 
     proofStatementsA
-        .split(newlinesRE)
+        .split (newlinesRE)
             .forEach (statement => {
-                if (/^[\w\{]/.test(statement)){
+                if (/^[\w\{]/.test (statement)){
                     const retArray = statement
                         .split (tokenDelimeterRE);
 
@@ -474,7 +380,7 @@ function initAxiomsArrayF ({ proofStatementsA = [] }) {
                 }
             }); // end proofStatementsA.split
 
-    maskSizeZ = resolutionOf({ valueZ: LASTPRIME });
+    maskSizeZ = resolutionOf ({ valueZ: LASTPRIME });
 
     // Second pass: create and populate axiom objects
     let _guidZ = 1n;
@@ -497,44 +403,44 @@ function initAxiomsArrayF ({ proofStatementsA = [] }) {
                             primaryKeyZArray.push (1n);
                         }
                         const tokenValue = tokenLibraryMap.get (token);
-                        contentsZArray[i] = (contentsZArray[i] << maskSizeZ) | tokenValue;
-                        primaryKeyZArray[i] *= tokenValue;
+                        contentsZArray [i] = (contentsZArray [i] << maskSizeZ) | tokenValue;
+                        primaryKeyZArray [i] *= tokenValue;
                     }
                 });
 
             let _guid2PartZ = 0n;
 
             contentsZArray
-                .forEach((_, i, array) => {
+                .forEach ((_, i, array) => {
                     for (let j = i + 1; j < array.length; j++) {
-                        const lhsZ = array[i] >= array[j] ? array[i] : array[j];
-                        const rhsZ = array[i] >= array[j] ? array[j] : array[i];
-                        const lhsPkeyZ = array[i] >= array[j] ? primaryKeyZArray[i] : primaryKeyZArray[j] ;
-                        const rhsPkeyZ = array[i] >= array[j] ? primaryKeyZArray[j] : primaryKeyZArray[i] ;
+                        const lhsZ = array [i] >= array [j] ? array [i] : array [j];
+                        const rhsZ = array [i] >= array [j] ? array [j] : array [i];
+                        const lhsPkeyZ = array [i] >= array [j] ? primaryKeyZArray [i] : primaryKeyZArray [j] ;
+                        const rhsPkeyZ = array [i] >= array [j] ? primaryKeyZArray [j] : primaryKeyZArray [i] ;
                         const visitedString = `${lhsZ}:${rhsZ}`;
 
                         if (!visitedMap.has (visitedString)) {
                             visitedMap.set (visitedString, true);
-                            const axiomObj = new AxiomClass();
+                            const axiomObj = new AxiomClass ();
                             axiomObj.guidZ = indexZ < thisArrayA.length - 1 ? `${_guidZ}.${_guid2PartZ++}` : 0n;
-                    
+
                             // Ensure lhs > rhs for proper expand/reduce operation
                             axiomObj.lhsZ = lhsZ;
                             axiomObj.rhsZ = rhsZ;
                             axiomObj.lhsPrimaryKeyZ = lhsPkeyZ;
                             axiomObj.rhsPrimaryKeyZ = rhsPkeyZ;
-                    
+
                             // Catalog for quick-lookup
-                            AxiomsArrayH[axiomObj.guidZ] = axiomObj;
-                    
-                            axiomObjArray.push(axiomObj);
+                            AxiomsArrayH [axiomObj.guidZ] = axiomObj;
+
+                            axiomObjArray.push (axiomObj);
                         }
                     }
                 });
 
             _guidZ++;
 
-        }); // end _proofStatementsA.forEach 
+        }); // end _proofStatementsA.forEach
 
     //clock ({ valueS: 'initAxiomsArrayF' })
 
@@ -542,17 +448,17 @@ function initAxiomsArrayF ({ proofStatementsA = [] }) {
 
 } // end initAxiomsArrayF
 
-function processAxioms({
+function processAxioms ({
     axiomsA,
     maskSizeZ,
     firstRewriteOnlyFlag = false,
     stackA = [],
     cb = null
 }) {
-    //clock({ valueS: "processAxioms" });
+    //clock ({ valueS: "processAxioms" });
 
-    axiomsA.forEach(axioms1C => {
-        AxiomsArray.forEach(axioms2C => {
+    axiomsA.forEach (axioms1C => {
+        AxiomsArray.forEach (axioms2C => {
             if (axioms1C.guidZ === axioms2C.guidZ) {
                 return; // Skip comparison if GUIDs are the same
             }
@@ -571,7 +477,7 @@ function processAxioms({
                 _resultObj._rhsExpand = axioms1C.rhsPrimaryKeyZ % axioms2C.rhsPrimaryKeyZ === 0n;
                 _resultObj._rhsReduce = axioms1C.rhsPrimaryKeyZ % axioms2C.lhsPrimaryKeyZ === 0n;
 
-                cb({
+                cb ({
                     axioms1C: axioms1C,
                     resultObj: { axioms2C, _resultObj },
                     stackA: stackA
@@ -582,8 +488,8 @@ function processAxioms({
         });
     });
 
-    //clock({ valueS: 'processAxioms' });
-    
+    //clock ({ valueS: 'processAxioms' });
+
 } // end processAxioms
 
 function rewriteSubnets ({
@@ -591,28 +497,38 @@ function rewriteSubnets ({
     , proofstack
 }) {
 
-    const axiom1C = AxiomsArrayH[proofStepC.guidZ];
+    if (updateProofFoundFlag ({ _proofStepC: proofStepC, _proofstack: proofstack }))
+        return;
+
+    const axiom1C = AxiomsArrayH [proofStepC.guidZ];
 
     //clock ({ valueS: "rewriteSubnets" });
 
-    rewriteSubnet_lhsExpand({ _proofStepC: proofStepC, _proofstack: proofstack, _subnetH: axiom1C._lhsExpandCallGraph });
-    rewriteSubnet_lhsReduce({ _proofStepC: proofStepC, _proofstack: proofstack, _subnetH: axiom1C._lhsReduceCallGraph });
-    rewriteSubnet_rhsExpand({ _proofStepC: proofStepC, _proofstack: proofstack, _subnetH: axiom1C._rhsExpandCallGraph });
-    rewriteSubnet_rhsReduce({ _proofStepC: proofStepC, _proofstack: proofstack, _subnetH: axiom1C._rhsReduceCallGraph });
+    rewriteSubnet_lhsExpand ({ _proofStepC: proofStepC, _proofstack: proofstack, _subnetH: axiom1C._lhsExpandCallGraph });
+    rewriteSubnet_lhsReduce ({ _proofStepC: proofStepC, _proofstack: proofstack, _subnetH: axiom1C._lhsReduceCallGraph });
+    rewriteSubnet_rhsExpand ({ _proofStepC: proofStepC, _proofstack: proofstack, _subnetH: axiom1C._rhsExpandCallGraph });
+    rewriteSubnet_rhsReduce ({ _proofStepC: proofStepC, _proofstack: proofstack, _subnetH: axiom1C._rhsReduceCallGraph });
 
     function rewriteSubnet_lhsExpand ({ _proofStepC, _proofstack, _subnetH }) {
         if (ProofFoundFlag)
             return;
 
+        const rhsFastForwardKeyS = `rhs:${_proofStepC.rhsPrimaryKeyZ}`;
+        !fastForwardQueue [rhsFastForwardKeyS]
+            && (fastForwardQueue [rhsFastForwardKeyS] = [..._proofstack]);
+
         for (let [indexZ, _] of _subnetH) {
-            const _axiom2C = AxiomsArrayH[indexZ];
+            const _axiom2C = AxiomsArrayH [indexZ];
             if (_proofStepC.lhsPrimaryKeyZ % _axiom2C.rhsPrimaryKeyZ === 0n) {
                 const newProofStepC = new CloneableObjectClass (_proofStepC);
                 newProofStepC.guidZ = _axiom2C.guidZ;
                 newProofStepC.rewriteOpcodeZ = rewriteOpcodesO._lhsExpand;
                 newProofStepC.lhsPrimaryKeyZ = newProofStepC.lhsPrimaryKeyZ / _axiom2C.rhsPrimaryKeyZ * _axiom2C.lhsPrimaryKeyZ;
                 const newProofStack = [..._proofstack, newProofStepC];
-                rewriteQueue.push(newProofStack);
+                const lhsFastForwardKeyS = `lhs:${newProofStepC.lhsPrimaryKeyZ}`;
+                !fastForwardQueue [lhsFastForwardKeyS]
+                    && (fastForwardQueue [lhsFastForwardKeyS] = [...newProofStack]);
+                rewriteQueue.push (newProofStack);
                 updateProofFoundFlag ({ _proofStepC: newProofStepC, _proofstack: newProofStack});
             }
         }
@@ -622,15 +538,23 @@ function rewriteSubnets ({
         if (ProofFoundFlag)
             return;
 
+        const rhsFastForwardKeyS = `rhs:${_proofStepC.rhsPrimaryKeyZ}`;
+        !fastForwardQueue [rhsFastForwardKeyS]
+            && (fastForwardQueue [rhsFastForwardKeyS] = [..._proofstack]);
+
         for (let [indexZ, _] of _subnetH) {
-            const _axiom2C = AxiomsArrayH[indexZ];
+            const _axiom2C = AxiomsArrayH [indexZ];
             if (_proofStepC.lhsPrimaryKeyZ % _axiom2C.lhsPrimaryKeyZ === 0n) {
                 const newProofStepC = new CloneableObjectClass (_proofStepC);
                 newProofStepC.guidZ = _axiom2C.guidZ;
+                newProofStepC.lhsReduceCallGraphMap.set (indexZ, true);
                 newProofStepC.rewriteOpcodeZ = rewriteOpcodesO._lhsReduce;
                 newProofStepC.lhsPrimaryKeyZ = newProofStepC.lhsPrimaryKeyZ / _axiom2C.lhsPrimaryKeyZ * _axiom2C.rhsPrimaryKeyZ;
                 const newProofStack = [..._proofstack, newProofStepC];
-                rewriteQueue.push([..._proofstack, newProofStepC]);
+                const lhsFastForwardKeyS = `lhs:${newProofStepC.lhsPrimaryKeyZ}`;
+                !fastForwardQueue [lhsFastForwardKeyS]
+                    && (fastForwardQueue [lhsFastForwardKeyS] = [...newProofStack]);
+                rewriteQueue.push ([..._proofstack, newProofStepC]);
                 updateProofFoundFlag ({ _proofStepC: newProofStepC, _proofstack: newProofStack});
             }
         }
@@ -640,15 +564,22 @@ function rewriteSubnets ({
         if (ProofFoundFlag)
             return;
 
+        const lhsFastForwardKeyS = `lhs:${_proofStepC.lhsPrimaryKeyZ}`;
+        !fastForwardQueue [lhsFastForwardKeyS]
+            && (fastForwardQueue [lhsFastForwardKeyS] = [..._proofstack]);
+
         for (let [indexZ, _] of _subnetH) {
-            const _axiom2C = AxiomsArrayH[indexZ];
+            const _axiom2C = AxiomsArrayH [indexZ];
             if (_proofStepC.rhsPrimaryKeyZ % _axiom2C.rhsPrimaryKeyZ === 0n) {
                 const newProofStepC = new CloneableObjectClass (_proofStepC);
                 newProofStepC.guidZ = _axiom2C.guidZ;
                 newProofStepC.rewriteOpcodeZ = rewriteOpcodesO._rhsExpand;
                 newProofStepC.rhsPrimaryKeyZ = newProofStepC.rhsPrimaryKeyZ / _axiom2C.rhsPrimaryKeyZ * _axiom2C.lhsPrimaryKeyZ;
                 const newProofStack = [..._proofstack, newProofStepC];
-                rewriteQueue.push([..._proofstack, newProofStepC]);
+                const rhsFastForwardKeyS = `rhs:${newProofStepC.rhsPrimaryKeyZ}`;
+                !fastForwardQueue [rhsFastForwardKeyS]
+                    && (fastForwardQueue [rhsFastForwardKeyS] = [...newProofStack]);
+                rewriteQueue.push ([..._proofstack, newProofStepC]);
                 updateProofFoundFlag ({ _proofStepC: newProofStepC, _proofstack: newProofStack});
             }
         }
@@ -658,40 +589,89 @@ function rewriteSubnets ({
         if (ProofFoundFlag)
             return;
 
+        const lhsFastForwardKeyS = `lhs:${_proofStepC.lhsPrimaryKeyZ}`;
+        !fastForwardQueue [lhsFastForwardKeyS]
+            && (fastForwardQueue [lhsFastForwardKeyS] = [..._proofstack]);
+
         for (let [indexZ, _] of _subnetH) {
-            const _axiom2C = AxiomsArrayH[indexZ];
+            const _axiom2C = AxiomsArrayH [indexZ];
             if (_proofStepC.rhsPrimaryKeyZ % _axiom2C.lhsPrimaryKeyZ === 0n) {
                 const newProofStepC = new CloneableObjectClass (_proofStepC);
                 newProofStepC.guidZ = _axiom2C.guidZ;
                 newProofStepC.rewriteOpcodeZ = rewriteOpcodesO._rhsReduce;
                 newProofStepC.rhsPrimaryKeyZ = newProofStepC.rhsPrimaryKeyZ / _axiom2C.lhsPrimaryKeyZ * _axiom2C.rhsPrimaryKeyZ;
                 const newProofStack = [..._proofstack, newProofStepC];
-                rewriteQueue.push([..._proofstack, newProofStepC]);
+                const rhsFastForwardKeyS = `rhs:${newProofStepC.rhsPrimaryKeyZ}`;
+                !fastForwardQueue [rhsFastForwardKeyS]
+                    && (fastForwardQueue [rhsFastForwardKeyS] = [...newProofStack]);
+                rewriteQueue.push ([..._proofstack, newProofStepC]);
                 updateProofFoundFlag ({ _proofStepC: newProofStepC, _proofstack: newProofStack});
             }
         }
     }
 
-    function updateProofFoundFlag({ _proofStepC, _proofstack }) {
+    function updateProofFoundFlag ({ _proofStepC, _proofstack }) {
         if (ProofFoundFlag)
-            return;
+            return ProofFoundFlag;
 
         ProofFoundFlag = (_proofStepC.lhsPrimaryKeyZ == _proofStepC.rhsPrimaryKeyZ);
 
-        if (ProofFoundFlag)
+        if (ProofFoundFlag){
             QED = _proofstack;
+            return ProofFoundFlag;
+        }
 
-    }
+        const lhsMatchingFastForwardKeyS = `rhs:${ _proofStepC.lhsPrimaryKeyZ }`;
+        if (fastForwardQueue [lhsMatchingFastForwardKeyS]){
+            QED = _proofstack;
+            const staticProofStepC = new CloneableObjectClass ( lastElementOf ({ valueA: QED }) );
+            fastForwardQueue [lhsMatchingFastForwardKeyS]
+                .forEach ((proofStepObj, indexZ, thisArray) => {
+                    if (indexZ > 0){
+                        const clonedProofstep = new CloneableObjectClass (proofStepObj);
+                        clonedProofstep.lhsPrimaryKeyZ = staticProofStepC.lhsPrimaryKeyZ;
+                        clonedProofstep.fastForwardFlag = '(rhs fast-forward)';
+                        QED.push (clonedProofstep);
+                    }
+                });
+
+            ProofFoundFlag = true;
+
+            return ProofFoundFlag;
+        }
+
+        const rhsMatchingFastForwardKeyS = `lhs:${ _proofStepC.rhsPrimaryKeyZ }`;
+        if (fastForwardQueue [rhsMatchingFastForwardKeyS]){
+            QED = _proofstack;
+            const staticProofStepC = new CloneableObjectClass ( lastElementOf ({ valueA: QED }) );
+            fastForwardQueue [rhsMatchingFastForwardKeyS]
+                .forEach ((proofStepObj, indexZ, thisArray) => {
+                    if (indexZ > 0){
+                        const clonedProofstep = new CloneableObjectClass (proofStepObj);
+                        clonedProofstep.rhsPrimaryKeyZ = staticProofStepC.rhsPrimaryKeyZ;
+                        clonedProofstep.fastForwardFlag = '(lhs fast-forward)';
+                        QED.push (clonedProofstep);
+                    }
+                });
+
+            ProofFoundFlag = true;
+
+            return ProofFoundFlag;
+        }
+
+        return false
+
+    } // end updateProofFoundFlag
 
 } // end rewriteSubnets
 
 function rewriteProofstepF ({
-    axioms1C    
+    axioms1C
     , resultObj: { axioms2C, _resultObj } = {}
     , stackA
 }) {
 
-    if (_resultObj == null) 
+    if (_resultObj == null)
         return false;
 
     if (axioms1C.lhsPrimaryKeyZ == axioms1C.rhsPrimaryKeyZ) {
@@ -700,7 +680,7 @@ function rewriteProofstepF ({
         return true;
     }
 
-    const result = checkProofStep(axioms1C, proofstackA);
+    const result = checkProofStep (axioms1C, proofstackA);
 
     if (result.ProofFoundFlag) {
         QED = result.QED;
@@ -769,41 +749,41 @@ function rewriteProofstepF ({
 
 } // end rewriteProofstepF
 
-function checkProofStep(proofStepC, proofstackA) {
-    const lhsFastKey = createFastKey('lhs', proofStepC.lhsPrimaryKeyZ);
-    const rhsFastKey = createFastKey('rhs', proofStepC.rhsPrimaryKeyZ);
+function checkProofStep (proofStepC, proofstackA) {
+    const lhsFastKey = createFastKey ('lhs', proofStepC.lhsPrimaryKeyZ);
+    const rhsFastKey = createFastKey ('rhs', proofStepC.rhsPrimaryKeyZ);
 
-    updateFastForwardQueue(lhsFastKey);
-    updateFastForwardQueue(rhsFastKey);
+    updateFastForwardQueue (lhsFastKey);
+    updateFastForwardQueue (rhsFastKey);
 
-    const lhsFastKeySearch = createFastKey('rhs', proofStepC.lhsPrimaryKeyZ);
-    const rhsFastKeySearch = createFastKey('lhs', proofStepC.rhsPrimaryKeyZ);
+    const lhsFastKeySearch = createFastKey ('rhs', proofStepC.lhsPrimaryKeyZ);
+    const rhsFastKeySearch = createFastKey ('lhs', proofStepC.rhsPrimaryKeyZ);
 
-    const lhsResult = queryFastForwardQueue('lhs', lhsFastKeySearch, proofStepC.lhsPrimaryKeyZ, null);
-    if (lhsResult) 
+    const lhsResult = queryFastForwardQueue ('lhs', lhsFastKeySearch, proofStepC.lhsPrimaryKeyZ, null);
+    if (lhsResult)
         return lhsResult;
 
-    const rhsResult = queryFastForwardQueue('rhs', rhsFastKeySearch, null, proofStepC.rhsPrimaryKeyZ);
-    if (rhsResult) 
+    const rhsResult = queryFastForwardQueue ('rhs', rhsFastKeySearch, null, proofStepC.rhsPrimaryKeyZ);
+    if (rhsResult)
         return rhsResult;
 
     return { QED: null, ProofFoundFlag: false };
 
     // Local function declarations
 
-    function createFastKey(prefix, value) {
+    function createFastKey (prefix, value) {
         return `${prefix}:${value}`;
     }
 
-    function updateFastForwardQueue(key) {
-        if (!fastForwardQueue[key]) {
-            fastForwardQueue[key] = [...proofstackA];
+    function updateFastForwardQueue (key) {
+        if (!fastForwardQueue [key]) {
+            fastForwardQueue [key] = [...proofstackA];
         }
     }
 
-    function createProofStep(indirS, lhs, rhs, valueObj) {
-        const proofStep = new ProofStepObjectClass();
-        const lhsFlag = /^lhs/.test(indirS);
+    function createProofStep (indirS, lhs, rhs, valueObj) {
+        const proofStep = new ProofStepObjectClass ();
+        const lhsFlag = /^lhs/.test (indirS);
         proofStep.guidZ = valueObj.guidZ;
         proofStep.lhsPrimaryKeyZ = lhsFlag ? lhs : valueObj.lhsPrimaryKeyZ;
         proofStep.rhsPrimaryKeyZ = lhsFlag ? valueObj.rhsPrimaryKeyZ : rhs;
@@ -811,11 +791,11 @@ function checkProofStep(proofStepC, proofstackA) {
         return proofStep;
     }
 
-    function queryFastForwardQueue(indirS, searchKey, lhs, rhs) {
-        if (fastForwardQueue[searchKey]) {
+    function queryFastForwardQueue (indirS, searchKey, lhs, rhs) {
+        if (fastForwardQueue [searchKey]) {
             const _QED = [...proofstackA];
-            fastForwardQueue[searchKey].forEach((value, indexZ, thisArray) => {
-                _QED.push(createProofStep(indirS, lhs, rhs, value));
+            fastForwardQueue [searchKey].forEach ((value, indexZ, thisArray) => {
+                _QED.push (createProofStep (indirS, lhs, rhs, value));
             });
             return { QED: _QED, ProofFoundFlag: true };
         }
@@ -843,7 +823,7 @@ function clock ({ valueS }) {
 function initCallGraphs ({
     axioms1C
     , resultObj
-    , stackA 
+    , stackA
 }) {
 
     if (isNotEmpty ({ targ: resultObj })) {
@@ -858,19 +838,19 @@ function initCallGraphs ({
         .forEach ((valueA, indexZ, thisArrayA) => {
             if (valueA == false)
                 return;
-            
+
             switch (indexZ) {
                 case 0: axioms1C._lhsExpandCallGraph.set (axioms2C.guidZ, true); break;
                 case 1: axioms1C._lhsReduceCallGraph.set (axioms2C.guidZ, true); break;
                 case 2: axioms1C._rhsExpandCallGraph.set (axioms2C.guidZ, true); break;
                 case 3: axioms1C._rhsReduceCallGraph.set (axioms2C.guidZ, true); break;
             }
-            
+
         });
     }
 } // end initCallGraphs
 
-function convertBitstream2tokens ({ proofStepZ, maskSizeZ }) {    
+function convertBitstream2tokens ({ proofStepZ, maskSizeZ }) {
 
     //clock ({ valueS: "bitstream2tokens" });
 
@@ -905,8 +885,8 @@ function replaceBitfieldsInProofStepBigEndian ({
     , maskSizeZ
     , fromZ
     , toZ
-    , firstRewriteOnlyFlag = false 
-}) {    
+    , firstRewriteOnlyFlag = false
+}) {
 
     //clock ({ valueS: "replaceBitfieldsInProofStepBigEndian" });
 
@@ -922,8 +902,8 @@ function replaceBitfieldsInProofStepBigEndian ({
 
     const _fastForwardKey = `${proofStepZ}:${fromZ}:${toZ}`;
 
-    if (fastForwardQueue[_fastForwardKey]) {
-        ret = fastForwardQueue[_fastForwardKey];
+    if (fastForwardQueue [_fastForwardKey]) {
+        ret = fastForwardQueue [_fastForwardKey];
 
         return ret;
     }
@@ -932,7 +912,7 @@ function replaceBitfieldsInProofStepBigEndian ({
     let fullRewriteFoundFlag = false;
     const chunkMask = (1n << maskSizeZ) - 1n;
     const toResolutionZ = resolutionOf ({ valueZ: toZ });
-    
+
     const nonMatchSubnetLengthsFlag = (fromResolutionZ !== proofStepResolutionZ);
 
     let bitsRemainingZ = proofStepResolutionZ;
@@ -1000,7 +980,7 @@ function replaceBitfieldsInProofStepBigEndian ({
 
     //clock ({ valueS: 'replaceBitfieldsInProofStepBigEndian'});
 
-    fastForwardQueue[_fastForwardKey] = [...ret];
+    fastForwardQueue [_fastForwardKey] = [...ret];
 
     // No full rewrites found
     if (!fullRewriteFoundFlag)
@@ -1024,8 +1004,8 @@ function lastElementOf ({ valueA }) {
     let ret;
     const ii = valueA.length - 1;
 
-    if (valueA[ii]) {
-        ret = valueA[ii];
+    if (valueA [ii]) {
+        ret = valueA [ii];
     }
 
     return ret;
@@ -1060,12 +1040,12 @@ function initAxiomCallGraphs ({
     for (let i = 0; i < II; ++i){
         const ii = (i < I ? i : I - i%I - 2) ;
         processAxioms ({
-            axiomsA: [AxiomsArray[ii]]
+            axiomsA: [AxiomsArray [ii]]
             , maskSizeZ: maskSizeZ
             , firstRewriteOnlyFlag: true
             , stackA: stackA
             , cb: cb });
-    }  
+    }
 
     //clock ({ valueS: 'initAxiomCallGraphs'});
 
@@ -1085,7 +1065,7 @@ function isPrime (num) {
 function nextPrime () {
     var num = LASTPRIME;
     while (true) {
-      if (isPrime(num)) {
+      if (isPrime (num)) {
         LASTPRIME = num + 2n;
         return num;
       }
@@ -1120,8 +1100,8 @@ try {
         lineNumbers.scrollTop = this.scrollTop;
     });
 
-    viewArea.value = viewArea.value.length > 0 
-        ? viewArea.value 
+    viewArea.value = viewArea.value.length > 0
+        ? viewArea.value
         : '// Axioms and Lemmas\n1 + 1 = 2\n2 + 2 = 4\n// Theorem to prove\n1 + 2 + 1 = 4';
 
     codeArea.value = '';
