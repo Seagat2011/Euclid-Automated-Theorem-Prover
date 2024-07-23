@@ -254,6 +254,7 @@ async function main (proofStatementsA) {
                 const { _axiom1C = axiom1C, proofArray: stepProofArray = [] } 
                     = processProofStep (axiom1C, axiom2C, maskSizeZ, fastForwardFlag);
 
+                axiom1C = _axiom1C;
                 proofArray.push (...stepProofArray);
             } else {
                 // Handle the root case
