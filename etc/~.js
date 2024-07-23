@@ -1,4 +1,23 @@
 
+case 5n: // lhs f/f
+if(_axiom1C.guidZ > 0) {
+    lhsStringArray = convertBitstream2tokens({ proofStepZ: _axiom1C.rhsZ, maskSizeZ });
+    rhsStringArray = convertBitstream2tokens({ proofStepZ: _axiom1C.lhsZ, maskSizeZ });
+    phraseString.push (`(${rewriteOpcodeZtoString[rewriteOpcodeZ]}) via axiom_${_guidZ}`);
+    rewriteResultZArray = [_axiom1C.rhsZ]; 
+    //proofArray.push(`${lhsStringArray.join(' ')} = ${rhsStringArray.join(' ')}, ${phraseString[0]}`);  
+}
+break;
+case 6n: // rhs f/f
+if(_axiom1C.guidZ > 0) {
+    lhsStringArray = convertBitstream2tokens({ proofStepZ: _axiom1C.rhsZ, maskSizeZ });
+    rhsStringArray = convertBitstream2tokens({ proofStepZ: _axiom1C.lhsZ, maskSizeZ });
+    phraseString.push (`(${rewriteOpcodeZtoString[rewriteOpcodeZ]}) via axiom_${_guidZ}`);
+    rewriteResultZArray = [_axiom1C.lhsZ]; 
+    //proofArray.push(`${lhsStringArray.join(' ')} = ${rhsStringArray.join(' ')}, ${phraseString[0]}`);
+}
+break;
+
 /* 
                     const lhsReduceFastForwardKey = `rhs:${_axiom1C.lhsPrimaryKeyZ}`;
 
