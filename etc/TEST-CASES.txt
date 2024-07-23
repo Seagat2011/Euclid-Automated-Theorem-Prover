@@ -37,6 +37,22 @@ TEST CASE (Via Reduce) [PASS]
 // Prove
 1 + 1 + 2 = 3 + 1
 
+
+TEST CASE [PASS]
+
+// Axioms and Lemmas
+1 + 1 = 2
+2 + 2 = 4
+4 + 4 = 8
+1 + 8 = 9
+8 + 8 = 16
+1 + 16 = 17
+9 + 9 = 18
+
+// Prove
+1 + 1 + 1 + 1 + 1 + 1 + 1 + 1 + 1 + 1 + 1 + 1 + 1 + 1 + 1 + 1 + 1 + 1 = 18
+
+
 TEST CASE [PASS]
 
 // Axioms and Lemmas
