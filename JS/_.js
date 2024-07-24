@@ -67,6 +67,7 @@ const rewriteOpcodeZtoString = {
 };
 let tokenLibraryMap = new Map ();
 let tokenLibraryInverseMap = new Map ();
+let inverseCallGraph = new Map ();
 let lhsExpandProofFoundFlag;
 let lhsReduceProofFoundFlag;
 let rhsExpandProofFoundFlag;
@@ -106,11 +107,11 @@ class ProofStepObjectClass extends Object {
 
         this.guidZ = null;
         this.lhsZ = null;
-        this.rhsZ = null;
+        this.rhsZ = null;/* 
         this.lhsExpandCallGraphMap = new Map ();
         this.lhsReduceCallGraphMap = new Map ();
         this.rhsExpandCallGraphMap = new Map ();
-        this.rhsReduceCallGraphMap = new Map ();
+        this.rhsReduceCallGraphMap = new Map (); */
         this.rewriteOpcodeZ = 0n;
         this.lhsPrimaryKeyZ = 1n;
         this.rhsPrimaryKeyZ = 1n;
@@ -237,7 +238,7 @@ async function main (proofStatementsA) {
         let axiom1C = new ProofStepObjectClass ();
         const proofArray = [];
 
-        QED.forEach (({
+        QED.forEach (({ 
             guidZ
             , lhsPrimaryKeyZ
             , rhsPrimaryKeyZ
@@ -251,9 +252,10 @@ async function main (proofStatementsA) {
                 // Handle other cases
                 Object.assign (axiom1C, { guidZ, lhsPrimaryKeyZ, rhsPrimaryKeyZ, rewriteOpcodeZ });
                 const axiom2C = AxiomsArrayH [guidZ];
-                const { _axiom1C = axiom1C, proofArray: stepProofArray = [] }
+                const { _axiom1C = axiom1C, proofArray: stepProofArray = [] } 
                     = processProofStep (axiom1C, axiom2C, maskSizeZ, fastForwardFlag);
 
+                axiom1C = _axiom1C;
                 proofArray.push (...stepProofArray);
             } else {
                 // Handle the root case
@@ -261,7 +263,7 @@ async function main (proofStatementsA) {
                 const lhsStringArray = convertBitstream2tokens ({ proofStepZ: lhsZ, maskSizeZ });
                 const rhsStringArray = convertBitstream2tokens ({ proofStepZ: rhsZ, maskSizeZ });
                 proofArray.push (`${lhsStringArray.join (' ')} = ${rhsStringArray.join (' ')}, (root)`);
-            }
+            } 
         });
 
         resultArray.push (proofArray.join ('\n'), QED_Flag);
@@ -341,6 +343,7 @@ function resetProof () {
     rewriteQueue = [];
     fastForwardQueue = {};
     ProofFoundFlag = false;
+    inverseCallGraph = new Map ();
     tokenLibraryMap = new Map ();
     tokenLibraryInverseMap = new Map ();
     sessionRuntimeClockFlag = false; // debug only
@@ -517,19 +520,37 @@ function rewriteSubnets ({
         for (let [indexZ, _] of _subnetH) {
             const _axiom2C = AxiomsArrayH [indexZ];
             if (_proofStepC.lhsPrimaryKeyZ % _axiom2C.rhsPrimaryKeyZ === 0n) {
-                const newProofStepC = new CloneableObjectClass (_proofStepC);
-                newProofStepC.guidZ = _axiom2C.guidZ;
-                newProofStepC.rewriteOpcodeZ = rewriteOpcodesO._lhsExpand;
-                newProofStepC.lhsPrimaryKeyZ = newProofStepC.lhsPrimaryKeyZ / _axiom2C.rhsPrimaryKeyZ * _axiom2C.lhsPrimaryKeyZ;
-                const newProofStack = [..._proofstack, newProofStepC];
-                const lhsFastForwardKeyS = `lhs:${newProofStepC.lhsPrimaryKeyZ}`;
-                !fastForwardQueue [lhsFastForwardKeyS]
-                    && (fastForwardQueue [lhsFastForwardKeyS] = [...newProofStack]);
-                rewriteQueue.push (newProofStack);
-                updateProofFoundFlag ({ _proofStepC: newProofStepC, _proofstack: newProofStack});
-            }
-        }
-    }
+                let _allSubnetArray = [indexZ];
+
+                if (inverseCallGraph.has (_axiom2C.guidZ)){
+                    for (let [ localSubnetZ, _] of inverseCallGraph.get (_axiom2C.guidZ)) {
+                        _allSubnetArray.push (localSubnetZ);
+                    }
+                }
+
+                const newPrimaryKeyZ 
+                    = _proofStepC.lhsPrimaryKeyZ 
+                        / _axiom2C.rhsPrimaryKeyZ 
+                            * _axiom2C.lhsPrimaryKeyZ;
+
+                const lhsFastForwardKeyS = `lhs:${_proofStepC.lhsPrimaryKeyZ}`;
+
+                _allSubnetArray
+                    .forEach ((currentSubnetGuidZ, indexZ, thisArray) => {
+                        const newProofStepC = new CloneableObjectClass (_proofStepC);
+                        newProofStepC.guidZ = currentSubnetGuidZ;
+                        newProofStepC.rewriteOpcodeZ = rewriteOpcodesO._lhsExpand;
+                        newProofStepC.lhsPrimaryKeyZ = newPrimaryKeyZ;
+                        const newProofStack = [..._proofstack, newProofStepC];
+                        !fastForwardQueue [lhsFastForwardKeyS]
+                            && (fastForwardQueue [lhsFastForwardKeyS] = [...newProofStack]);
+                        rewriteQueue.push (newProofStack);
+                        updateProofFoundFlag ({ _proofStepC: newProofStepC, _proofstack: newProofStack});
+                    });
+
+            } // end if (_proofStepC.lhsPrimaryKeyZ % _axiom2C.rhsPrimaryKeyZ === 0n)
+        } // end for (let [indexZ, _] of _subnetH)
+    } // end rewriteSubnet_lhsExpand
 
     function rewriteSubnet_lhsReduce ({ _proofStepC, _proofstack, _subnetH }) {
         if (ProofFoundFlag)
@@ -542,20 +563,37 @@ function rewriteSubnets ({
         for (let [indexZ, _] of _subnetH) {
             const _axiom2C = AxiomsArrayH [indexZ];
             if (_proofStepC.lhsPrimaryKeyZ % _axiom2C.lhsPrimaryKeyZ === 0n) {
-                const newProofStepC = new CloneableObjectClass (_proofStepC);
-                newProofStepC.guidZ = _axiom2C.guidZ;
-                newProofStepC.lhsReduceCallGraphMap.set (indexZ, true);
-                newProofStepC.rewriteOpcodeZ = rewriteOpcodesO._lhsReduce;
-                newProofStepC.lhsPrimaryKeyZ = newProofStepC.lhsPrimaryKeyZ / _axiom2C.lhsPrimaryKeyZ * _axiom2C.rhsPrimaryKeyZ;
-                const newProofStack = [..._proofstack, newProofStepC];
-                const lhsFastForwardKeyS = `lhs:${newProofStepC.lhsPrimaryKeyZ}`;
-                !fastForwardQueue [lhsFastForwardKeyS]
-                    && (fastForwardQueue [lhsFastForwardKeyS] = [...newProofStack]);
-                rewriteQueue.push ([..._proofstack, newProofStepC]);
-                updateProofFoundFlag ({ _proofStepC: newProofStepC, _proofstack: newProofStack});
-            }
-        }
-    }
+                let _allSubnetArray = [indexZ];
+
+                if (inverseCallGraph.has (_axiom2C.guidZ)){
+                    for (let [ localSubnetZ, _] of inverseCallGraph.get (_axiom2C.guidZ)) {
+                        _allSubnetArray.push (localSubnetZ);
+                    }
+                }
+
+                const newPrimaryKeyZ 
+                    = _proofStepC.lhsPrimaryKeyZ 
+                        / _axiom2C.lhsPrimaryKeyZ 
+                            * _axiom2C.rhsPrimaryKeyZ;
+                        
+                const lhsFastForwardKeyS = `lhs:${_proofStepC.lhsPrimaryKeyZ}`;
+
+                _allSubnetArray
+                    .forEach ((currentSubnetGuidZ, indexZ, thisArray) => {
+                        const newProofStepC = new CloneableObjectClass (_proofStepC);
+                        newProofStepC.guidZ = currentSubnetGuidZ;
+                        newProofStepC.rewriteOpcodeZ = rewriteOpcodesO._lhsReduce;
+                        newProofStepC.lhsPrimaryKeyZ = newPrimaryKeyZ;
+                        const newProofStack = [..._proofstack, newProofStepC];
+                        const lhsFastForwardKeyS = `lhs:${newProofStepC.lhsPrimaryKeyZ}`;
+                        !fastForwardQueue [lhsFastForwardKeyS]
+                            && (fastForwardQueue [lhsFastForwardKeyS] = [...newProofStack]);
+                        rewriteQueue.push ([..._proofstack, newProofStepC]);
+                        updateProofFoundFlag ({ _proofStepC: newProofStepC, _proofstack: newProofStack});
+                    });
+            } // end if (_proofStepC.lhsPrimaryKeyZ % _axiom2C.lhsPrimaryKeyZ === 0n)
+        } // end for (let [indexZ, _] of _subnetH)
+    } // end rewriteSubnet_lhsReduce
 
     function rewriteSubnet_rhsExpand ({ _proofStepC, _proofstack, _subnetH }) {
         if (ProofFoundFlag)
@@ -568,19 +606,37 @@ function rewriteSubnets ({
         for (let [indexZ, _] of _subnetH) {
             const _axiom2C = AxiomsArrayH [indexZ];
             if (_proofStepC.rhsPrimaryKeyZ % _axiom2C.rhsPrimaryKeyZ === 0n) {
-                const newProofStepC = new CloneableObjectClass (_proofStepC);
-                newProofStepC.guidZ = _axiom2C.guidZ;
-                newProofStepC.rewriteOpcodeZ = rewriteOpcodesO._rhsExpand;
-                newProofStepC.rhsPrimaryKeyZ = newProofStepC.rhsPrimaryKeyZ / _axiom2C.rhsPrimaryKeyZ * _axiom2C.lhsPrimaryKeyZ;
-                const newProofStack = [..._proofstack, newProofStepC];
-                const rhsFastForwardKeyS = `rhs:${newProofStepC.rhsPrimaryKeyZ}`;
-                !fastForwardQueue [rhsFastForwardKeyS]
-                    && (fastForwardQueue [rhsFastForwardKeyS] = [...newProofStack]);
-                rewriteQueue.push ([..._proofstack, newProofStepC]);
-                updateProofFoundFlag ({ _proofStepC: newProofStepC, _proofstack: newProofStack});
-            }
-        }
-    }
+                let _allSubnetArray = [indexZ];
+
+                if (inverseCallGraph.has (_axiom2C.guidZ)){
+                    for (let [ localSubnetZ, _] of inverseCallGraph.get (_axiom2C.guidZ)) {
+                        _allSubnetArray.push (localSubnetZ);
+                    }
+                }
+
+                const newPrimaryKeyZ 
+                    = _proofStepC.rhsPrimaryKeyZ 
+                        / _axiom2C.rhsPrimaryKeyZ 
+                            * _axiom2C.lhsPrimaryKeyZ;
+                        
+                const rhsFastForwardKeyS = `rhs:${_proofStepC.rhsPrimaryKeyZ}`;
+
+                _allSubnetArray
+                    .forEach ((currentSubnetGuidZ, indexZ, thisArray) => {
+                        const newProofStepC = new CloneableObjectClass (_proofStepC);
+                        newProofStepC.guidZ = currentSubnetGuidZ;
+                        newProofStepC.rewriteOpcodeZ = rewriteOpcodesO._rhsExpand;
+                        newProofStepC.rhsPrimaryKeyZ = newPrimaryKeyZ;
+                        const newProofStack = [..._proofstack, newProofStepC];
+                        const rhsFastForwardKeyS = `rhs:${newProofStepC.rhsPrimaryKeyZ}`;
+                        !fastForwardQueue [rhsFastForwardKeyS]
+                            && (fastForwardQueue [rhsFastForwardKeyS] = [...newProofStack]);
+                        rewriteQueue.push ([..._proofstack, newProofStepC]);
+                        updateProofFoundFlag ({ _proofStepC: newProofStepC, _proofstack: newProofStack});
+                    });
+            } // end if (_proofStepC.rhsPrimaryKeyZ % _axiom2C.rhsPrimaryKeyZ === 0n)
+        } // end for (let [indexZ, _] of _subnetH)
+    } // rewriteSubnet_rhsExpand
 
     function rewriteSubnet_rhsReduce ({ _proofStepC, _proofstack, _subnetH }) {
         if (ProofFoundFlag)
@@ -593,19 +649,37 @@ function rewriteSubnets ({
         for (let [indexZ, _] of _subnetH) {
             const _axiom2C = AxiomsArrayH [indexZ];
             if (_proofStepC.rhsPrimaryKeyZ % _axiom2C.lhsPrimaryKeyZ === 0n) {
-                const newProofStepC = new CloneableObjectClass (_proofStepC);
-                newProofStepC.guidZ = _axiom2C.guidZ;
-                newProofStepC.rewriteOpcodeZ = rewriteOpcodesO._rhsReduce;
-                newProofStepC.rhsPrimaryKeyZ = newProofStepC.rhsPrimaryKeyZ / _axiom2C.lhsPrimaryKeyZ * _axiom2C.rhsPrimaryKeyZ;
-                const newProofStack = [..._proofstack, newProofStepC];
-                const rhsFastForwardKeyS = `rhs:${newProofStepC.rhsPrimaryKeyZ}`;
-                !fastForwardQueue [rhsFastForwardKeyS]
-                    && (fastForwardQueue [rhsFastForwardKeyS] = [...newProofStack]);
-                rewriteQueue.push ([..._proofstack, newProofStepC]);
-                updateProofFoundFlag ({ _proofStepC: newProofStepC, _proofstack: newProofStack});
-            }
-        }
-    }
+                let _allSubnetArray = [indexZ];
+
+                if (inverseCallGraph.has (_axiom2C.guidZ)){
+                    for (let [ localSubnetZ, _] of inverseCallGraph.get (_axiom2C.guidZ)) {
+                        localSubnetZ > 0n && _allSubnetArray.push (localSubnetZ);
+                    }
+                }
+
+                const newPrimaryKeyZ 
+                    = _proofStepC.rhsPrimaryKeyZ 
+                        / _axiom2C.lhsPrimaryKeyZ 
+                            * _axiom2C.rhsPrimaryKeyZ;
+                        
+                const rhsFastForwardKeyS = `rhs:${_proofStepC.rhsPrimaryKeyZ}`;
+
+                _allSubnetArray
+                    .forEach ((currentSubnetGuidZ, indexZ, thisArray) => {
+                        const newProofStepC = new CloneableObjectClass (_proofStepC);
+                        newProofStepC.guidZ = currentSubnetGuidZ;
+                        newProofStepC.rewriteOpcodeZ = rewriteOpcodesO._rhsReduce;
+                        newProofStepC.rhsPrimaryKeyZ = newPrimaryKeyZ;
+                        const newProofStack = [..._proofstack, newProofStepC];
+                        const rhsFastForwardKeyS = `rhs:${newProofStepC.rhsPrimaryKeyZ}`;
+                        !fastForwardQueue [rhsFastForwardKeyS]
+                            && (fastForwardQueue [rhsFastForwardKeyS] = [...newProofStack]);
+                        rewriteQueue.push ([..._proofstack, newProofStepC]);
+                        updateProofFoundFlag ({ _proofStepC: newProofStepC, _proofstack: newProofStack});
+                    });
+            } // end if (_proofStepC.rhsPrimaryKeyZ % _axiom2C.lhsPrimaryKeyZ === 0n)
+        } // end for (let [indexZ, _] of _subnetH)
+    } // end rewriteSubnet_rhsReduce
 
     function updateProofFoundFlag ({ _proofStepC, _proofstack }) {
         if (ProofFoundFlag)
@@ -837,12 +911,31 @@ function initCallGraphs ({
                 return;
 
             switch (indexZ) {
-                case 0: axioms1C._lhsExpandCallGraph.set (axioms2C.guidZ, true); break;
-                case 1: axioms1C._lhsReduceCallGraph.set (axioms2C.guidZ, true); break;
-                case 2: axioms1C._rhsExpandCallGraph.set (axioms2C.guidZ, true); break;
-                case 3: axioms1C._rhsReduceCallGraph.set (axioms2C.guidZ, true); break;
-            }
+                case 0: 
+                axioms1C._lhsExpandCallGraph.set (axioms2C.guidZ, true);
+                break;
 
+                case 1: 
+                axioms1C._lhsReduceCallGraph.set (axioms2C.guidZ, true);
+                break;
+
+                case 2: 
+                axioms1C._rhsExpandCallGraph.set (axioms2C.guidZ, true);
+                break;
+
+                case 3: 
+                axioms1C._rhsReduceCallGraph.set (axioms2C.guidZ, true);
+                break;
+            }
+            
+            if (axioms1C.guidZ != 0n){
+                if (!inverseCallGraph.has (axioms2C.guidZ))
+                    inverseCallGraph.set (axioms2C.guidZ, new Map ());
+
+                inverseCallGraph
+                    .get (axioms2C.guidZ)
+                        .set (axioms1C.guidZ, true);
+            }
         });
     }
 } // end initCallGraphs
