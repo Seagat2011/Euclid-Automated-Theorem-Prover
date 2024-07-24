@@ -1,5 +1,144 @@
 
 
+function rewriteProofstepF ({
+    axioms1C
+    , resultObj: { axioms2C, _resultObj } = {}
+    , stackA
+}) {
+
+    if (_resultObj == null)
+        return false;
+
+    if (axioms1C.lhsPrimaryKeyZ == axioms1C.rhsPrimaryKeyZ) {
+        QED = stackA;
+        ProofFoundFlag = true;
+        return true;
+    }
+
+    const result = checkProofStep (axioms1C, proofstackA);
+
+    if (result.ProofFoundFlag) {
+        QED = result.QED;
+        ProofFoundFlag = true;
+        return true;
+    }
+
+    const resultsA = [
+        { values: _resultObj._lhsExpand }
+        , { values: _resultObj._lhsReduce }
+        , { values: _resultObj._rhsExpand }
+        , { values: _resultObj._rhsReduce }
+    ].map (({ values }, indexZ, thisArrayA) => {
+        if (!values?.length) return false;
+
+        let currentProofChain = [...stackA];
+
+        for (let valueZ of values) {
+            let proofStep = new ProofStepObjectClass ();
+
+            proofStep.guidZ = axioms2C.guidZ;
+
+            switch (indexZ) {
+                case 0:
+                proofStep.lhsPrimaryKeyZ = valueZ;
+                proofStep.rhsPrimaryKeyZ = axioms1C.rhsPrimaryKeyZ;
+                proofStep.rewriteOpcodeZ = rewriteOpcodesO._lhsExpand;
+                break;
+
+                case 1:
+                proofStep.lhsPrimaryKeyZ = valueZ;
+                proofStep.rhsPrimaryKeyZ = axioms1C.rhsPrimaryKeyZ;
+                proofStep.rewriteOpcodeZ = rewriteOpcodesO._lhsReduce;
+                break;
+
+                case 2:
+                proofStep.lhsPrimaryKeyZ = axioms1C.lhsPrimaryKeyZ;
+                proofStep.rhsPrimaryKeyZ = valueZ;
+                proofStep.rewriteOpcodeZ = rewriteOpcodesO._rhsExpand;
+                break;
+
+                case 3:
+                proofStep.lhsPrimaryKeyZ = axioms1C.lhsPrimaryKeyZ;
+                proofStep.rhsPrimaryKeyZ = valueZ;
+                proofStep.rewriteOpcodeZ = rewriteOpcodesO._rhsReduce;
+                break;
+            }
+
+            const proofFound = (proofStep.lhsPrimaryKeyZ === proofStep.rhsPrimaryKeyZ);
+
+            currentProofChain.push (proofStep);
+
+            rewriteQueue.push (currentProofChain);
+
+            if (proofFound) {
+                QED = [...currentProofChain];
+                ProofFoundFlag = true;
+                return QED;
+            }
+        }
+
+        return false;
+    });
+
+    [ lhsExpandProofFoundFlag, lhsReduceProofFoundFlag, rhsExpandProofFoundFlag, rhsReduceProofFoundFlag ] = resultsA;
+
+} // end rewriteProofstepF
+
+function checkProofStep (proofStepC, proofstackA) {
+    const lhsFastKey = createFastKey ('lhs', proofStepC.lhsPrimaryKeyZ);
+    const rhsFastKey = createFastKey ('rhs', proofStepC.rhsPrimaryKeyZ);
+
+    updateFastForwardQueue (lhsFastKey);
+    updateFastForwardQueue (rhsFastKey);
+
+    const lhsFastKeySearch = createFastKey ('rhs', proofStepC.lhsPrimaryKeyZ);
+    const rhsFastKeySearch = createFastKey ('lhs', proofStepC.rhsPrimaryKeyZ);
+
+    const lhsResult = queryFastForwardQueue ('lhs', lhsFastKeySearch, proofStepC.lhsPrimaryKeyZ, null);
+    if (lhsResult)
+        return lhsResult;
+
+    const rhsResult = queryFastForwardQueue ('rhs', rhsFastKeySearch, null, proofStepC.rhsPrimaryKeyZ);
+    if (rhsResult)
+        return rhsResult;
+
+    return { QED: null, ProofFoundFlag: false };
+
+    // Local function declarations
+
+    function createFastKey (prefix, value) {
+        return `${prefix}:${value}`;
+    }
+
+    function updateFastForwardQueue (key) {
+        if (!fastForwardQueue [key]) {
+            fastForwardQueue [key] = [...proofstackA];
+        }
+    }
+
+    function createProofStep (indirS, lhs, rhs, valueObj) {
+        const proofStep = new ProofStepObjectClass ();
+        const lhsFlag = /^lhs/.test (indirS);
+        proofStep.guidZ = valueObj.guidZ;
+        proofStep.lhsPrimaryKeyZ = lhsFlag ? lhs : valueObj.lhsPrimaryKeyZ;
+        proofStep.rhsPrimaryKeyZ = lhsFlag ? valueObj.rhsPrimaryKeyZ : rhs;
+        proofStep.rewriteOpcodeZ = lhsFlag ? rewriteOpcodesO._lhsFastForward : rewriteOpcodesO._rhsFastForward;
+        return proofStep;
+    }
+
+    function queryFastForwardQueue (indirS, searchKey, lhs, rhs) {
+        if (fastForwardQueue [searchKey]) {
+            const _QED = [...proofstackA];
+            fastForwardQueue [searchKey].forEach ((value, indexZ, thisArray) => {
+                _QED.push (createProofStep (indirS, lhs, rhs, value));
+            });
+            return { QED: _QED, ProofFoundFlag: true };
+        }
+        return null;
+    }
+
+} // end checkProofStep
+
 function rewriteSubnet_lhsExpand ({ _proofStepC, _proofstack, _subnetH }) {
     if (ProofFoundFlag)
         return;
