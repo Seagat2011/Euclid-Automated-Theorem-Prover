@@ -147,3 +147,11 @@ function tryExpand(expression, axioms) {
     }
     return null;
 }
+
+input.value = 
+`// Axioms and Lemmas
+1 + 1 = 2
+2 + 2 = 4
+
+// Prove
+1 + 2 + 1 = 4`;
