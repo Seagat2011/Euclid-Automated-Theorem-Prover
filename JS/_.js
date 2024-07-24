@@ -71,8 +71,11 @@ function parseInput(input) {
 }
 
 function generateProof(axioms, proofStatement) {
-    let proof = `Proof found!\n${proofStatement}, (root)\n`;
+    let proof = `Proof found!\n\n${proofStatement}, (root)\n`;
     const [lhs, rhs] = proofStatement.split('=').map(s => s.trim());
+
+    if (lhs === rhs) 
+        return proof + `\nQ.E.D.`;
     
     const steps = [];
     let currentLhs = lhs;
@@ -118,7 +121,7 @@ function generateProof(axioms, proofStatement) {
         proof += `${step.result} = ${step.side === 'lhs' ? currentRhs : currentLhs}, (${step.side} ${step.action}) via ${step.axiom}\n`;
     }
     
-    proof += 'Q.E.D.';
+    proof += '\nQ.E.D.';
     return proof;
 }
 
@@ -148,10 +151,13 @@ function tryExpand(expression, axioms) {
     return null;
 }
 
-input.value = 
+input.value = input.value 
+? input.value :
 `// Axioms and Lemmas
 1 + 1 = 2
 2 + 2 = 4
 
 // Prove
 1 + 2 + 1 = 4`;
+
+output.value = '';
