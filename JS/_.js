@@ -198,7 +198,7 @@ async function main (proofStatementsA) {
     do {
 
         // read from (bottom of) the rewriteQueue
-        proofstackA = rewriteQueue.shift ();
+        proofstackA = rewriteQueue.pop ();
 
         const proofStepC = lastElementOf ({ valueA: proofstackA });
 
@@ -237,7 +237,7 @@ async function main (proofStatementsA) {
         let axiom1C = new ProofStepObjectClass ();
         const proofArray = [];
 
-        QED.forEach (({ 
+        QED.forEach (({
             guidZ
             , lhsPrimaryKeyZ
             , rhsPrimaryKeyZ
@@ -251,10 +251,9 @@ async function main (proofStatementsA) {
                 // Handle other cases
                 Object.assign (axiom1C, { guidZ, lhsPrimaryKeyZ, rhsPrimaryKeyZ, rewriteOpcodeZ });
                 const axiom2C = AxiomsArrayH [guidZ];
-                const { _axiom1C = axiom1C, proofArray: stepProofArray = [] } 
+                const { _axiom1C = axiom1C, proofArray: stepProofArray = [] }
                     = processProofStep (axiom1C, axiom2C, maskSizeZ, fastForwardFlag);
 
-                axiom1C = _axiom1C;
                 proofArray.push (...stepProofArray);
             } else {
                 // Handle the root case
@@ -262,7 +261,7 @@ async function main (proofStatementsA) {
                 const lhsStringArray = convertBitstream2tokens ({ proofStepZ: lhsZ, maskSizeZ });
                 const rhsStringArray = convertBitstream2tokens ({ proofStepZ: rhsZ, maskSizeZ });
                 proofArray.push (`${lhsStringArray.join (' ')} = ${rhsStringArray.join (' ')}, (root)`);
-            } 
+            }
         });
 
         resultArray.push (proofArray.join ('\n'), QED_Flag);
