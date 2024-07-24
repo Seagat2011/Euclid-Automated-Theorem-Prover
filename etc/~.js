@@ -1,4 +1,50 @@
 
+
+function rewriteSubnet_lhsExpand ({ _proofStepC, _proofstack, _subnetH }) {
+    if (ProofFoundFlag)
+        return;
+
+    const rhsFastForwardKeyS = `rhs:${_proofStepC.rhsPrimaryKeyZ}`;
+    !fastForwardQueue [rhsFastForwardKeyS]
+        && (fastForwardQueue [rhsFastForwardKeyS] = [..._proofstack]);
+
+    for (let [indexZ, _] of _subnetH) {
+        const _axiom2C = AxiomsArrayH [indexZ];
+        if (_proofStepC.lhsPrimaryKeyZ % _axiom2C.rhsPrimaryKeyZ === 0n) {
+            let _allSubnetArray = [indexZ];
+            for (let localSubnetZ of _axiom2C._lhsExpandCallGraph)
+                _allSubnetArray.push(localSubnetZ);
+            for (let localSubnetZ of _axiom2C._lhsReduceCallGraph)
+                _allSubnetArray.push(localSubnetZ);
+            for (let localSubnetZ of _axiom2C._rhsExpandCallGraph)
+                _allSubnetArray.push(localSubnetZ);
+            for (let localSubnetZ of _axiom2C._rhsReduceCallGraph)
+                _allSubnetArray.push(localSubnetZ);
+
+            const newPrimaryKeyZ 
+                = _proofStepC.lhsPrimaryKeyZ 
+                    / _axiom2C.rhsPrimaryKeyZ 
+                        * _axiom2C.lhsPrimaryKeyZ;
+
+            const lhsFastForwardKeyS = `lhs:${newProofStepC.lhsPrimaryKeyZ}`;
+
+            _allSubnetArray
+                .forEach((currentSubnetGuidZ, indexZ, thisArray) => {
+                    const newProofStepC = new CloneableObjectClass (_proofStepC);
+                    newProofStepC.guidZ = currentSubnetGuidZ;
+                    newProofStepC.rewriteOpcodeZ = rewriteOpcodesO._lhsExpand;
+                    newProofStepC.lhsPrimaryKeyZ = newPrimaryKeyZ;
+                    const newProofStack = [..._proofstack, newProofStepC];
+                    !fastForwardQueue [lhsFastForwardKeyS]
+                        && (fastForwardQueue [lhsFastForwardKeyS] = [...newProofStack]);
+                    rewriteQueue.push (newProofStack);
+                    updateProofFoundFlag ({ _proofStepC: newProofStepC, _proofstack: newProofStack});
+                });
+
+        } // end if (_proofStepC.lhsPrimaryKeyZ % _axiom2C.rhsPrimaryKeyZ === 0n)
+    } // end for (let [indexZ, _] of _subnetH)
+} // end rewriteSubnet_lhsExpand
+
 case 5n: // lhs f/f
 if(_axiom1C.guidZ > 0) {
     lhsStringArray = convertBitstream2tokens({ proofStepZ: _axiom1C.rhsZ, maskSizeZ });
