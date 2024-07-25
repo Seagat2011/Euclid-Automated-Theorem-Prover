@@ -13,14 +13,14 @@
     0.0.1.0
 
     DESCRIPTION:
-    Experimental Parser
+    claude AI based Experimental Prover
 
-    UPDATED
-    Add CallGraph support
-    Add Session runtime support (during debug mode)
-    Add FastForward support
+    UPDATES
+    N/A
 
     TODOS
+    More Flexable axiom parsing via Map builtin objects
+    Rewrite queue for more variance and (solution space) coverage
     Add Multi-thread support via inline Web Workers
     Add async/await and Promise.All support
 
@@ -41,14 +41,12 @@
 
 */
 
-
 function solveProblem() {
+    let rewriteQueue = [];
     const input = document.getElementById('input').value;
-    const output = document.getElementById('output');
-    
+    const output = document.getElementById('output');    
     const { axioms, proofStatement } = parseInput(input);
-    const proof = generateProof(axioms, proofStatement);
-    
+    const proof = generateProof(axioms, proofStatement, rewriteQueue);    
     output.value = proof;
 }
 
@@ -56,21 +54,18 @@ function parseInput(input) {
     const lines = input.split('\n').map(line => line.trim()).filter(line => line && !line.startsWith('//'));
     const axioms = [];
     let proofStatement = '';
-
     const isProof = lines.length-1;
-    lines
-        .forEach((line, indexZ, thisArray) => {
-            if (indexZ != isProof) {
-                axioms.push(line);
-            } else {
-                proofStatement = line;
-            }         
-        });
-
+    lines.forEach((line, indexZ, thisArray) => {
+        if (indexZ != isProof) {
+            axioms.push(line);
+        } else {
+            proofStatement = line;
+        }         
+    });
     return { axioms, proofStatement };
 }
 
-function generateProof(axioms, proofStatement) {
+function generateProof(axioms, proofStatement, rewriteQueue) {
     let proof = `Proof found!\n\n${proofStatement}, (root)\n`;
     const [lhs, rhs] = proofStatement.split('=').map(s => s.trim());
 
