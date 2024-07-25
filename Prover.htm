@@ -3,17 +3,20 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Mathematical Proof Solver</title>
+    <title>Euclid Automated Theorem Prover (minimal writes version) - Editor - v1.0.0.0</title>
     <link rel='stylesheet' media='all' href='CSS\_.css'>
 </head>
 <body>
-    <h1>Mathematical Proof Solver</h1>
-    <textarea id="input" placeholder="Enter axioms and proof statement here"></textarea>
-    <button onclick="solveProblem()">Solve</button>
-    <textarea id="output" readonly placeholder="Solution will appear here"></textarea>
+    <div id="editor-container">
+        <div id="line-numbers"></div>
+    <textarea id="_view_" placeholder="Axioms and Lemmas" spellcheck="false"></textarea>
+    </div>
+        <textarea id="_code_" placeholder="Proofs shown here" spellcheck="false"></textarea>
     <footer>
       <!-- engine scripts -->
       <script src="JS\_.js"></script>
+      <!---------------------------->
+      <script src="JS\MD5.js"></script>
     </footer>
 </body>
 </html>
