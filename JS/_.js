@@ -43,127 +43,137 @@
 
 try {
 
-    function solveProblem() {
+    function solveProblem () {
         let rewriteQueue = [];
-        const input = document.getElementById('input').value;
-        const output = document.getElementById('output');    
-        const { axioms, proofStatement } = parseInput(input);
-        const proof = generateProof(axioms, proofStatement, rewriteQueue);    
+        const input = document.getElementById ('input').value;
+        const output = document.getElementById ('output');
+        const { axioms, proofStatement } = parseInput (input);
+        const proof = generateProof (axioms, proofStatement, rewriteQueue);
         output.value = proof;
     }
     
-    function parseInput(input) {
-        const lines = input.split('\n').map(line => line.trim()).filter(line => line && !line.startsWith('//'));
+    function parseInput (input) {
+        const lines = input.split ('\n').map (line => line.trim ()).filter (line => line && !line.startsWith ('//'));
         const axioms = [];
         let proofStatement = '';
         const isProof = lines.length-1;
-        lines.forEach((line, indexZ, thisArray) => {
+        lines.forEach ((line, indexZ, thisArray) => {
             if (indexZ != isProof) {
-                line = line.split(/[~<]?=+[>]?/g).map(s => s.trim());
-                const _lhs = line[0].split(/\s+/g).map(s => s.trim());
-                const _rhs = line[1].split(/\s+/g).map(s => s.trim());
-                axioms.push([
-                    _lhs.length >= _rhs.length ? _lhs : _rhs, 
-                    _lhs.length >= _rhs.length ? _rhs : _lhs, 
+                line = line.split (/[~<]?=+[>]?/g).map (s => s.trim ());
+                const _lhs = line [0].split (/\s+/g).map (s => s.trim ());
+                const _rhs = line [1].split (/\s+/g).map (s => s.trim ());
+                axioms.push ([
+                    _lhs.length >= _rhs.length ? _lhs : _rhs,
+                    _lhs.length >= _rhs.length ? _rhs : _lhs,
                 ]);
             } else {
                 proofStatement = line;
-            }         
+            }
         });
         return { axioms, proofStatement };
     }
     
-    function generateProof(axioms, proofStatement, rewriteQueue) {
-        let proof = `Proof found!\n\n${proofStatement}, (root)\n`;
-        let [lhs, rhs] = proofStatement.split(/[~<]?=+[>]?/g).map(s => s.trim());
+    function generateProof (axioms, proofStatement, rewriteQueue) {
+        let proof;
+        let [lhs, rhs] = proofStatement.split (/[~<]?=+[>]?/g).map (s => s.trim ());
     
-        if (lhs === rhs) 
+        if (lhs === rhs)
             return proof + `\nQ.E.D.`;
     
-        lhs = lhs.split(/\s+/).map(s => s.trim());
-        rhs = rhs.split(/\s+/).map(s => s.trim());
-        
+        lhs = lhs.split (/\s+/).map (s => s.trim ());
+        rhs = rhs.split (/\s+/).map (s => s.trim ());
+    
         let steps = [];
         let currentLhs;
         let currentRhs;
-        
+    
         currentLhs = lhs;
         currentRhs = rhs;
-        
+    
         // Try to reduce RHS first
-        while (currentLhs.join(' ') !== currentRhs.join(' ')) {
-            const rhsReduction = tryReduce(currentRhs, axioms);
+        while (currentLhs.join (' ') !== currentRhs.join (' ')) {
+            const rhsReduction = tryReduce (currentRhs, axioms);
             if (rhsReduction) {
-                steps.push({ side: 'rhs', action: 'reduce', result: [...rhsReduction.result], axiom: rhsReduction.axiom, other: [...currentLhs] });
+                steps.push ({ side: 'rhs', action: 'reduce', result: [...rhsReduction.result], axiom: rhsReduction.axiom, other: [...currentLhs] });
                 currentRhs = rhsReduction.result;
             } else {
                 break;
             }
         }
-        
+    
         // If LHS and RHS are not equal, try reducing LHS
-        while (currentLhs.join(' ') !== currentRhs.join(' ')) {
-            const lhsReduction = tryReduce(currentLhs, axioms);
+        while (currentLhs.join (' ') !== currentRhs.join (' ')) {
+            const lhsReduction = tryReduce (currentLhs, axioms);
             if (lhsReduction) {
-                steps.push({ side: 'lhs', action: 'reduce', result: [...lhsReduction.result], axiom: lhsReduction.axiom, other: [...currentRhs] });
+                steps.push ({ side: 'lhs', action: 'reduce', result: [...lhsReduction.result], axiom: lhsReduction.axiom, other: [...currentRhs] });
                 currentLhs = lhsReduction.result;
                 if (currentLhs === currentRhs) break;
             } else {
                 break;
             }
-        }    
-        
-        if (currentLhs.join(' ') !== currentRhs.join(' ')) {
+        }
+    
+        if (currentLhs.join (' ') !== currentRhs.join (' ')) {
             currentLhs = lhs;
             currentRhs = rhs;
             steps = [];
         }
     
         // Then expand RHS
-        while (currentLhs.join(' ') !== currentRhs.join(' ')) {
-            const rhsReduction = tryExpand(currentRhs, axioms);
+        while (currentLhs.join (' ') !== currentRhs.join (' ')) {
+            const rhsReduction = tryExpand (currentRhs, axioms);
             if (rhsReduction) {
-                steps.push({ side: 'rhs', action: 'expand', result: [...rhsReduction.result], axiom: rhsReduction.axiom, other: [...currentLhs] });
+                steps.push ({ side: 'rhs', action: 'expand', result: [...rhsReduction.result], axiom: rhsReduction.axiom, other: [...currentLhs] });
                 currentRhs = rhsReduction.result;
             } else {
                 break;
             }
         }
-        
+    
         // Then expand LHS
-        while (currentLhs.join(' ') !== currentRhs.join(' ')) {
-            const lhsExpansion = tryExpand(currentLhs, axioms);
+        while (currentLhs.join (' ') !== currentRhs.join (' ')) {
+            const lhsExpansion = tryExpand (currentLhs, axioms);
             if (lhsExpansion) {
-                steps.push({ side: 'lhs', action: 'expand', result: [...lhsExpansion.result], axiom: lhsExpansion.axiom, other: [...currentRhs] });
+                steps.push ({ side: 'lhs', action: 'expand', result: [...lhsExpansion.result], axiom: lhsExpansion.axiom, other: [...currentRhs] });
                 currentLhs = lhsExpansion.result;
             } else {
                 break;
             }
         }
-        
+    
+        const ProofFound = (currentLhs.join (' ') == currentRhs.join (' '));
+        const QED = (() => {
+            let ret = '';
+            if (ProofFound)
+                ret = '\nQ.E.D.'
+           return ret;
+        })();
+    
+        proof = `${ProofFound ? 'Proof' : 'partial-proof'} found!\n\n${proofStatement}, (root)\n`;
+    
         for (const step of steps) {
             switch (step.side) {
                 case 'lhs':
-                proof += `${ step.result.join(' ') } = ${ step.other.join(' ') }, (${ step.side } ${ step.action }) via ${ step.axiom }\n`;
+                proof += `${ step.result.join (' ') } = ${ step.other.join (' ') }, (${ step.side } ${ step.action }) via ${ step.axiom }\n`;
                 break;
-                
+    
                 case 'rhs':
-                proof += `${ step.other.join(' ') } = ${ step.result.join(' ') }, (${ step.side } ${ step.action }) via ${ step.axiom }\n`;
+                proof += `${ step.other.join (' ') } = ${ step.result.join (' ') }, (${ step.side } ${ step.action }) via ${ step.axiom }\n`;
                 break;
-            }        
+            }
         }
-        
-        proof += '\nQ.E.D.';
+    
+        proof += QED;
         return proof;
     }
     
-    Object.prototype._includes = function(indir) {
+    Object.prototype._includes = function (indir) {
         let ret = false;
         const self = this;
-        if(self.length >= indir.length){
+        if (self.length >= indir.length){
             let i = 0;
             for (let tok of self) {
-                if (indir[i] === tok)
+                if (indir [i] === tok)
                     ++i;
                 !ret && (ret = (indir.length == i));
                 if (ret)
@@ -173,24 +183,24 @@ try {
         return ret;
     }
     
-    Object.prototype._replace = function(from, to) {
+    Object.prototype._replace = function (from, to) {
         let ret = false;
         let self = [...this];
-        if(self.length >= from.length){
+        if (self.length >= from.length){
             let i = 0;
             let j = 0;
             let tokenIDX = [];
             for (let tok of self) {
-                if (from[i] === tok){
-                    tokenIDX.push(j);
+                if (from [i] === tok){
+                    tokenIDX.push (j);
                     ++i;
                 }
                 !ret && (ret = (from.length == i));
                 if (ret){
-                    tokenIDX.forEach((k,idx,me) => {
-                        self[k] = '';
+                    tokenIDX.forEach ((k,idx,me) => {
+                        self [k] = '';
                     });
-                    self[j] = to.join(' ');
+                    self [j] = to.join (' ');
                     i = 0;
                     ret = false;
                     tokenIDX = [];
@@ -198,16 +208,16 @@ try {
                 ++j;
             }
         }
-        self = self.join(' ').split(/\s+/).filter(u => u).map((s,index,me) => s.trim());
+        self = self.join (' ').split (/\s+/).filter (u => u).map ((s,index,me) => s.trim ());
         return self;
     }
     
-    function tryReduce(expression, axioms) {
+    function tryReduce (expression, axioms) {
         for (let i = 0; i < axioms.length; i++) {
-            const [left, right] = axioms[i];
-            if (expression._includes(left)) {
+            const [left, right] = axioms [i];
+            if (expression._includes (left)) {
                 return {
-                    result: expression._replace(left, right),
+                    result: expression._replace (left, right),
                     axiom: `axiom_${i + 1}.0`
                 };
             }
@@ -215,12 +225,12 @@ try {
         return null;
     }
     
-    function tryExpand(expression, axioms) {
+    function tryExpand (expression, axioms) {
         for (let i = 0; i < axioms.length; i++) {
-            const [left, right] = axioms[i];
-            if (expression._includes(right)) {
+            const [left, right] = axioms [i];
+            if (expression._includes (right)) {
                 return {
-                    result: expression._replace(right, left),
+                    result: expression._replace (right, left),
                     axiom: `axiom_${i + 1}.0`
                 };
             }
@@ -229,10 +239,10 @@ try {
     }
     
     } catch (e) {
-        output.value = JSON.stringify(e, ' ', 2);
+        output.value = JSON.stringify (e, ' ', 2);
     }
     
-    input.value = input.value 
+    input.value = input.value
     ? input.value :
     `// Axioms and Lemmas
     1 + 1 = 2
