@@ -133,7 +133,15 @@ function generateProof(axioms, proofStatement, rewriteQueue) {
     }
     
     for (const step of steps) {
-        proof += `${ step.result.join(' ') } = ${ step.side === 'lhs' ? currentRhs.join(' ') : currentLhs.join(' ') }, (${ step.side } ${ step.action }) via ${ step.axiom }\n`;
+        switch (step.side) {
+            case 'lhs':
+            proof += `${ step.result.join(' ') } = ${ currentRhs.join(' ') }, (${ step.side } ${ step.action }) via ${ step.axiom }\n`;
+            break;
+            
+            case 'rhs':
+            proof += `${ currentLhs.join(' ') } = ${ step.result.join(' ') }, (${ step.side } ${ step.action }) via ${ step.axiom }\n`;
+            break;
+        }        
     }
     
     proof += '\nQ.E.D.';
