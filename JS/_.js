@@ -86,11 +86,23 @@ function generateProof(axioms, proofStatement, rewriteQueue) {
     let currentRhs = rhs;
     
     // Try to reduce RHS first
-    while (true) {
+    while (currentLhs.join(' ') !== currentRhs.join(' ')) {
         const rhsReduction = tryReduce(currentRhs, axioms);
         if (rhsReduction) {
-            steps.push({ side: 'rhs', action: 'reduce', result: rhsReduction.result, axiom: rhsReduction.axiom });
+            steps.push({ side: 'rhs', action: 'reduce', result: [...rhsReduction.result], axiom: rhsReduction.axiom, other: [...currentLhs] });
             currentRhs = rhsReduction.result;
+        } else {
+            break;
+        }
+    }
+    
+    // If LHS and RHS are not equal, try reducing LHS
+    while (currentLhs.join(' ') !== currentRhs.join(' ')) {
+        const lhsReduction = tryReduce(currentLhs, axioms);
+        if (lhsReduction) {
+            steps.push({ side: 'lhs', action: 'reduce', result: [...lhsReduction.result], axiom: lhsReduction.axiom, other: [...currentRhs] });
+            currentLhs = lhsReduction.result;
+            if (currentLhs === currentRhs) break;
         } else {
             break;
         }
@@ -100,7 +112,7 @@ function generateProof(axioms, proofStatement, rewriteQueue) {
     while (currentLhs.join(' ') !== currentRhs.join(' ')) {
         const rhsReduction = tryExpand(currentRhs, axioms);
         if (rhsReduction) {
-            steps.push({ side: 'rhs', action: 'expand', result: rhsReduction.result, axiom: rhsReduction.axiom });
+            steps.push({ side: 'rhs', action: 'expand', result: [...rhsReduction.result], axiom: rhsReduction.axiom, other: [...currentLhs] });
             currentRhs = rhsReduction.result;
         } else {
             break;
@@ -111,35 +123,21 @@ function generateProof(axioms, proofStatement, rewriteQueue) {
     while (currentLhs.join(' ') !== currentRhs.join(' ')) {
         const lhsExpansion = tryExpand(currentLhs, axioms);
         if (lhsExpansion) {
-            steps.push({ side: 'lhs', action: 'expand', result: lhsExpansion.result, axiom: lhsExpansion.axiom });
+            steps.push({ side: 'lhs', action: 'expand', result: [...lhsExpansion.result], axiom: lhsExpansion.axiom, other: [...currentRhs] });
             currentLhs = lhsExpansion.result;
         } else {
             break;
         }
     }
     
-    // If LHS and RHS are not equal, try reducing LHS
-    if (currentLhs.join(' ') !== currentRhs.join(' ')) {
-        while (true) {
-            const lhsReduction = tryReduce(currentLhs, axioms);
-            if (lhsReduction) {
-                steps.push({ side: 'lhs', action: 'reduce', result: lhsReduction.result, axiom: lhsReduction.axiom });
-                currentLhs = lhsReduction.result;
-                if (currentLhs === currentRhs) break;
-            } else {
-                break;
-            }
-        }
-    }
-    
     for (const step of steps) {
         switch (step.side) {
             case 'lhs':
-            proof += `${ step.result.join(' ') } = ${ currentRhs.join(' ') }, (${ step.side } ${ step.action }) via ${ step.axiom }\n`;
+            proof += `${ step.result.join(' ') } = ${ step.other.join(' ') }, (${ step.side } ${ step.action }) via ${ step.axiom }\n`;
             break;
             
             case 'rhs':
-            proof += `${ currentLhs.join(' ') } = ${ step.result.join(' ') }, (${ step.side } ${ step.action }) via ${ step.axiom }\n`;
+            proof += `${ step.other.join(' ') } = ${ step.result.join(' ') }, (${ step.side } ${ step.action }) via ${ step.axiom }\n`;
             break;
         }        
     }
@@ -170,21 +168,26 @@ Object.prototype._replace = function(from, to) {
     if(self.length >= from.length){
         let i = 0;
         let j = 0;
+        let tokenIDX = [];
         for (let tok of self) {
             if (from[i] === tok){
-                self[j] = '';
+                tokenIDX.push(j);
                 ++i;
             }
             !ret && (ret = (from.length == i));
             if (ret){
+                tokenIDX.forEach((k,idx,me) => {
+                    self[k] = '';
+                });
                 self[j] = to.join(' ');
                 i = 0;
                 ret = false;
+                tokenIDX = [];
             }
             ++j;
         }
     }
-    self = self.join(' ').split(/\s+/).map((s,index,me) => s.trim());
+    self = self.join(' ').split(/\s+/).filter(u => u).map((s,index,me) => s.trim());
     return self;
 }
 
