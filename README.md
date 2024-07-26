@@ -1,1 +1,1 @@
-## Minimal writes Version 
+## Elegant Anthropic Claude Prover Version 
