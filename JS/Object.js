@@ -517,7 +517,7 @@ Object.prototype.isPrime=function(num) {
 
     // Check divisibility from 2 to the square root of num
     for (let i = BigInt(2); i * i <= num; ++i) {
-      if (num % i === 0) return false;
+      if (num % i == 0) return false;
     }
     return true;
 }
