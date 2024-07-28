@@ -733,16 +733,18 @@ function convertBitstream2tokens ({ proofStepZ, maskSizeZ }) {
     let ret = [];
     const chunkMask = (1n << maskSizeZ) - 1n;
     const proofStepResolutionZ = resolutionOf ({ valueZ: proofStepZ });
-
-    let bitsRemainingZ = proofStepResolutionZ;
-
-    // ensure read/write masks are properly aligned
-    while (bitsRemainingZ > maskSizeZ) {
-
-        if (bitsRemainingZ > maskSizeZ)
-            bitsRemainingZ -= maskSizeZ;
-
-    }
+    const bitsRemainingZ = proofStepResolutionZ % maskSizeZ;
+    /* 
+        let bitsRemainingZ = proofStepResolutionZ;
+    
+        // ensure read/write masks are properly aligned
+        while (bitsRemainingZ > maskSizeZ) {
+    
+            if (bitsRemainingZ > maskSizeZ)
+                bitsRemainingZ -= maskSizeZ;
+    
+        }
+     */
 
     // ensure all offsets align to (Resolution % maskSizeZ) boundaries
     const proofstepOffsetZ = proofStepResolutionZ - bitsRemainingZ;
@@ -790,25 +792,29 @@ function replaceBitfieldsInProofStepBigEndian ({
     const toResolutionZ = resolutionOf ({ valueZ: toZ });
 
     const nonMatchSubnetLengthsFlag = (fromResolutionZ !== proofStepResolutionZ);
-
-    let bitsRemainingZ = proofStepResolutionZ;
-    let fromOffsetBitsRemainingZ = fromResolutionZ;
-    let toOffsetBitsRemainingZ = toResolutionZ;
-
-    // ensure read/write masks are properly aligned
-    while (bitsRemainingZ > maskSizeZ
-        || fromOffsetBitsRemainingZ > maskSizeZ
-        || toOffsetBitsRemainingZ > maskSizeZ) {
-
-        if (bitsRemainingZ > maskSizeZ)
-            bitsRemainingZ -= maskSizeZ;
-
-        if (fromOffsetBitsRemainingZ > maskSizeZ)
-            fromOffsetBitsRemainingZ -= maskSizeZ;
-
-        if (toOffsetBitsRemainingZ > maskSizeZ)
-            toOffsetBitsRemainingZ -= maskSizeZ;
-    }
+        const bitsRemainingZ = proofStepResolutionZ % maskSizeZ;
+        const fromOffsetBitsRemainingZ = fromResolutionZ % maskSizeZ;
+        const toOffsetBitsRemainingZ = toResolutionZ % maskSizeZ;
+    /*
+        let bitsRemainingZ = proofStepResolutionZ;
+        let fromOffsetBitsRemainingZ = fromResolutionZ;
+        let toOffsetBitsRemainingZ = toResolutionZ;
+    
+        // ensure read/write masks are properly aligned
+        while (bitsRemainingZ > maskSizeZ
+            || fromOffsetBitsRemainingZ > maskSizeZ
+            || toOffsetBitsRemainingZ > maskSizeZ) {
+    
+            if (bitsRemainingZ > maskSizeZ)
+                bitsRemainingZ -= maskSizeZ;
+    
+            if (fromOffsetBitsRemainingZ > maskSizeZ)
+                fromOffsetBitsRemainingZ -= maskSizeZ;
+    
+            if (toOffsetBitsRemainingZ > maskSizeZ)
+                toOffsetBitsRemainingZ -= maskSizeZ;
+        }
+     */
 
     let lastPushedValue = null;
 
