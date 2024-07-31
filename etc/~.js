@@ -1,5 +1,36 @@
 
 
+    Object.prototype._tryReplace = function (from, to) {
+        let self = [...this];
+        if (self.length < from.length) return false;
+        let i = 0;
+        let match = true;
+        while (i <= self.length - from.length) {
+            match = true;
+            for (let j = 0; j < self.length; j++) {
+                if (self[j] === '{' || self[j] === '(') {
+                    if (!scopeSatisfied(self[j], self, i + j, from, j)) {
+                        match = false;
+                        break;
+                    }
+                } else if (self[i + j] !== from[j]) {
+                    match = false;
+                    break;
+                }
+            }
+            if (match) {
+                const beforeMatch = self.slice(0, i);
+                const afterMatch = self.slice(i + from.length);
+                self = [...beforeMatch, ...to, ...afterMatch];
+                i += to.length;
+            } else {
+                i++;
+            }
+        }
+        if (match)
+            return self;
+    }; // end Object.prototype._tryReplace
+
 function rewriteProofstepF ({
     axioms1C
     , resultObj: { axioms2C, _resultObj } = {}
